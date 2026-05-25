@@ -7,6 +7,8 @@
     <RootNamespace>AStar.Dev.FunctionsParadigm.Tests.Unit</RootNamespace>
     <TargetFramework>net10.0</TargetFramework>
     <TestingPlatformDotnetTestSupport>true</TestingPlatformDotnetTestSupport>
+    <ExcludeFromCodeCoverage>true</ExcludeFromCodeCoverage>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
   </PropertyGroup>
 
   <ItemGroup>
