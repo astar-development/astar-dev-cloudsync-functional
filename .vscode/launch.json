@@ -1,0 +1,17 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": ".NET: AStar.Dev.OneDriveFunctional",
+      "type": "coreclr",
+      "request": "launch",
+      "project": "${workspaceFolder}/src/AStar.Dev.OneDriveFunctional/AStar.Dev.OneDriveFunctional.csproj",
+      "cwd": "${workspaceFolder}/src/AStar.Dev.OneDriveFunctional",
+      "console": "internalConsole",
+      "stopAtEntry": false,
+      "justMyCode": false,
+      "enableStepFiltering": true,
+      "program": "${workspaceFolder}/src/AStar.Dev.OneDriveFunctional/bin/Debug/net10.0/AStar.Dev.OneDriveFunctional.dll"
+    }
+  ]
+}
