@@ -1,0 +1,8 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/AStar.Dev.FunctionalParadigm/AStar.Dev.FunctionalParadigm.csproj" />
+  </Folder>
+  <Folder Name="/test/">
+    <Project Path="test/AStar.Dev.FunctionsParadigm.Tests.Unit/AStar.Dev.FunctionsParadigm.Tests.Unit.csproj" />
+  </Folder>
+</Solution>
