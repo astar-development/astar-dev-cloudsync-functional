@@ -2,7 +2,7 @@ using AStar.Dev.FunctionalParadigm;
 
 namespace AStar.Dev.FunctionsParadigm.Tests.Unit;
 
-public class GivenAOptionBind
+public class GivenAnOptionBind
 {
     [Fact]
     public void when_binding_a_some_option_then_the_bound_result_is_returned()

@@ -2,7 +2,7 @@ using AStar.Dev.FunctionalParadigm;
 
 namespace AStar.Dev.FunctionsParadigm.Tests.Unit;
 
-public class GivenAOptionTap
+public class GivenAnOptionTap
 {
     [Fact]
     public void when_tapping_a_some_option_then_the_success_action_runs()

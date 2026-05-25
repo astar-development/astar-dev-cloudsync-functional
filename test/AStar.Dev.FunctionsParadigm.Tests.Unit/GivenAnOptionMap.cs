@@ -2,7 +2,7 @@ using AStar.Dev.FunctionalParadigm;
 
 namespace AStar.Dev.FunctionsParadigm.Tests.Unit;
 
-public class GivenAOptionMap
+public class GivenAnOptionMap
 {
     [Fact]
     public void when_mapping_a_some_option_then_the_value_is_transformed()
