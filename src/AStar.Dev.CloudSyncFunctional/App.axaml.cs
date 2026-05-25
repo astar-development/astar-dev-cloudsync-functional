@@ -2,7 +2,7 @@ using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
 
-namespace AStar.Dev.OneDriveFunctional;
+namespace AStar.Dev.CloudSyncFunctional;
 
 public partial class App : Application
 {

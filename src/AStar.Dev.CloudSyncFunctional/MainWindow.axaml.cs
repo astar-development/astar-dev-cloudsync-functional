@@ -1,6 +1,6 @@
 using Avalonia.Controls;
 
-namespace AStar.Dev.OneDriveFunctional;
+namespace AStar.Dev.CloudSyncFunctional;
 
 public partial class MainWindow : Window
 {

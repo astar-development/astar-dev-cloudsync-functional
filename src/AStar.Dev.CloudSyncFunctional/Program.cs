@@ -1,7 +1,8 @@
-﻿using Avalonia;
+﻿using AStar.Dev.CloudSyncFunctional;
+using Avalonia;
 using System;
 
-namespace AStar.Dev.OneDriveFunctional;
+namespace AStar.Dev.CloudSyncFunctional;
 
 class Program
 {

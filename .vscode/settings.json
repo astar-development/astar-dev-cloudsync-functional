@@ -4,5 +4,8 @@
         "dotnet build": true,
         "dotnet run": true
     },
-    "dotnet.defaultSolution": "AStar.Dev.OneDrive.Functional.slnx"
+    "dotnet.defaultSolution": "AStar.Dev.OneDrive.Functional.slnx",
+    "cSpell.words": [
+        "Avalonia"
+    ]
 }

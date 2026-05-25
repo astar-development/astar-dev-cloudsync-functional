@@ -1,7 +1,7 @@
 <Solution>
   <Folder Name="/src/">
+    <Project Path="src/AStar.Dev.CloudSyncFunctional/AStar.Dev.CloudSyncFunctional.csproj" />
     <Project Path="src/AStar.Dev.FunctionalParadigm/AStar.Dev.FunctionalParadigm.csproj" />
-    <Project Path="src/AStar.Dev.OneDriveFunctional/AStar.Dev.OneDriveFunctional.csproj" />
   </Folder>
   <Folder Name="/test/">
     <Project Path="test/AStar.Dev.FunctionsParadigm.Tests.Unit/AStar.Dev.FunctionsParadigm.Tests.Unit.csproj" />

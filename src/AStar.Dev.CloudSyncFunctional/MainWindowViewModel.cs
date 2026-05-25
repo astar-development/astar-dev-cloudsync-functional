@@ -2,7 +2,7 @@ using System;
 using System.Windows.Input;
 using ReactiveUI;
 
-namespace AStar.Dev.OneDriveFunctional;
+namespace AStar.Dev.CloudSyncFunctional;
 
 public class MainWindowViewModel : ReactiveObject
 {
