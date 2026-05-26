@@ -2,6 +2,17 @@
 
 This repo contains functional-style `Result<T, TError>` and `Option<T>` flows.
 
+> **See also**: `@.claude/rules/functional-usage.md` — the authoritative rules for which type to use in which layer, typed error unions, banned patterns (no `is Ok`, no `string` as TError, no `try/catch` outside infrastructure), and ViewModel usage.
+
+## Option<T> vs Option<T, TError>
+
+| Use | When |
+|---|---|
+| `Option<T>` | Value may or may not be present; absence needs no explanation (e.g. `GetById` returning `None` = "not found") |
+| `Option<T, TError>` | Value may be absent AND absence has a typed reason callers may branch on |
+
+Do not use `T?` (nullable) where `Option<T>` is semantically correct.
+
 ## Getting started
 
 ### `Result<T, TError>`

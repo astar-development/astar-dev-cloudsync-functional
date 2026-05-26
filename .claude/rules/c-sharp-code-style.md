@@ -161,10 +161,12 @@ This applies to all new code.
   Assert.Contains(nameof(WorkspaceViewModel.SelectedAccount), raisedProperties);
   ```
 - **If no test project exists** for the production project being worked on, create it **before** writing any production code. Set up correct NuGet references (xUnit v3, Shouldly) and a `<ProjectReference>` to the production project before writing the first test.
-- Use NSubstitute for mocking dependencies in tests. Avoid mocking when possible; prefer using real instances or test doubles.
+- Prefer real instances or hand-rolled test doubles. Use NSubstitute only when constructing a real dependency requires significant setup that obscures the test's intent (e.g. `IAuthService`, `IGraphService`, `ILogger<T>`). See `@.claude/rules/c-sharp-testing.md` for full rules including integration test patterns.
 - Never add XML documentation or comments to test classes or test methods.
 
 ## Functional Extensions (AStar.Dev.Functional.Extensions)
+
+See `@.claude/rules/functional-usage.md` for the full authoritative rules. Hard constraints repeated here for visibility:
 
 - **Never** await a `Task<Result<T,E>>` into an intermediate variable just to call `.Match()` on the next line. Always chain `.MatchAsync()` directly on the task:
   ```csharp
@@ -177,7 +179,10 @@ This applies to all new code.
       .MatchAsync<TSuccess, TError, string?>(ok => ok.Value, _ => null);
   ```
 - Error-branch code (logging, setting properties, returning sentinel values) belongs **inside** the error lambda of `Match`/`MatchAsync`, not in a separate `if` block after the call.
-- Never use `is Result<T,E>.Ok` / `is not Result<T,E>.Ok` pattern matching in production code — use `Match` or `MatchAsync`.
+- Never use `is Result<T,E>.Ok` / `is not Result<T,E>.Ok` / `is Option<T>.Some` / `is Option<T>.None` pattern matching in production code — use `Match` or `MatchAsync` exclusively.
+- **Never use `string` as `TError`** — every layer boundary defines a typed error discriminated union (e.g., `AuthError`, `GraphError`, `PersistenceError`, `SyncError`).
+- `try/catch` is only permitted at infrastructure boundaries (Graph, MSAL, file system, EF Core) and the `async void` Timer callback in `SyncScheduler`. Service and domain layers never `catch`.
+- Observable properties in ViewModels are plain C# types — never `Result<T,E>` or `Option<T>`. Set them inside `Match`/`MatchAsync` lambdas.
 
 ## XML Documentation
 

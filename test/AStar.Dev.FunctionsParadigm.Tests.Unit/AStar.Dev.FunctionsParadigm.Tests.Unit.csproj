@@ -9,6 +9,7 @@
     <TestingPlatformDotnetTestSupport>true</TestingPlatformDotnetTestSupport>
     <ExcludeFromCodeCoverage>true</ExcludeFromCodeCoverage>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <NoWarn>NU1902;CA1859</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>

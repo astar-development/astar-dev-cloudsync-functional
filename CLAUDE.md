@@ -55,7 +55,8 @@ xUnit v3 tests against the FunctionalParadigm library. `TreatWarningsAsErrors` i
 
 - Nullable and ImplicitUsings enabled across all projects.
 - Test naming: `GivenA<Subject>` class, `when_..._then_...` method names (snake_case).
-- No mocking framework — tests construct types directly.
+- **Mocking**: Prefer real instances. Use NSubstitute only when a real dependency requires significant setup that obscures the test (e.g. `IAuthService`, `IGraphService`, `ILogger<T>`). Add the package only when needed. See `@.claude/rules/c-sharp-testing.md`.
+- **Integration tests**: Require a real SQLite `:memory:` database. Never use EF Core in-memory provider. `AppDbContext` constructed directly via `DbContextOptionsBuilder`, never mocked. `MigrateAsync` in fixture setup. Per-class lifecycle via `IClassFixture<DatabaseFixture>`. See `@.claude/rules/c-sharp-testing.md`.
 - **Commit messages**: Conventional Commits — `feat(packages/core): ...`, `fix(apps/web/Portal.Blazor): ...`
 - **Branch names**: `feature/...`, `bug/...`, `doc/...`; `main` ALWAYS deployable
 - **Test projects**: Named `*.Tests.Unit` or `*.Tests.Integration` — auto-set `IsPackable=false`
@@ -85,6 +86,23 @@ Three steps **MANDATORY** before single line of code. No exceptions, including s
 ## Branching & Commits
 
 ALL development work MUST follow the GIT rules in: @docs/git-instructions.md
+
+## OneDrive / Sync Rules
+
+Ten rules files in `.claude/rules/` cover the implementation patterns for this project. Read the relevant file before implementing any work in its domain:
+
+| Domain | File |
+|---|---|
+| **Result\<T\>/Option\<T\> usage — authoritative rules for all layers** | `@.claude/rules/functional-usage.md` |
+| MSAL authentication, token cache, multi-account | `@.claude/rules/onedrive-auth.md` |
+| Microsoft Graph API client, folder listing, all Graph operations | `@.claude/rules/onedrive-graph.md` |
+| Sync pipeline, upload/download protocol, conflict handling, file classification | `@.claude/rules/onedrive-sync.md` |
+| EF Core + SQLite persistence, value converters, Option<T> mapping | `@.claude/rules/onedrive-persistence.md` |
+| Background scheduler, CancellationToken, progress events, thread safety | `@.claude/rules/onedrive-background.md` |
+| ReactiveUI ViewModel patterns (observable props, commands, canExecute, wizard) | `@.claude/rules/onedrive-viewmodels.md` |
+| DI lifetime guidelines, AppDbContext factory, unhandled exceptions | `@.claude/rules/onedrive-di.md` |
+| Account onboarding — wizard completion, default sync path, sync rule seeding | `@.claude/rules/onedrive-onboarding.md` |
+| In-app log viewer — Serilog sink, ring buffer, PII scrubbing, reactive stream | `@.claude/rules/onedrive-logviewer.md` |
 
 ## Code Exploration
 
