@@ -3,15 +3,13 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:AStar.Dev.CloudSyncFunctional"
-        mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+        mc:Ignorable="d" d:DesignWidth="1280" d:DesignHeight="800"
         x:Class="AStar.Dev.CloudSyncFunctional.MainWindow"
         x:DataType="local:MainWindowViewModel"
         Title="AStar.Dev.CloudSyncFunctional"
-        Width="900" Height="560">
+        Width="1280" Height="800">
     <StackPanel Margin="24" Spacing="16">
         <TextBlock Text="AStar.Dev.CloudSyncFunctional" FontSize="26" FontWeight="Bold" />
-        <TextBlock Text="Cross-platform Avalonia UI with ReactiveUI bindings." FontSize="16" />
-        <TextBlock Text="{Binding StatusText}" FontSize="18" TextWrapping="Wrap" />
-        <Button Content="Update status" Command="{Binding UpdateStatusCommand}" Width="180" />
+        <TextBlock Text="{Binding Workspace.CurrentRate}" FontSize="16" />
     </StackPanel>
 </Window>
