@@ -2,7 +2,7 @@ using System;
 using System.Collections.ObjectModel;
 using ReactiveUI;
 
-namespace AStar.Dev.CloudSyncFunctional.ViewModels;
+namespace AStar.Dev.CloudSyncFunctional.FolderTree;
 
 /// <summary>Represents a single folder in the cloud provider's folder tree.</summary>
 public class FolderNode : ReactiveObject

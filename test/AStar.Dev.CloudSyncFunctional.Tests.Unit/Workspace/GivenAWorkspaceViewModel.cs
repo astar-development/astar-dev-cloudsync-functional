@@ -1,5 +1,6 @@
 using System.Collections.Generic;
-using AStar.Dev.CloudSyncFunctional.ViewModels;
+using AStar.Dev.CloudSyncFunctional.Accounts;
+using AStar.Dev.CloudSyncFunctional.Workspace;
 
 namespace AStar.Dev.CloudSyncFunctional.Tests.Unit;
 

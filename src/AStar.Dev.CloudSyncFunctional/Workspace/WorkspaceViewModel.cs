@@ -1,8 +1,10 @@
 using System;
 using System.Collections.ObjectModel;
+using AStar.Dev.CloudSyncFunctional.Accounts;
+using AStar.Dev.CloudSyncFunctional.FolderTree;
 using ReactiveUI;
 
-namespace AStar.Dev.CloudSyncFunctional.ViewModels;
+namespace AStar.Dev.CloudSyncFunctional.Workspace;
 
 /// <summary>Root view-model for the application workspace. Holds all accounts and summary statistics.</summary>
 public class WorkspaceViewModel : ReactiveObject
