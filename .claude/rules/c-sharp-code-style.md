@@ -36,6 +36,35 @@ Coding standards and style guidelines / preferences for C# files in this reposit
 - Use file-scoped namespaces.
 - Namespace names should follow the pattern: Company.Project.Module (e.g., Contoso.Sales.Reporting).
 
+## Folder Structure
+
+Organise files by **feature / domain concept**, not by type category.
+
+```
+// ✅ feature grouping
+src/
+  Accounts/
+    AccountViewModel.cs
+    ProviderKind.cs
+    SyncStatus.cs
+  Workspace/
+    WorkspaceViewModel.cs
+  FolderTree/
+    FolderNode.cs
+    CheckState.cs
+
+// ❌ type grouping
+src/
+  ViewModels/
+    AccountViewModel.cs
+    WorkspaceViewModel.cs
+    FolderNode.cs
+  Enums/
+    ProviderKind.cs
+```
+
+This applies to all new code.
+
 ## Classes and Methods
 
 - Define one class, record, interface etc. per file, and name the file after the class. The exception to this is when defining multiple related record types for a discriminated union - in this case, all records should be defined in the same file. Factory classes for records should be defined in the same file as the record they relate to.
@@ -121,7 +150,17 @@ Coding standards and style guidelines / preferences for C# files in this reposit
 - Use the Arrange-Act-Assert (AAA) pattern within test methods to structure the code clearly. Divide the method into three distinct sections: setup (Arrange), execution (Act), and verification (Assert). Do not comment these sections; the structure should be clear from the code itself. Separate these sections with a single blank line for readability.
 - Use test data builders to create complex test objects, enhancing readability and maintainability of tests.
 - Avoid logic in test methods; keep tests simple and focused on behavior verification.
-- Use Shouldly for more readable and expressive assertions in tests.
+- **Always** use Shouldly for every assertion — `Assert.*` is **banned** in new test code.
+  ```csharp
+  // ✅
+  sut.Accounts.Count.ShouldBe(4);
+  raisedProperties.ShouldContain(nameof(WorkspaceViewModel.SelectedAccount));
+
+  // ❌
+  Assert.Equal(4, sut.Accounts.Count);
+  Assert.Contains(nameof(WorkspaceViewModel.SelectedAccount), raisedProperties);
+  ```
+- **If no test project exists** for the production project being worked on, create it **before** writing any production code. Set up correct NuGet references (xUnit v3, Shouldly) and a `<ProjectReference>` to the production project before writing the first test.
 - Use NSubstitute for mocking dependencies in tests. Avoid mocking when possible; prefer using real instances or test doubles.
 - Never add XML documentation or comments to test classes or test methods.
 
@@ -139,6 +178,25 @@ Coding standards and style guidelines / preferences for C# files in this reposit
   ```
 - Error-branch code (logging, setting properties, returning sentinel values) belongs **inside** the error lambda of `Match`/`MatchAsync`, not in a separate `if` block after the call.
 - Never use `is Result<T,E>.Ok` / `is not Result<T,E>.Ok` pattern matching in production code — use `Match` or `MatchAsync`.
+
+## XML Documentation
+
+All public methods, properties, and types must carry complete XML documentation:
+
+- `<summary>` required on every public member.
+- `<param name="...">` documented for **every** parameter.
+- `<returns>` documented for every non-`void` method.
+- `<exception cref="...">` documented for every exception the method explicitly `throw`s.
+- Classes/interfaces: `<summary>` required. Use `<inheritdoc />` on concrete implementations of an interface — not on the interface itself.
+
+```csharp
+/// <summary>Computes the percentage of storage used.</summary>
+/// <param name="usedBytes">Bytes currently consumed.</param>
+/// <param name="totalBytes">Total capacity in bytes.</param>
+/// <returns>A value between 0.0 and 1.0 representing the fraction used.</returns>
+/// <exception cref="DivideByZeroException">Thrown when <paramref name="totalBytes"/> is zero.</exception>
+public static double ComputeUsedFraction(long usedBytes, long totalBytes) { … }
+```
 
 ## Utilities
 
