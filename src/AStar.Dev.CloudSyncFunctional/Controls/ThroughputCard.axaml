@@ -1,0 +1,61 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="AStar.Dev.CloudSyncFunctional.Controls.ThroughputCard"
+             VerticalContentAlignment="Stretch"
+             HorizontalContentAlignment="Stretch">
+    <Border x:Name="CardBorder"
+            CornerRadius="8"
+            BorderThickness="1"
+            Padding="10,12">
+        <StackPanel Spacing="6">
+            <Grid ColumnDefinitions="*,Auto">
+                <TextBlock x:Name="TodayLabel"
+                           Grid.Column="0"
+                           Text="TODAY"
+                           FontFamily="{StaticResource PlusJakartaSans}"
+                           FontSize="10"
+                           FontWeight="Bold"
+                           LetterSpacing="0.7"/>
+                <TextBlock x:Name="RateText"
+                           Grid.Column="1"
+                           FontFamily="{StaticResource JetBrainsMono}"
+                           FontSize="10"/>
+            </Grid>
+            <StackPanel Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
+                <TextBlock x:Name="GbText"
+                           FontFamily="{StaticResource JetBrainsMono}"
+                           FontSize="18"
+                           FontWeight="Bold"/>
+                <TextBlock x:Name="FilesText"
+                           FontFamily="{StaticResource PlusJakartaSans}"
+                           FontSize="11"
+                           FontWeight="Medium"
+                           VerticalAlignment="Bottom"
+                           Margin="0,0,0,3"/>
+            </StackPanel>
+            <UniformGrid x:Name="HistogramGrid"
+                         Rows="1"
+                         Columns="24"
+                         Height="28"/>
+            <Grid ColumnDefinitions="*,*,Auto">
+                <TextBlock x:Name="AxisStartLabel"
+                           Grid.Column="0"
+                           Text="00:00"
+                           FontFamily="{StaticResource JetBrainsMono}"
+                           FontSize="9.5"
+                           HorizontalAlignment="Left"/>
+                <TextBlock x:Name="AxisMidLabel"
+                           Grid.Column="1"
+                           Text="12:00"
+                           FontFamily="{StaticResource JetBrainsMono}"
+                           FontSize="9.5"
+                           HorizontalAlignment="Center"/>
+                <TextBlock x:Name="AxisEndLabel"
+                           Grid.Column="2"
+                           Text="now"
+                           FontFamily="{StaticResource JetBrainsMono}"
+                           FontSize="9.5"/>
+            </Grid>
+        </StackPanel>
+    </Border>
+</UserControl>
