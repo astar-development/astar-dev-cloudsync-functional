@@ -1,0 +1,137 @@
+name: .NET CI
+
+on:
+  push:
+    branches:
+      - main
+      - 'release/**'
+    paths:
+      - 'apps/**/*.cs'
+      - 'apps/**/*.csproj'
+      - 'apps/**/*.axaml'
+      - 'apps/**/*.razor'
+      - 'packages/**/*.cs'
+      - 'packages/**/*.csproj'
+      - 'tests/**/*.cs'
+      - 'tests/**/*.csproj'
+      - 'Directory.Build.props'
+      - 'Directory.Build.targets'
+      - 'Directory.Packages.props'
+      - 'global.json'
+      - 'NuGet.Config'
+      - '*.slnx'
+      - '.github/workflows/dotnet-ci.yml'
+
+  pull_request:
+    branches:
+      - main
+      - 'release/**'
+    paths:
+      - 'apps/**/*.cs'
+      - 'apps/**/*.csproj'
+      - 'apps/**/*.axaml'
+      - 'apps/**/*.razor'
+      - 'packages/**/*.cs'
+      - 'packages/**/*.csproj'
+      - 'tests/**/*.cs'
+      - 'tests/**/*.csproj'
+      - 'Directory.Build.props'
+      - 'Directory.Build.targets'
+      - 'Directory.Packages.props'
+      - 'global.json'
+      - 'NuGet.Config'
+      - '*.slnx'
+      - '.github/workflows/dotnet-ci.yml'
+
+permissions:
+  contents: read
+  checks: write
+  pull-requests: write
+
+concurrency:
+  group: dotnet-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  DOTNET_NOLOGO: true
+  DOTNET_SKIP_FIRST_TIME_EXPERIENCE: true
+  DOTNET_CLI_TELEMETRY_OPTOUT: true
+  NUGET_XMLDOC_MODE: skip
+  NUGET_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+jobs:
+  build-and-test:
+    name: Build & test
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4.2.2
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Setup .NET 10
+        uses: actions/setup-dotnet@v4.3.1
+        with:
+          global-json-file: global.json
+
+      - name: Cache NuGet packages
+        uses: actions/cache@v4.2.3
+        with:
+          path: ~/.nuget/packages
+          key: nuget-${{ runner.os }}-${{ hashFiles('Directory.Packages.props') }}
+          restore-keys: |
+            nuget-${{ runner.os }}-
+          lookup-only: true
+
+      - name: Restore
+        run: dotnet restore
+
+      - name: Build
+        run: |
+          dotnet build \
+            --no-restore \
+            --configuration Release \
+            -p:TreatWarningsAsErrors=true
+
+      - name: Test (per project)
+        run: |
+          mkdir -p TestResults
+
+          mapfile -t projects < <(find . -name '*.Tests*.csproj')
+
+          for proj in "${projects[@]}"; do
+            echo "Running tests for $proj"
+
+            proj_dir=$(dirname "$proj")
+            proj_name=$(basename "$proj" .csproj)
+
+            cd "$proj_dir"
+
+            dotnet test \
+              --no-build \
+              --configuration Release \
+              --logger "trx;LogFileName=$proj_name.trx" \
+              --results-directory "$GITHUB_WORKSPACE/TestResults" \
+              --collect:"XPlat Code Coverage" \
+              -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=cobertura
+
+            cd "$GITHUB_WORKSPACE"
+          done
+
+      - name: Publish test results
+        uses: EnricoMi/publish-unit-test-result-action@v2.23.0
+        if: always()
+        with:
+          files: TestResults/**/*.trx
+          check_name: Test results
+          fail_on: test failures
+
+      - name: Upload coverage
+        uses: codecov/codecov-action@v5.4.3
+        if: always()
+        with:
+          files: TestResults/**/coverage.cobertura.xml
+          fail_ci_if_error: false

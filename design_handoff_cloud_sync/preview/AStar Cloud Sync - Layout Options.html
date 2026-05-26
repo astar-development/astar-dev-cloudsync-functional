@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>AStar Dev Cloud Sync — Layout Options</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+
+<!-- Fonts -->
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+
+<style>
+  html, body { margin: 0; padding: 0; height: 100%; background: #f0eee9; }
+  body { font-family: 'Plus Jakarta Sans', system-ui, sans-serif; }
+  * { box-sizing: border-box; }
+  @keyframes astar-pulse {
+    0%   { opacity: 1;   transform: scale(1); }
+    50%  { opacity: .55; transform: scale(1.18); }
+    100% { opacity: 1;   transform: scale(1); }
+  }
+</style>
+
+<!-- React + Babel -->
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+</head>
+<body>
+<div id="root"></div>
+
+<script type="text/babel" src="design-canvas.jsx"></script>
+<script type="text/babel" src="tweaks-panel.jsx"></script>
+<script type="text/babel" src="theme.jsx"></script>
+<script type="text/babel" src="option-a-sidebar.jsx"></script>
+<script type="text/babel" src="option-b-tabs.jsx"></script>
+<script type="text/babel" src="option-c-cards.jsx"></script>
+
+<script type="text/babel">
+const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
+  "theme": "dark"
+}/*EDITMODE-END*/;
+
+function App() {
+  const [tweaks, setTweak] = useTweaks(TWEAK_DEFAULTS);
+  const theme = tweaks.theme === 'dark' ? 'dark' : 'light';
+  const FRAME_W = 1280;
+  const FRAME_H = 820;
+
+  // Card-level wrapper that paints the canvas-card's background
+  // so the WindowChrome's transparent-corner radius shows the
+  // window-bg through it.
+  const Frame = ({ children }) => (
+    <div style={{ width: FRAME_W, height: FRAME_H, background: TOKENS[theme].chrome }}>
+      {children}
+    </div>
+  );
+
+  return (
+    <React.Fragment>
+      <DesignCanvas>
+        <DCSection
+          id="intro"
+          title="AStar Dev Cloud Sync — three layouts"
+          subtitle="Same brand, same data, three information architectures. Use Tweaks (toolbar, top-right) to flip light/dark across all three. Click any artboard's ⤢ to focus."
+        >
+          <DCArtboard id="a-sidebar" label="A · Sidebar — accounts-led" width={FRAME_W} height={FRAME_H}>
+            <Frame><OptionASidebar theme={theme} /></Frame>
+          </DCArtboard>
+          <DCArtboard id="b-tabs" label="B · Tabs — task-led, activity-first" width={FRAME_W} height={FRAME_H}>
+            <Frame><OptionBTabs theme={theme} /></Frame>
+          </DCArtboard>
+          <DCArtboard id="c-cards" label="C · Cards — overview dashboard" width={FRAME_W} height={FRAME_H}>
+            <Frame><OptionCCards theme={theme} /></Frame>
+          </DCArtboard>
+        </DCSection>
+
+        <DCPostIt top={140} left={40} rotate={-3} width={210}>
+          Brand palette is shared — only the layout/IA changes between options. Same indigo primary, saffron accent.
+        </DCPostIt>
+      </DesignCanvas>
+
+      <TweaksPanel title="Tweaks">
+        <TweakSection label="Appearance" />
+        <TweakRadio
+          label="Theme"
+          value={tweaks.theme}
+          options={['light', 'dark']}
+          onChange={(v) => setTweak('theme', v)}
+        />
+        <TweakSection label="Comparing layouts" />
+        <div style={{ fontSize: 11.5, lineHeight: 1.5, color: 'rgba(41,38,27,.72)' }}>
+          <p style={{ margin: '0 0 8px' }}><b>A · Sidebar</b> — best when users live with one account at a time and want fine-grained control. Densest.</p>
+          <p style={{ margin: '0 0 8px' }}><b>B · Tabs</b> — task-first. Activity is the hero; folders, accounts, and settings are equal siblings.</p>
+          <p style={{ margin: 0 }}><b>C · Cards</b> — overview-first. Reads like a status page; the dashboard IS the home screen.</p>
+        </div>
+      </TweaksPanel>
+    </React.Fragment>
+  );
+}
+
+const root = ReactDOM.createRoot(document.getElementById('root'));
+// Wait a tick so all type="text/babel" scripts have transpiled and
+// global helpers (WindowChrome, useTweaks, etc.) are defined.
+setTimeout(() => root.render(<App />), 0);
+</script>
+</body>
+</html>

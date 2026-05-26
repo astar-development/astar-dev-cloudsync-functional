@@ -26,13 +26,17 @@ dotnet run --project test/AStar.Dev.FunctionsParadigm.Tests.Unit -- --filter "wh
 Three projects in `AStar.Dev.OneDrive.Functional.slnx`, targeting **net10.0**:
 
 ### `src/AStar.Dev.FunctionalParadigm`
-Core library. Implements a discriminated union `Result<TResult, TError>` (abstract record with `Ok` and `Fail` subtypes) plus extension methods:
+Core library. Two discriminated unions:
+
+**`Result<TResult, TError>`** — abstract record with `Ok` and `Fail` subtypes plus extension methods:
 - `Map` — transform success value, propagate failure
 - `Bind` — chain operations that return `Result`
 - `Tap` — side-effect on success/failure, return result unchanged
 - `Match` — fold both cases to a single output type
 
 Implicit conversions exist from `Result<TResult,TError>` to `TResult` and `TError` (returns `default!` for the wrong case).
+
+**`Option<TResult, TError>`** — extends `Result<TResult, TError>`. Abstract record with `Some<TResult, TError>` and `None<TResult, TError>` subtypes. Same four extension methods (`Map`, `Bind`, `Tap`, `Match`) via `OptionExtensions`. Implicit conversions to `TResult` (from `Some`) and `TError` (from `None`). Semantically: presence (`Some`) vs absence (`None`) rather than success/failure.
 
 ### `src/AStar.Dev.OneDriveFunctional`
 Avalonia 12 desktop app (WinExe). Uses ReactiveUI with compiled bindings. Entry point is `Program.cs`; MVVM wired via `MainWindowViewModel : ReactiveObject`. `AvaloniaUI.DiagnosticsSupport` is Debug-only.
