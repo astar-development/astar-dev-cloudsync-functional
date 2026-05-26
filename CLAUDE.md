@@ -61,7 +61,8 @@ xUnit v3 tests against the FunctionalParadigm library. `TreatWarningsAsErrors` i
 - **Test projects**: Named `*.Tests.Unit` or `*.Tests.Integration` — auto-set `IsPackable=false`
 - **Method signatures**: Always single-line regardless of param count — `public void Foo(string a, int b, CancellationToken cancellationToken = default)`. Never split params across lines. Every file type.
 - **Comments**: Never restate what code says — any file type (`.cs`, `.csproj`, `.axaml`, config, etc.). Refactor to extract when needed. Only comment when _reason_ behind decision isn't derivable from code.
-- **XML Comments**: all public methods/properties
+- **XML Comments**: all public methods/properties — see full spec in `.claude/rules/c-sharp-code-style.md` § XML Documentation.
+    - Every `<param>`, `<returns>`, and `<exception>` must be documented where applicable.
     - Classes implementing interface: use `<inheritdoc />`, not class-level docs.
 
 
