@@ -14,7 +14,7 @@ public class GivenAnAccountViewModel
 
         sut.Status = SyncStatus.Syncing;
 
-        Assert.Contains(nameof(AccountViewModel.Status), raisedProperties);
+        raisedProperties.ShouldContain(nameof(AccountViewModel.Status));
     }
 
     [Fact]
@@ -26,6 +26,6 @@ public class GivenAnAccountViewModel
 
         sut.Status = SyncStatus.Ok;
 
-        Assert.Empty(raisedProperties);
+        raisedProperties.ShouldBeEmpty();
     }
 }

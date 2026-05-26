@@ -10,7 +10,7 @@ public class GivenAWorkspaceViewModel
     {
         var sut = new WorkspaceViewModel();
 
-        Assert.Equal(4, sut.Accounts.Count);
+        sut.Accounts.Count.ShouldBe(4);
     }
 
     [Fact]
@@ -18,10 +18,10 @@ public class GivenAWorkspaceViewModel
     {
         var sut = new WorkspaceViewModel();
 
-        Assert.Equal(ProviderKind.OneDrive,    sut.Accounts[0].Kind);
-        Assert.Equal(ProviderKind.GoogleDrive, sut.Accounts[1].Kind);
-        Assert.Equal(ProviderKind.GoogleDrive, sut.Accounts[2].Kind);
-        Assert.Equal(ProviderKind.Dropbox,     sut.Accounts[3].Kind);
+        sut.Accounts[0].Kind.ShouldBe(ProviderKind.OneDrive);
+        sut.Accounts[1].Kind.ShouldBe(ProviderKind.GoogleDrive);
+        sut.Accounts[2].Kind.ShouldBe(ProviderKind.GoogleDrive);
+        sut.Accounts[3].Kind.ShouldBe(ProviderKind.Dropbox);
     }
 
     [Fact]
@@ -29,7 +29,7 @@ public class GivenAWorkspaceViewModel
     {
         var sut = new WorkspaceViewModel();
 
-        Assert.Same(sut.Accounts[0], sut.SelectedAccount);
+        sut.SelectedAccount.ShouldBeSameAs(sut.Accounts[0]);
     }
 
     [Fact]
@@ -37,7 +37,7 @@ public class GivenAWorkspaceViewModel
     {
         var sut = new WorkspaceViewModel();
 
-        Assert.Equal(24, sut.TodayBuckets.Length);
+        sut.TodayBuckets.Length.ShouldBe(24);
     }
 
     [Fact]
@@ -49,6 +49,6 @@ public class GivenAWorkspaceViewModel
 
         sut.SelectedAccount = sut.Accounts[1];
 
-        Assert.Contains(nameof(WorkspaceViewModel.SelectedAccount), raisedProperties);
+        raisedProperties.ShouldContain(nameof(WorkspaceViewModel.SelectedAccount));
     }
 }
