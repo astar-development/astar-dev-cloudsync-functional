@@ -1,7 +1,8 @@
 using System.Collections.ObjectModel;
+using AStar.Dev.CloudSyncFunctional.FolderTree;
 using ReactiveUI;
 
-namespace AStar.Dev.CloudSyncFunctional.ViewModels;
+namespace AStar.Dev.CloudSyncFunctional.Accounts;
 
 /// <summary>Represents a single cloud storage account and its folder tree.</summary>
 public class AccountViewModel : ReactiveObject

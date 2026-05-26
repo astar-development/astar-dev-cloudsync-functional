@@ -1,5 +1,5 @@
 using System.Collections.Generic;
-using AStar.Dev.CloudSyncFunctional.ViewModels;
+using AStar.Dev.CloudSyncFunctional.FolderTree;
 
 namespace AStar.Dev.CloudSyncFunctional.Tests.Unit;
 
