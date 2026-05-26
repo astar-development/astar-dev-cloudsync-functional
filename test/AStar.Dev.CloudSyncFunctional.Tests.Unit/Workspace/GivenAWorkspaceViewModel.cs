@@ -34,6 +34,24 @@ public class GivenAWorkspaceViewModel
     }
 
     [Fact]
+    public void when_constructed_then_first_account_is_marked_as_selected()
+    {
+        var sut = new WorkspaceViewModel();
+
+        sut.Accounts[0].IsSelected.ShouldBeTrue();
+    }
+
+    [Fact]
+    public void when_constructed_then_non_first_accounts_are_not_marked_as_selected()
+    {
+        var sut = new WorkspaceViewModel();
+
+        sut.Accounts[1].IsSelected.ShouldBeFalse();
+        sut.Accounts[2].IsSelected.ShouldBeFalse();
+        sut.Accounts[3].IsSelected.ShouldBeFalse();
+    }
+
+    [Fact]
     public void when_constructed_then_today_buckets_has_twenty_four_entries()
     {
         var sut = new WorkspaceViewModel();
@@ -51,5 +69,25 @@ public class GivenAWorkspaceViewModel
         sut.SelectedAccount = sut.Accounts[1];
 
         raisedProperties.ShouldContain(nameof(WorkspaceViewModel.SelectedAccount));
+    }
+
+    [Fact]
+    public void when_selected_account_is_changed_then_new_account_is_marked_as_selected()
+    {
+        var sut = new WorkspaceViewModel();
+
+        sut.SelectedAccount = sut.Accounts[2];
+
+        sut.Accounts[2].IsSelected.ShouldBeTrue();
+    }
+
+    [Fact]
+    public void when_selected_account_is_changed_then_previous_account_is_not_marked_as_selected()
+    {
+        var sut = new WorkspaceViewModel();
+
+        sut.SelectedAccount = sut.Accounts[2];
+
+        sut.Accounts[0].IsSelected.ShouldBeFalse();
     }
 }
