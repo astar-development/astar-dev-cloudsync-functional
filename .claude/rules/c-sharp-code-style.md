@@ -22,7 +22,7 @@ Coding standards and style guidelines / preferences for C# files in this reposit
 
 ## Classes and Methods
 
-- Define one class, recored, interface etc. per file, and name the file after the class.
+- Define one class, record, interface etc. per file, and name the file after the class. The exception to this is when defining multiple related record types for a discriminated union - in this case, all records should be defined in the same file. Factory classes for records should be defined in the same file as the record they relate to.
 - Follow SOLID principles for class and method design.
 - Keep classes / methods focused on a SINGLE responsibility.
 - Ensure good cohesion within classes and methods (related functionality grouped together).

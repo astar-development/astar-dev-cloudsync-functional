@@ -1,0 +1,42 @@
+<Styles xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <Style Selector="TextBlock.DisplayText">
+        <Setter Property="FontFamily" Value="{StaticResource PlusJakartaSans}"/>
+        <Setter Property="FontWeight" Value="Bold"/>
+        <Setter Property="FontSize" Value="19"/>
+        <Setter Property="LineHeight" Value="26"/>
+    </Style>
+
+    <Style Selector="TextBlock.SectionHeader">
+        <Setter Property="FontFamily" Value="{StaticResource PlusJakartaSans}"/>
+        <Setter Property="FontWeight" Value="Bold"/>
+        <Setter Property="FontSize" Value="10.5"/>
+        <Setter Property="LetterSpacing" Value="0.7"/>
+    </Style>
+
+    <Style Selector="TextBlock.UILabel">
+        <Setter Property="FontFamily" Value="{StaticResource PlusJakartaSans}"/>
+        <Setter Property="FontWeight" Value="SemiBold"/>
+        <Setter Property="FontSize" Value="12.5"/>
+    </Style>
+
+    <Style Selector="TextBlock.BodyText">
+        <Setter Property="FontFamily" Value="{StaticResource PlusJakartaSans}"/>
+        <Setter Property="FontWeight" Value="Medium"/>
+        <Setter Property="FontSize" Value="12.5"/>
+    </Style>
+
+    <Style Selector="TextBlock.CaptionText">
+        <Setter Property="FontFamily" Value="{StaticResource PlusJakartaSans}"/>
+        <Setter Property="FontWeight" Value="Medium"/>
+        <Setter Property="FontSize" Value="11"/>
+    </Style>
+
+    <Style Selector="TextBlock.MonoText">
+        <Setter Property="FontFamily" Value="{StaticResource JetBrainsMono}"/>
+        <Setter Property="FontWeight" Value="Medium"/>
+        <Setter Property="FontSize" Value="11"/>
+    </Style>
+
+</Styles>
