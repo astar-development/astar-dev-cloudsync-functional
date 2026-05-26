@@ -90,4 +90,52 @@ public class GivenAWorkspaceViewModel
 
         sut.Accounts[0].IsSelected.ShouldBeFalse();
     }
+
+    [Fact]
+    public void when_constructed_then_download_rate_is_not_empty()
+    {
+        var sut = new WorkspaceViewModel();
+
+        sut.DownloadRate.ShouldNotBeNullOrEmpty();
+    }
+
+    [Fact]
+    public void when_constructed_then_upload_rate_is_not_empty()
+    {
+        var sut = new WorkspaceViewModel();
+
+        sut.UploadRate.ShouldNotBeNullOrEmpty();
+    }
+
+    [Fact]
+    public void when_constructed_then_queue_summary_is_not_empty()
+    {
+        var sut = new WorkspaceViewModel();
+
+        sut.QueueSummary.ShouldNotBeNullOrEmpty();
+    }
+
+    [Fact]
+    public void when_constructed_then_version_is_not_empty()
+    {
+        var sut = new WorkspaceViewModel();
+
+        sut.Version.ShouldNotBeNullOrEmpty();
+    }
+
+    [Fact]
+    public void when_constructed_then_workspace_subtitle_contains_account_count()
+    {
+        var sut = new WorkspaceViewModel();
+
+        sut.WorkspaceSubtitle.ShouldContain("4");
+    }
+
+    [Fact]
+    public void when_constructed_then_workspace_subtitle_contains_total_storage()
+    {
+        var sut = new WorkspaceViewModel();
+
+        sut.WorkspaceSubtitle.ShouldContain("TB");
+    }
 }

@@ -2,14 +2,14 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:local="clr-namespace:AStar.Dev.CloudSyncFunctional"
+        xmlns:workspace="clr-namespace:AStar.Dev.CloudSyncFunctional.Workspace"
         xmlns:controls="clr-namespace:AStar.Dev.CloudSyncFunctional.Controls"
         xmlns:accounts="clr-namespace:AStar.Dev.CloudSyncFunctional.Accounts"
         xmlns:folderTree="clr-namespace:AStar.Dev.CloudSyncFunctional.FolderTree"
         xmlns:lucide="clr-namespace:Lucide.Avalonia;assembly=Lucide.Avalonia"
         mc:Ignorable="d" d:DesignWidth="1280" d:DesignHeight="820"
         x:Class="AStar.Dev.CloudSyncFunctional.MainWindow"
-        x:DataType="local:MainWindowViewModel"
+        x:DataType="workspace:WorkspaceViewModel"
         Title="AStar Dev Cloud Sync"
         Width="1280" Height="820"
         MinWidth="960" MinHeight="600"
@@ -18,7 +18,8 @@
     <Grid RowDefinitions="38,*">
 
         <!-- Titlebar row -->
-        <Grid x:Name="TitleBarGrid" Grid.Row="0" ColumnDefinitions="*,Auto">
+        <Grid x:Name="TitleBarGrid" Grid.Row="0" ColumnDefinitions="*,Auto"
+              Background="{DynamicResource SurfaceAlt}">
             <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="8"
                         VerticalAlignment="Center" Margin="12,0">
                 <lucide:LucideIcon Kind="Star" Width="16" Height="16"
@@ -81,6 +82,7 @@
                                    FontSize="13" FontWeight="Bold"
                                    Foreground="{DynamicResource Ink}"/>
                         <TextBlock x:Name="WorkspaceSubtitleText"
+                                   Text="{Binding WorkspaceSubtitle}"
                                    FontFamily="{StaticResource JetBrainsMono}"
                                    FontSize="11"
                                    Foreground="{DynamicResource Ink3}"/>
@@ -125,6 +127,7 @@
                                Foreground="{DynamicResource Ink3}"
                                VerticalAlignment="Center"/>
                     <TextBlock x:Name="AccountCountText" Grid.Column="1"
+                               Text="{Binding Accounts.Count}"
                                FontFamily="{StaticResource PlusJakartaSans}"
                                FontSize="10.5"
                                Foreground="{DynamicResource Ink3}"
@@ -138,7 +141,8 @@
                               MinHeight="0"
                               Padding="14,0">
                     <ListBox x:Name="AccountsListBox"
-                             ItemsSource="{Binding Workspace.Accounts}"
+                             ItemsSource="{Binding Accounts}"
+                             SelectedItem="{Binding SelectedAccount, Mode=TwoWay}"
                              Background="Transparent"
                              BorderThickness="0"
                              Padding="0">
@@ -198,10 +202,10 @@
                 <!-- ThroughputCard (pinned below scroll) -->
                 <controls:ThroughputCard Grid.Row="5"
                                          Margin="14,0"
-                                         Buckets="{Binding Workspace.TodayBuckets}"
-                                         TodayGb="{Binding Workspace.TodayGb}"
-                                         FileCount="{Binding Workspace.TodayFileCount}"
-                                         CurrentRate="{Binding Workspace.CurrentRate}"/>
+                                         Buckets="{Binding TodayBuckets}"
+                                         TodayGb="{Binding TodayGb}"
+                                         FileCount="{Binding TodayFileCount}"
+                                         CurrentRate="{Binding CurrentRate}"/>
 
                 <!-- Sidebar footer -->
                 <Border Grid.Row="6"
@@ -238,7 +242,11 @@
                   Background="{DynamicResource Bg}">
 
                 <!-- Account header -->
-                <controls:AccountHeader x:Name="AccountHeaderControl" Grid.Row="0"/>
+                <controls:AccountHeader x:Name="AccountHeaderControl" Grid.Row="0"
+                                        AccountName="{Binding SelectedAccount.Name}"
+                                        Email="{Binding SelectedAccount.Email}"
+                                        Kind="{Binding SelectedAccount.Kind}"
+                                        Status="{Binding SelectedAccount.Status}"/>
 
                 <!-- Sub-tabs -->
                 <controls:SubTabBar x:Name="SubTabBarControl" Grid.Row="1"/>
@@ -251,7 +259,8 @@
                               VerticalScrollBarVisibility="Auto"
                               HorizontalScrollBarVisibility="Disabled"
                               MinHeight="0">
-                    <ItemsControl x:Name="FolderItemsControl" Padding="14,4">
+                    <ItemsControl x:Name="FolderItemsControl" Padding="14,4"
+                                  ItemsSource="{Binding SelectedAccount.Folders}">
                         <ItemsControl.ItemTemplate>
                             <DataTemplate x:DataType="folderTree:FolderNode">
                                 <controls:FolderTreeRow
@@ -271,9 +280,10 @@
 
                 <!-- Status bar -->
                 <controls:StatusBar x:Name="StatusBarControl" Grid.Row="4"
-                                    DownloadRate="↓ 142 KB/s"
-                                    QueueSummary="3 files in queue · 188 MB"
-                                    Version="v2.4.1 · linux-x64"/>
+                                    DownloadRate="{Binding DownloadRate}"
+                                    UploadRate="{Binding UploadRate}"
+                                    QueueSummary="{Binding QueueSummary}"
+                                    Version="{Binding Version}"/>
             </Grid>
         </Grid>
     </Grid>
