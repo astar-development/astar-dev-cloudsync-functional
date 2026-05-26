@@ -11,7 +11,7 @@ public class GivenAResultBind
 
         Result<int, string> bound = result.Bind(value => new Ok<int, string>(value + 5));
 
-        Assert.Equal(12, bound.Match(value => value, _ => -1));
+        bound.Match(value => value, _ => -1).ShouldBe(12);
     }
 
     [Fact]
@@ -21,6 +21,6 @@ public class GivenAResultBind
 
         Result<int, string> bound = result.Bind(value => new Ok<int, string>(value + 1));
 
-        Assert.Equal("nope", bound.Match(_ => string.Empty, error => error));
+        bound.Match(_ => string.Empty, error => error).ShouldBe("nope");
     }
 }

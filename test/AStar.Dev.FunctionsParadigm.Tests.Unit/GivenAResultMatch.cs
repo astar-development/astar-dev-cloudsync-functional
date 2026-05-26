@@ -11,7 +11,7 @@ public class GivenAResultMatch
 
         string matched = result.Match(value => $"ok:{value}", error => $"fail:{error}");
 
-        Assert.Equal("ok:8", matched);
+        matched.ShouldBe("ok:8");
     }
 
     [Fact]
@@ -21,6 +21,6 @@ public class GivenAResultMatch
 
         string matched = result.Match(value => $"ok:{value}", error => $"fail:{error}");
 
-        Assert.Equal("fail:bad", matched);
+        matched.ShouldBe("fail:bad");
     }
 }

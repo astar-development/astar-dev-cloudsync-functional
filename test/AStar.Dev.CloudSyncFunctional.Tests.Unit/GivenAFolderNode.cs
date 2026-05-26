@@ -14,7 +14,7 @@ public class GivenAFolderNode
 
         sut.Name = "Documents";
 
-        Assert.Contains(nameof(FolderNode.Name), raisedProperties);
+        raisedProperties.ShouldContain(nameof(FolderNode.Name));
     }
 
     [Fact]
@@ -26,6 +26,6 @@ public class GivenAFolderNode
 
         sut.IsSyncing = true;
 
-        Assert.Contains(nameof(FolderNode.IsSyncing), raisedProperties);
+        raisedProperties.ShouldContain(nameof(FolderNode.IsSyncing));
     }
 }

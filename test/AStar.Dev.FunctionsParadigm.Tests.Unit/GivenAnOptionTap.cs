@@ -12,7 +12,7 @@ public class GivenAnOptionTap
 
         result.Tap(value => observed = value * 2);
 
-        Assert.Equal(10, observed);
+        observed.ShouldBe(10);
     }
 
     [Fact]
@@ -23,6 +23,6 @@ public class GivenAnOptionTap
 
         result.Tap(_ => observed = "unexpected", error => observed = error);
 
-        Assert.Equal("boom", observed);
+        observed.ShouldBe("boom");
     }
 }

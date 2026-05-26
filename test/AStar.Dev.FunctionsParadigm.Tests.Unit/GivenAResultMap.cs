@@ -11,7 +11,7 @@ public class GivenAResultMap
 
         Result<int, string> mapped = result.Map(value => value * 3);
 
-        Assert.Equal(21, mapped.Match(value => value, _ => -1));
+        mapped.Match(value => value, _ => -1).ShouldBe(21);
     }
 
     [Fact]
@@ -21,6 +21,6 @@ public class GivenAResultMap
 
         Result<int, string> mapped = result.Map(value => value * 3);
 
-        Assert.Equal("nope", mapped.Match(_ => string.Empty, error => error));
+        mapped.Match(_ => string.Empty, error => error).ShouldBe("nope");
     }
 }

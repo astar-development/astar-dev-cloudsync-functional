@@ -11,7 +11,7 @@ public class GivenAResult
 
         int value = result;
 
-        Assert.Equal(42, value);
+        value.ShouldBe(42);
     }
 
     [Fact]
@@ -21,6 +21,6 @@ public class GivenAResult
 
         string error = result;
 
-        Assert.Equal("boom", error);
+        error.ShouldBe("boom");
     }
 }

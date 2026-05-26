@@ -11,7 +11,7 @@ public class GivenAnOption
 
         int value = result;
 
-        Assert.Equal(42, value);
+        value.ShouldBe(42);
     }
 
     [Fact]
@@ -21,6 +21,6 @@ public class GivenAnOption
 
         string error = result;
 
-        Assert.Equal("missing", error);
+        error.ShouldBe("missing");
     }
 }
