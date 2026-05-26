@@ -1,0 +1,38 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:controls="clr-namespace:AStar.Dev.CloudSyncFunctional.Controls"
+             x:Class="AStar.Dev.CloudSyncFunctional.Controls.SubTabBar"
+             VerticalContentAlignment="Stretch"
+             HorizontalContentAlignment="Stretch">
+    <Border x:Name="ContainerBorder" BorderThickness="0,0,0,1" Padding="28,12">
+        <StackPanel Orientation="Horizontal" Spacing="24">
+            <StackPanel x:Name="SyncFoldersTab" Spacing="3" Cursor="Hand">
+                <TextBlock x:Name="SyncFoldersLabel"
+                           FontFamily="{StaticResource PlusJakartaSans}"
+                           FontSize="12.5"/>
+                <Border x:Name="SyncFoldersUnderline" Height="2" CornerRadius="1"/>
+            </StackPanel>
+            <StackPanel x:Name="ActivityTab" Spacing="3" Cursor="Hand">
+                <TextBlock x:Name="ActivityLabel"
+                           FontFamily="{StaticResource PlusJakartaSans}"
+                           FontSize="12.5"/>
+                <Border x:Name="ActivityUnderline" Height="2" CornerRadius="1"/>
+            </StackPanel>
+            <StackPanel x:Name="ConflictsTab" Spacing="3" Cursor="Hand">
+                <StackPanel Orientation="Horizontal" Spacing="6">
+                    <TextBlock x:Name="ConflictsLabel"
+                               FontFamily="{StaticResource PlusJakartaSans}"
+                               FontSize="12.5"/>
+                    <controls:StatusPill x:Name="ConflictsPill" Tone="Warn"/>
+                </StackPanel>
+                <Border x:Name="ConflictsUnderline" Height="2" CornerRadius="1"/>
+            </StackPanel>
+            <StackPanel x:Name="SettingsTab" Spacing="3" Cursor="Hand">
+                <TextBlock x:Name="SettingsLabel"
+                           FontFamily="{StaticResource PlusJakartaSans}"
+                           FontSize="12.5"/>
+                <Border x:Name="SettingsUnderline" Height="2" CornerRadius="1"/>
+            </StackPanel>
+        </StackPanel>
+    </Border>
+</UserControl>

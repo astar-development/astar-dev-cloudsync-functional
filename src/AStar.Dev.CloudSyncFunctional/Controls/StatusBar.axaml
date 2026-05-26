@@ -1,0 +1,37 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:controls="clr-namespace:AStar.Dev.CloudSyncFunctional.Controls"
+             x:Class="AStar.Dev.CloudSyncFunctional.Controls.StatusBar"
+             VerticalContentAlignment="Stretch"
+             HorizontalContentAlignment="Stretch">
+    <Border x:Name="ContainerBorder" BorderThickness="0,1,0,0" Height="30" Padding="28,0">
+        <StackPanel Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
+            <controls:StatusDot x:Name="HealthDot" VerticalAlignment="Center"/>
+            <TextBlock x:Name="HealthTextBlock"
+                       FontFamily="{StaticResource JetBrainsMono}"
+                       FontSize="11"
+                       VerticalAlignment="Center"/>
+            <TextBlock x:Name="UploadText"
+                       FontFamily="{StaticResource JetBrainsMono}"
+                       FontSize="11"
+                       VerticalAlignment="Center"/>
+            <TextBlock x:Name="DownloadText"
+                       FontFamily="{StaticResource JetBrainsMono}"
+                       FontSize="11"
+                       VerticalAlignment="Center"/>
+            <TextBlock x:Name="QueueText"
+                       FontFamily="{StaticResource JetBrainsMono}"
+                       FontSize="11"
+                       VerticalAlignment="Center"/>
+            <TextBlock x:Name="EllipsisText"
+                       FontFamily="{StaticResource JetBrainsMono}"
+                       FontSize="11"
+                       Text="⋯"
+                       VerticalAlignment="Center"/>
+            <TextBlock x:Name="VersionText"
+                       FontFamily="{StaticResource JetBrainsMono}"
+                       FontSize="11"
+                       VerticalAlignment="Center"/>
+        </StackPanel>
+    </Border>
+</UserControl>
