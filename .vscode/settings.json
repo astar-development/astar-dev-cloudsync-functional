@@ -7,6 +7,8 @@
     "dotnet.defaultSolution": "AStar.Dev.OneDrive.Functional.slnx",
     "cSpell.words": [
         "Avalonia",
-        "MVVM"
+        "googledrive",
+        "MVVM",
+        "onedrive"
     ]
 }

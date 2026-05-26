@@ -1,0 +1,18 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="AStar.Dev.CloudSyncFunctional.Controls.AppButton">
+    <Button x:Name="InnerButton"
+            HorizontalContentAlignment="Center"
+            VerticalContentAlignment="Center"
+            Padding="12,0"
+            HorizontalAlignment="Stretch">
+        <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+            <PathIcon x:Name="LeadingIconView" Width="14" Height="14" IsVisible="False"/>
+            <TextBlock x:Name="LabelText"
+                       FontFamily="{StaticResource PlusJakartaSans}"
+                       FontWeight="SemiBold"
+                       VerticalAlignment="Center"/>
+            <PathIcon x:Name="TrailingIconView" Width="14" Height="14" IsVisible="False"/>
+        </StackPanel>
+    </Button>
+</UserControl>

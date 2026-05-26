@@ -1,0 +1,23 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="AStar.Dev.CloudSyncFunctional.Controls.TriStateCheckbox"
+             Width="14" Height="14">
+    <Border x:Name="Box"
+            Width="14" Height="14"
+            CornerRadius="4"
+            BorderThickness="1.5">
+        <Grid>
+            <Path x:Name="Check"
+                  Stroke="White"
+                  StrokeThickness="1.5"
+                  Data="M 2 7 L 5 10 L 11 4"
+                  IsVisible="False"/>
+            <Rectangle x:Name="Bar"
+                       Width="7" Height="1.5"
+                       Fill="White"
+                       HorizontalAlignment="Center"
+                       VerticalAlignment="Center"
+                       IsVisible="False"/>
+        </Grid>
+    </Border>
+</UserControl>
