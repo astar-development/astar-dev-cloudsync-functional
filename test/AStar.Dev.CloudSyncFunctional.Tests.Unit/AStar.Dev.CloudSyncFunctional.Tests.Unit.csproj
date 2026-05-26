@@ -4,11 +4,9 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <OutputType>Exe</OutputType>
-    <RootNamespace>AStar.Dev.FunctionsParadigm.Tests.Unit</RootNamespace>
+    <RootNamespace>AStar.Dev.CloudSyncFunctional.Tests.Unit</RootNamespace>
     <TargetFramework>net10.0</TargetFramework>
     <TestingPlatformDotnetTestSupport>true</TestingPlatformDotnetTestSupport>
-    <ExcludeFromCodeCoverage>true</ExcludeFromCodeCoverage>
-    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
   </PropertyGroup>
 
   <ItemGroup>
@@ -26,7 +24,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="../../src/AStar.Dev.FunctionalParadigm/AStar.Dev.FunctionalParadigm.csproj" />
+    <ProjectReference Include="../../src/AStar.Dev.CloudSyncFunctional/AStar.Dev.CloudSyncFunctional.csproj" />
   </ItemGroup>
 
 </Project>

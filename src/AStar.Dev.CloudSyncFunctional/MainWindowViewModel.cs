@@ -1,39 +1,11 @@
-using System;
-using System.Windows.Input;
 using ReactiveUI;
+using AStar.Dev.CloudSyncFunctional.ViewModels;
 
 namespace AStar.Dev.CloudSyncFunctional;
 
+/// <summary>Top-level view-model that owns the workspace and is bound to the main window.</summary>
 public class MainWindowViewModel : ReactiveObject
 {
-    private string _statusText = "Ready to explore OneDrive functional workflows.";
-
-    public string StatusText
-    {
-        get => _statusText;
-        set => this.RaiseAndSetIfChanged(ref _statusText, value);
-    }
-
-    public ICommand UpdateStatusCommand { get; }
-
-    public MainWindowViewModel()
-    {
-        UpdateStatusCommand = new DelegateCommand(() =>
-        {
-            StatusText = "ReactiveUI + Avalonia is connected.";
-        });
-    }
-
-    private sealed class DelegateCommand(Action execute) : ICommand
-    {
-        public bool CanExecute(object? parameter) => true;
-
-        public void Execute(object? parameter) => execute();
-
-        public event EventHandler? CanExecuteChanged
-        {
-            add { }
-            remove { }
-        }
-    }
+    /// <summary>Gets the workspace containing all accounts and summary data.</summary>
+    public WorkspaceViewModel Workspace { get; } = new WorkspaceViewModel();
 }

@@ -5,6 +5,22 @@ paths:
 
 Coding standards and style guidelines / preferences for C# files in this repository that AI must follow.
 
+## Language Version
+
+- Always use the **latest available C# language features** (currently C# 14). Never fall back to older patterns when a newer idiom is cleaner.
+- Key C# 14+ idioms to prefer:
+  - `field` keyword for semi-auto properties — eliminates explicit backing fields for `RaiseAndSetIfChanged` reactive props:
+    ```csharp
+    // ✅ C# 14
+    public string Name { get; set => this.RaiseAndSetIfChanged(ref field, value); } = string.Empty;
+    // ❌ older
+    private string name = string.Empty;
+    public string Name { get => name; set => this.RaiseAndSetIfChanged(ref name, value); }
+    ```
+  - Collection expressions `[]` over `new List<T>()` / `new T[]{}` / `Array.Empty<T>()`
+  - Primary constructors for simple DI / immutable types
+  - Pattern matching (`is`, `switch` expressions) over type-checking `if`/`else` chains
+
 ## Naming Conventions
 
 - **Public members**: PascalCase (e.g., `MyClass`, `MyMethod`, `MyProperty`)
