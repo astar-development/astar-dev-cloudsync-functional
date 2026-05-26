@@ -13,7 +13,16 @@ public class WorkspaceViewModel : ReactiveObject
     public ObservableCollection<AccountViewModel> Accounts { get; } = BuildAccounts();
 
     /// <summary>Gets or sets the currently selected account.</summary>
-    public AccountViewModel? SelectedAccount { get; set => this.RaiseAndSetIfChanged(ref field, value); }
+    public AccountViewModel? SelectedAccount
+    {
+        get;
+        set
+        {
+            this.RaiseAndSetIfChanged(ref field, value);
+            foreach (var account in Accounts)
+                account.IsSelected = account == value;
+        }
+    }
 
     /// <summary>Gets hourly transfer buckets for today (24 values, index = hour).</summary>
     public int[] TodayBuckets { get; } =

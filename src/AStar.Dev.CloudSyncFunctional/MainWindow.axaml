@@ -3,13 +3,278 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:AStar.Dev.CloudSyncFunctional"
-        mc:Ignorable="d" d:DesignWidth="1280" d:DesignHeight="800"
+        xmlns:controls="clr-namespace:AStar.Dev.CloudSyncFunctional.Controls"
+        xmlns:accounts="clr-namespace:AStar.Dev.CloudSyncFunctional.Accounts"
+        xmlns:folderTree="clr-namespace:AStar.Dev.CloudSyncFunctional.FolderTree"
+        xmlns:lucide="clr-namespace:Lucide.Avalonia;assembly=Lucide.Avalonia"
+        mc:Ignorable="d" d:DesignWidth="1280" d:DesignHeight="820"
         x:Class="AStar.Dev.CloudSyncFunctional.MainWindow"
         x:DataType="local:MainWindowViewModel"
-        Title="AStar.Dev.CloudSyncFunctional"
-        Width="1280" Height="800">
-    <StackPanel Margin="24" Spacing="16">
-        <TextBlock Text="AStar.Dev.CloudSyncFunctional" FontSize="26" FontWeight="Bold" />
-        <TextBlock Text="{Binding Workspace.CurrentRate}" FontSize="16" />
-    </StackPanel>
+        Title="AStar Dev Cloud Sync"
+        Width="1280" Height="820"
+        MinWidth="960" MinHeight="600"
+        ExtendClientAreaToDecorationsHint="True"
+        Background="{DynamicResource Chrome}">
+    <Grid RowDefinitions="38,*">
+
+        <!-- Titlebar row -->
+        <Grid x:Name="TitleBarGrid" Grid.Row="0" ColumnDefinitions="*,Auto">
+            <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="8"
+                        VerticalAlignment="Center" Margin="12,0">
+                <lucide:LucideIcon Kind="Star" Width="16" Height="16"
+                                   Foreground="{DynamicResource ChromeInk}"/>
+                <TextBlock Text="AStar Dev Cloud Sync"
+                           IsHitTestVisible="False"
+                           FontFamily="{StaticResource PlusJakartaSans}"
+                           FontSize="13" FontWeight="Bold"
+                           Foreground="{DynamicResource ChromeInk}"
+                           VerticalAlignment="Center"/>
+            </StackPanel>
+            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="4"
+                        VerticalAlignment="Center" Margin="0,0,8,0">
+                <Button x:Name="MinimizeButton"
+                        Width="22" Height="22" CornerRadius="11"
+                        Padding="0" Background="Transparent" BorderThickness="0">
+                    <lucide:LucideIcon Kind="Minus" Width="10" Height="10"
+                                       Foreground="{DynamicResource ChromeInk}"/>
+                </Button>
+                <Button x:Name="MaximizeButton"
+                        Width="22" Height="22" CornerRadius="11"
+                        Padding="0" Background="Transparent" BorderThickness="0">
+                    <lucide:LucideIcon Kind="Square" Width="10" Height="10"
+                                       Foreground="{DynamicResource ChromeInk}"/>
+                </Button>
+                <Button x:Name="CloseButton"
+                        Width="22" Height="22" CornerRadius="11"
+                        Padding="0" Background="Transparent" BorderThickness="0">
+                    <lucide:LucideIcon Kind="X" Width="10" Height="10"
+                                       Foreground="{DynamicResource ChromeInk}"/>
+                </Button>
+            </StackPanel>
+        </Grid>
+
+        <!-- Content: Sidebar + Main Pane -->
+        <Grid Grid.Row="1" ColumnDefinitions="286,*">
+
+            <!-- Sidebar (Col 0, SurfaceAlt background) -->
+            <Grid Grid.Column="0"
+                  RowDefinitions="Auto,Auto,Auto,*,Auto,Auto,Auto"
+                  Background="{DynamicResource SurfaceAlt}">
+
+                <!-- Workspace header -->
+                <Grid Grid.Row="0" ColumnDefinitions="Auto,*,Auto" Margin="14,12">
+                    <Border Grid.Column="0"
+                            Width="30" Height="30" CornerRadius="8"
+                            Background="{DynamicResource Primary}"
+                            VerticalAlignment="Center">
+                        <TextBlock Text="A"
+                                   FontFamily="{StaticResource PlusJakartaSans}"
+                                   FontWeight="Bold" FontSize="13"
+                                   Foreground="White"
+                                   HorizontalAlignment="Center"
+                                   VerticalAlignment="Center"/>
+                    </Border>
+                    <StackPanel Grid.Column="1" Spacing="1"
+                                VerticalAlignment="Center" Margin="8,0">
+                        <TextBlock Text="AStar Dev"
+                                   FontFamily="{StaticResource PlusJakartaSans}"
+                                   FontSize="13" FontWeight="Bold"
+                                   Foreground="{DynamicResource Ink}"/>
+                        <TextBlock x:Name="WorkspaceSubtitleText"
+                                   FontFamily="{StaticResource JetBrainsMono}"
+                                   FontSize="11"
+                                   Foreground="{DynamicResource Ink3}"/>
+                    </StackPanel>
+                    <lucide:LucideIcon Grid.Column="2" Kind="ChevronDown"
+                                       Width="14" Height="14"
+                                       Foreground="{DynamicResource Ink3}"
+                                       VerticalAlignment="Center"/>
+                </Grid>
+
+                <!-- Search bar -->
+                <Border Grid.Row="1"
+                        Height="30" CornerRadius="15" BorderThickness="1"
+                        BorderBrush="{DynamicResource Border}"
+                        Background="{DynamicResource Surface}"
+                        Margin="14,0">
+                    <Grid ColumnDefinitions="Auto,*,Auto" Margin="10,0">
+                        <lucide:LucideIcon Grid.Column="0" Kind="Search"
+                                           Width="12" Height="12"
+                                           Foreground="{DynamicResource Ink3}"
+                                           VerticalAlignment="Center"/>
+                        <TextBlock Grid.Column="1"
+                                   Text="Search accounts &amp; folders…"
+                                   FontFamily="{StaticResource PlusJakartaSans}"
+                                   FontSize="11" Margin="6,0,0,0"
+                                   Foreground="{DynamicResource Ink3}"
+                                   VerticalAlignment="Center"/>
+                        <TextBlock Grid.Column="2" Text="⌘K"
+                                   FontFamily="{StaticResource JetBrainsMono}"
+                                   FontSize="9.5"
+                                   Foreground="{DynamicResource Ink3}"
+                                   VerticalAlignment="Center"/>
+                    </Grid>
+                </Border>
+
+                <!-- ACCOUNTS section header -->
+                <Grid Grid.Row="2" ColumnDefinitions="*,Auto" Margin="14,10,14,4">
+                    <TextBlock Grid.Column="0" Text="ACCOUNTS"
+                               FontFamily="{StaticResource PlusJakartaSans}"
+                               FontSize="10.5" FontWeight="Bold"
+                               LetterSpacing="0.8"
+                               Foreground="{DynamicResource Ink3}"
+                               VerticalAlignment="Center"/>
+                    <TextBlock x:Name="AccountCountText" Grid.Column="1"
+                               FontFamily="{StaticResource PlusJakartaSans}"
+                               FontSize="10.5"
+                               Foreground="{DynamicResource Ink3}"
+                               VerticalAlignment="Center"/>
+                </Grid>
+
+                <!-- Scrollable accounts list (* row — bounded height) -->
+                <ScrollViewer Grid.Row="3"
+                              VerticalScrollBarVisibility="Auto"
+                              HorizontalScrollBarVisibility="Disabled"
+                              MinHeight="0"
+                              Padding="14,0">
+                    <ListBox x:Name="AccountsListBox"
+                             ItemsSource="{Binding Workspace.Accounts}"
+                             Background="Transparent"
+                             BorderThickness="0"
+                             Padding="0">
+                        <ListBox.ItemContainerTheme>
+                            <ControlTheme TargetType="ListBoxItem" BasedOn="{x:Null}">
+                                <Setter Property="Padding" Value="0"/>
+                                <Setter Property="Margin" Value="0,2"/>
+                                <Setter Property="Background" Value="Transparent"/>
+                                <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+                                <Setter Property="Template">
+                                    <ControlTemplate>
+                                        <ContentPresenter
+                                            Content="{TemplateBinding Content}"
+                                            ContentTemplate="{TemplateBinding ContentTemplate}"
+                                            HorizontalContentAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                            VerticalContentAlignment="{TemplateBinding VerticalContentAlignment}"
+                                            Padding="{TemplateBinding Padding}"/>
+                                    </ControlTemplate>
+                                </Setter>
+                            </ControlTheme>
+                        </ListBox.ItemContainerTheme>
+                        <ListBox.ItemTemplate>
+                            <DataTemplate x:DataType="accounts:AccountViewModel">
+                                <controls:AccountListItem
+                                    AccountName="{Binding Name}"
+                                    Email="{Binding Email}"
+                                    Kind="{Binding Kind}"
+                                    UsedBytes="{Binding UsedBytes}"
+                                    TotalBytes="{Binding TotalBytes}"
+                                    FolderCount="{Binding FolderCount}"
+                                    Status="{Binding Status}"
+                                    IsSelected="{Binding IsSelected}"/>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+                </ScrollViewer>
+
+                <!-- + Add account button -->
+                <Border Grid.Row="4"
+                        Height="32" CornerRadius="6"
+                        BorderThickness="1"
+                        BorderBrush="{DynamicResource BorderStrong}"
+                        Cursor="Hand" Margin="14,8">
+                    <StackPanel Orientation="Horizontal" Spacing="6"
+                                HorizontalAlignment="Center"
+                                VerticalAlignment="Center">
+                        <lucide:LucideIcon Kind="Plus" Width="12" Height="12"
+                                           Foreground="{DynamicResource Ink3}"/>
+                        <TextBlock Text="Add account…"
+                                   FontFamily="{StaticResource PlusJakartaSans}"
+                                   FontSize="12"
+                                   Foreground="{DynamicResource Ink3}"
+                                   VerticalAlignment="Center"/>
+                    </StackPanel>
+                </Border>
+
+                <!-- ThroughputCard (pinned below scroll) -->
+                <controls:ThroughputCard Grid.Row="5"
+                                         Margin="14,0"
+                                         Buckets="{Binding Workspace.TodayBuckets}"
+                                         TodayGb="{Binding Workspace.TodayGb}"
+                                         FileCount="{Binding Workspace.TodayFileCount}"
+                                         CurrentRate="{Binding Workspace.CurrentRate}"/>
+
+                <!-- Sidebar footer -->
+                <Border Grid.Row="6"
+                        BorderThickness="0,1,0,0"
+                        BorderBrush="{DynamicResource Border}"
+                        Padding="14,8">
+                    <Grid ColumnDefinitions="Auto,*,Auto,Auto">
+                        <controls:AppButton Grid.Column="0"
+                                            Kind="Ghost" ButtonSize="Sm"
+                                            Label="Pause all"/>
+                        <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="4">
+                            <Button x:Name="BellButton"
+                                    Width="26" Height="26"
+                                    Background="Transparent"
+                                    BorderThickness="0" Padding="0">
+                                <lucide:LucideIcon Kind="Bell" Width="14" Height="14"
+                                                   Foreground="{DynamicResource Ink3}"/>
+                            </Button>
+                            <Button x:Name="FooterSettingsButton"
+                                    Width="26" Height="26"
+                                    Background="Transparent"
+                                    BorderThickness="0" Padding="0">
+                                <lucide:LucideIcon Kind="Settings" Width="14" Height="14"
+                                                   Foreground="{DynamicResource Ink3}"/>
+                            </Button>
+                        </StackPanel>
+                    </Grid>
+                </Border>
+            </Grid>
+
+            <!-- Main Pane (Col 1, Bg background) -->
+            <Grid Grid.Column="1"
+                  RowDefinitions="Auto,Auto,Auto,*,Auto"
+                  Background="{DynamicResource Bg}">
+
+                <!-- Account header -->
+                <controls:AccountHeader x:Name="AccountHeaderControl" Grid.Row="0"/>
+
+                <!-- Sub-tabs -->
+                <controls:SubTabBar x:Name="SubTabBarControl" Grid.Row="1"/>
+
+                <!-- Folder toolbar -->
+                <controls:FolderToolbar x:Name="FolderToolbarControl" Grid.Row="2"/>
+
+                <!-- Folder tree (scrollable, * row — bounded height) -->
+                <ScrollViewer Grid.Row="3"
+                              VerticalScrollBarVisibility="Auto"
+                              HorizontalScrollBarVisibility="Disabled"
+                              MinHeight="0">
+                    <ItemsControl x:Name="FolderItemsControl" Padding="14,4">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate x:DataType="folderTree:FolderNode">
+                                <controls:FolderTreeRow
+                                    NodeName="{Binding Name}"
+                                    Depth="{Binding Depth}"
+                                    ChildCount="{Binding ChildCount}"
+                                    SizeBytes="{Binding SizeBytes}"
+                                    LastSync="{Binding LastSync}"
+                                    SelectionState="{Binding SelectionState}"
+                                    IsExpanded="{Binding IsExpanded}"
+                                    IsSyncing="{Binding IsSyncing}"
+                                    HasChildren="{Binding HasChildren}"/>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </ScrollViewer>
+
+                <!-- Status bar -->
+                <controls:StatusBar x:Name="StatusBarControl" Grid.Row="4"
+                                    DownloadRate="↓ 142 KB/s"
+                                    QueueSummary="3 files in queue · 188 MB"
+                                    Version="v2.4.1 · linux-x64"/>
+            </Grid>
+        </Grid>
+    </Grid>
 </Window>

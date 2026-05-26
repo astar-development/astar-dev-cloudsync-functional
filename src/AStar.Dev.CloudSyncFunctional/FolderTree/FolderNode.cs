@@ -36,4 +36,7 @@ public class FolderNode : ReactiveObject
 
     /// <summary>Gets or sets the immediate child folder nodes.</summary>
     public ObservableCollection<FolderNode> Children { get; set => this.RaiseAndSetIfChanged(ref field, value); } = [];
+
+    /// <summary>Gets whether this folder has any child folders.</summary>
+    public bool HasChildren => Children.Count > 0;
 }
