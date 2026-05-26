@@ -32,6 +32,13 @@ public class AccountViewModel : ReactiveObject
         set => this.RaiseAndSetIfChanged(ref field, value);
     }
 
+    /// <summary>Gets or sets whether this account is currently selected in the sidebar.</summary>
+    public bool IsSelected
+    {
+        get;
+        set => this.RaiseAndSetIfChanged(ref field, value);
+    }
+
     /// <summary>Gets the root-level folder nodes for this account.</summary>
     public ObservableCollection<FolderNode> Folders { get; init; } = [];
 }

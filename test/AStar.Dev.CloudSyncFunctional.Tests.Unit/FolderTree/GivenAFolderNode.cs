@@ -28,4 +28,21 @@ public class GivenAFolderNode
 
         raisedProperties.ShouldContain(nameof(FolderNode.IsSyncing));
     }
+
+    [Fact]
+    public void when_no_children_then_has_children_is_false()
+    {
+        var sut = new FolderNode();
+
+        sut.HasChildren.ShouldBeFalse();
+    }
+
+    [Fact]
+    public void when_children_collection_has_items_then_has_children_is_true()
+    {
+        var sut = new FolderNode();
+        sut.Children.Add(new FolderNode { Name = "sub" });
+
+        sut.HasChildren.ShouldBeTrue();
+    }
 }
