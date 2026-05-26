@@ -1,0 +1,60 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:controls="clr-namespace:AStar.Dev.CloudSyncFunctional.Controls"
+             xmlns:lucide="clr-namespace:Lucide.Avalonia;assembly=Lucide.Avalonia"
+             x:Class="AStar.Dev.CloudSyncFunctional.Controls.FolderTreeRow"
+             VerticalContentAlignment="Stretch"
+             HorizontalContentAlignment="Stretch">
+    <Border x:Name="RowBackground" CornerRadius="6" Padding="0,6">
+        <Grid ColumnDefinitions="20,22,*,90,110,70" VerticalAlignment="Center">
+            <Grid Grid.Column="0">
+                <lucide:LucideIcon x:Name="ChevronIcon"
+                                   Width="12" Height="12"
+                                   HorizontalAlignment="Right"
+                                   VerticalAlignment="Center"
+                                   IsVisible="False"/>
+            </Grid>
+            <controls:TriStateCheckbox x:Name="CheckboxControl"
+                                       Grid.Column="1"
+                                       HorizontalAlignment="Center"
+                                       VerticalAlignment="Center"/>
+            <StackPanel Grid.Column="2"
+                        Orientation="Horizontal"
+                        Spacing="6"
+                        VerticalAlignment="Center"
+                        Margin="4,0,0,0">
+                <lucide:LucideIcon x:Name="FolderIcon"
+                                   Width="14" Height="14"
+                                   VerticalAlignment="Center"/>
+                <TextBlock x:Name="NameText"
+                           VerticalAlignment="Center"/>
+                <controls:StatusPill x:Name="SyncingPill"
+                                     Label="syncing"
+                                     Tone="Primary"
+                                     IsVisible="False"
+                                     VerticalAlignment="Center"/>
+            </StackPanel>
+            <TextBlock x:Name="ItemCountText"
+                       Grid.Column="3"
+                       FontFamily="{StaticResource JetBrainsMono}"
+                       FontSize="11"
+                       HorizontalAlignment="Right"
+                       VerticalAlignment="Center"
+                       Margin="0,0,8,0"/>
+            <TextBlock x:Name="SizeText"
+                       Grid.Column="4"
+                       FontFamily="{StaticResource JetBrainsMono}"
+                       FontSize="11"
+                       HorizontalAlignment="Right"
+                       VerticalAlignment="Center"
+                       Margin="0,0,8,0"/>
+            <TextBlock x:Name="UpdatedText"
+                       Grid.Column="5"
+                       FontFamily="{StaticResource JetBrainsMono}"
+                       FontSize="11"
+                       HorizontalAlignment="Right"
+                       VerticalAlignment="Center"
+                       Margin="0,0,4,0"/>
+        </Grid>
+    </Border>
+</UserControl>
