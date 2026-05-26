@@ -2,8 +2,7 @@ using AStar.Dev.FunctionalParadigm;
 
 namespace AStar.Dev.FunctionsParadigm.Tests.Unit;
 
-public class GivenAn
-OptionMatch
+public class GivenAnOptionMatch
 {
     [Fact]
     public void when_matching_a_some_option_then_the_success_handler_is_used()
