@@ -1,5 +1,6 @@
 using System;
 using System.Collections.ObjectModel;
+using System.Linq;
 using AStar.Dev.CloudSyncFunctional.Accounts;
 using AStar.Dev.CloudSyncFunctional.FolderTree;
 using ReactiveUI;
@@ -40,6 +41,21 @@ public class WorkspaceViewModel : ReactiveObject
 
     /// <summary>Gets the current transfer rate as a display string.</summary>
     public string CurrentRate { get; } = "142 KB/s";
+
+    /// <summary>Gets the download rate display string for the status bar.</summary>
+    public string DownloadRate { get; } = "↓ 142 KB/s";
+
+    /// <summary>Gets the upload rate display string for the status bar.</summary>
+    public string UploadRate { get; } = "↑ 0 B/s";
+
+    /// <summary>Gets the queue summary display string for the status bar.</summary>
+    public string QueueSummary { get; } = "3 files in queue · 188 MB";
+
+    /// <summary>Gets the application version display string for the status bar.</summary>
+    public string Version { get; } = "v2.4.1 · linux-x64";
+
+    /// <summary>Gets a formatted subtitle summarising account count and total storage capacity.</summary>
+    public string WorkspaceSubtitle => $"{Accounts.Count} accounts · {Accounts.Sum(a => a.TotalBytes) / 1_099_511_627_776.0:F1} TB total";
 
     /// <summary>Initialises a new <see cref="WorkspaceViewModel"/> and selects the first account.</summary>
     public WorkspaceViewModel()
