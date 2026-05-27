@@ -17,6 +17,6 @@ public sealed class OneDriveAccount
     /// <summary>Gets the Graph drive ID for this account's OneDrive.</summary>
     public string? DriveId { get; init; }
 
-    /// <summary>Gets the IDs of folders the user selected for sync.</summary>
-    public IReadOnlyList<string> SelectedFolderIds { get; init; } = [];
+    /// <summary>Gets the folders selected for sync, carrying both Graph item ID and display name.</summary>
+    public IReadOnlyList<SelectedFolder> SelectedFolders { get; init; } = [];
 }

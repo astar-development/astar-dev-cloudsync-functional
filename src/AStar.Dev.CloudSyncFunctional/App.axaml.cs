@@ -40,7 +40,11 @@ public partial class App : Application
         ApplyDatabaseMigrations(_serviceProvider);
 
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
-            desktop.MainWindow = new MainWindow(_serviceProvider.GetRequiredService<WorkspaceViewModel>());
+        {
+            var viewModel = _serviceProvider.GetRequiredService<WorkspaceViewModel>();
+            desktop.MainWindow = new MainWindow(viewModel);
+            _ = viewModel.LoadPersistedAccountsAsync(CancellationToken.None);
+        }
 
         base.OnFrameworkInitializationCompleted();
     }

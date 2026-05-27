@@ -2,6 +2,8 @@ using System.Collections.ObjectModel;
 using AStar.Dev.CloudSyncFunctional.Accounts;
 using AStar.Dev.CloudSyncFunctional.Domain;
 using AStar.Dev.CloudSyncFunctional.FolderTree;
+using AStar.Dev.CloudSyncFunctional.Persistence.Entities;
+using AStar.Dev.CloudSyncFunctional.Persistence.Repositories;
 using AStar.Dev.CloudSyncFunctional.Wizard;
 using Microsoft.Extensions.DependencyInjection;
 using ReactiveUI;
@@ -13,9 +15,10 @@ namespace AStar.Dev.CloudSyncFunctional.Workspace;
 public class WorkspaceViewModel : ReactiveObject
 {
     private readonly IServiceProvider _serviceProvider;
+    private readonly IAccountRepository? _accountRepository;
 
     /// <summary>Gets all cloud storage accounts registered in the workspace.</summary>
-    public ObservableCollection<AccountViewModel> Accounts { get; } = BuildAccounts();
+    public ObservableCollection<AccountViewModel> Accounts { get; }
 
     /// <summary>Gets or sets the currently selected account.</summary>
     public AccountViewModel? SelectedAccount
@@ -71,16 +74,43 @@ public class WorkspaceViewModel : ReactiveObject
     /// <summary>Gets a formatted subtitle summarising account count and total storage capacity.</summary>
     public string WorkspaceSubtitle => $"{Accounts.Count} accounts · {Accounts.Sum(a => a.TotalBytes) / 1_099_511_627_776.0:F1} TB total";
 
-    /// <summary>Initialises a new <see cref="WorkspaceViewModel"/> using the provided service provider.</summary>
+    /// <summary>Initialises a new <see cref="WorkspaceViewModel"/> using the provided service provider and account repository (runtime path).</summary>
+    /// <param name="serviceProvider">The DI container used to resolve the wizard ViewModel on demand.</param>
+    /// <param name="accountRepository">Repository used to load persisted accounts on startup.</param>
+    public WorkspaceViewModel(IServiceProvider serviceProvider, IAccountRepository accountRepository)
+    {
+        _serviceProvider = serviceProvider;
+        _accountRepository = accountRepository;
+        Accounts = [];
+        OpenAddAccountWizard = ReactiveCommand.Create(ExecuteOpenAddAccountWizard);
+    }
+
+    /// <summary>Loads persisted accounts from the database and populates <see cref="Accounts"/>.</summary>
+    /// <param name="ct">Cancellation token.</param>
+    /// <returns>A task that completes when accounts are loaded and added to the collection.</returns>
+    public async Task LoadPersistedAccountsAsync(CancellationToken ct = default)
+    {
+        if (_accountRepository is null)
+            return;
+
+        var entities = await _accountRepository.GetAllAsync(ct);
+        foreach (var vm in entities.Select(MapToViewModel))
+            Accounts.Add(vm);
+        if (Accounts.Count > 0 && SelectedAccount is null)
+            SelectedAccount = Accounts[0];
+    }
+
+    /// <summary>Initialises a new <see cref="WorkspaceViewModel"/> using the provided service provider (design-time and test use).</summary>
     /// <param name="serviceProvider">The DI container used to resolve the wizard ViewModel on demand.</param>
     public WorkspaceViewModel(IServiceProvider serviceProvider)
     {
         _serviceProvider = serviceProvider;
+        Accounts = BuildAccounts();
         SelectedAccount = Accounts[0];
         OpenAddAccountWizard = ReactiveCommand.Create(ExecuteOpenAddAccountWizard);
     }
 
-    /// <summary>Initialises a new <see cref="WorkspaceViewModel"/> with no DI services (design-time and test use).</summary>
+    /// <summary>Initialises a new <see cref="WorkspaceViewModel"/> with no DI services (design-time use).</summary>
     public WorkspaceViewModel() : this(EmptyServiceProvider.Instance)
     {
     }
@@ -103,11 +133,20 @@ public class WorkspaceViewModel : ReactiveObject
             Name = account.Profile.DisplayName,
             Email = account.Profile.Email,
             Status = SyncStatus.Ok,
-            FolderCount = account.SelectedFolderIds.Count
+            FolderCount = account.SelectedFolders.Count
         });
         SelectedAccount = Accounts[^1];
         this.RaisePropertyChanged(nameof(WorkspaceSubtitle));
     }
+
+    private static AccountViewModel MapToViewModel(AccountEntity entity) =>
+        new()
+        {
+            Kind = ProviderKind.OneDrive,
+            Name = entity.Profile.DisplayName.Value,
+            Email = entity.Profile.Email.Value,
+            Status = SyncStatus.Ok
+        };
 
     private void OnWizardCancelled(object? sender, EventArgs e)
     {

@@ -3,6 +3,9 @@ using AStar.Dev.CloudSyncFunctional.Auth;
 using AStar.Dev.CloudSyncFunctional.Domain;
 using AStar.Dev.CloudSyncFunctional.Graph;
 using AStar.Dev.CloudSyncFunctional.Onboarding;
+using AStar.Dev.CloudSyncFunctional.Persistence.Entities;
+using AStar.Dev.CloudSyncFunctional.Persistence.Repositories;
+using AStar.Dev.CloudSyncFunctional.Persistence.ValueObjects;
 using AStar.Dev.CloudSyncFunctional.Tests.Unit.Infrastructure;
 using AStar.Dev.CloudSyncFunctional.Wizard;
 using AStar.Dev.CloudSyncFunctional.Workspace;
@@ -210,7 +213,7 @@ public class GivenAWorkspaceViewModel : IClassFixture<ReactiveUiFixture>
         var auth = Substitute.For<IAuthService>();
         var graph = Substitute.For<IGraphService>();
         var onboarding = Substitute.For<IAccountOnboardingService>();
-        var account = new OneDriveAccount { AccountId = "id", Profile = new AccountProfile("Name", "email@x.com"), SelectedFolderIds = [] };
+        var account = new OneDriveAccount { AccountId = "id", Profile = new AccountProfile("Name", "email@x.com"), SelectedFolders = [] };
         onboarding.CompleteOnboardingAsync(Arg.Any<OneDriveAccount>(), Arg.Any<CancellationToken>())
             .Returns(Task.FromResult<Result<OneDriveAccount, PersistenceError>>(new Ok<OneDriveAccount, PersistenceError>(account)));
 
@@ -232,7 +235,7 @@ public class GivenAWorkspaceViewModel : IClassFixture<ReactiveUiFixture>
         var auth = Substitute.For<IAuthService>();
         var graph = Substitute.For<IGraphService>();
         var onboarding = Substitute.For<IAccountOnboardingService>();
-        var account = new OneDriveAccount { AccountId = "id", Profile = new AccountProfile("New User", "new@x.com"), SelectedFolderIds = ["f1"] };
+        var account = new OneDriveAccount { AccountId = "id", Profile = new AccountProfile("New User", "new@x.com"), SelectedFolders = [new SelectedFolder("f1-id", "f1")] };
         onboarding.CompleteOnboardingAsync(Arg.Any<OneDriveAccount>(), Arg.Any<CancellationToken>())
             .Returns(Task.FromResult<Result<OneDriveAccount, PersistenceError>>(new Ok<OneDriveAccount, PersistenceError>(account)));
 
@@ -246,5 +249,65 @@ public class GivenAWorkspaceViewModel : IClassFixture<ReactiveUiFixture>
         wizard.SimulateCompleted(account);
 
         sut.Accounts.Count.ShouldBe(5);
+    }
+
+    [Fact]
+    public async Task when_load_persisted_accounts_is_called_then_stored_account_appears_in_accounts()
+    {
+        var accountRepo = Substitute.For<IAccountRepository>();
+        accountRepo.GetAllAsync(Arg.Any<CancellationToken>())
+            .Returns(Task.FromResult<IReadOnlyList<AccountEntity>>(
+            [
+                new AccountEntity
+                {
+                    Id = new AccountId("acc-1"),
+                    Profile = new AccountProfileEntity { DisplayName = new DisplayName("Alice"), Email = new EmailAddress("alice@x.com") },
+                    IsActive = true,
+                    DriveId = new DriveId("drive-1"),
+                    SyncConfig = new AccountSyncConfig { LocalSyncPath = new LocalSyncPath("/home/alice/OneDrive"), WorkerCount = 8 }
+                }
+            ]));
+        var sut = new WorkspaceViewModel(new ServiceCollection().BuildServiceProvider(), accountRepo);
+
+        await sut.LoadPersistedAccountsAsync(CancellationToken.None);
+
+        sut.Accounts.ShouldContain(a => a.Email == "alice@x.com");
+    }
+
+    [Fact]
+    public async Task when_load_persisted_accounts_is_called_with_no_accounts_then_accounts_collection_is_empty()
+    {
+        var accountRepo = Substitute.For<IAccountRepository>();
+        accountRepo.GetAllAsync(Arg.Any<CancellationToken>())
+            .Returns(Task.FromResult<IReadOnlyList<AccountEntity>>([]));
+        var sut = new WorkspaceViewModel(new ServiceCollection().BuildServiceProvider(), accountRepo);
+
+        await sut.LoadPersistedAccountsAsync(CancellationToken.None);
+
+        sut.Accounts.ShouldBeEmpty();
+    }
+
+    [Fact]
+    public async Task when_load_persisted_accounts_is_called_then_first_account_is_auto_selected()
+    {
+        var accountRepo = Substitute.For<IAccountRepository>();
+        accountRepo.GetAllAsync(Arg.Any<CancellationToken>())
+            .Returns(Task.FromResult<IReadOnlyList<AccountEntity>>(
+            [
+                new AccountEntity
+                {
+                    Id = new AccountId("acc-1"),
+                    Profile = new AccountProfileEntity { DisplayName = new DisplayName("Bob"), Email = new EmailAddress("bob@x.com") },
+                    IsActive = true,
+                    DriveId = new DriveId("drive-1"),
+                    SyncConfig = new AccountSyncConfig { LocalSyncPath = new LocalSyncPath("/home/bob/OneDrive"), WorkerCount = 8 }
+                }
+            ]));
+        var sut = new WorkspaceViewModel(new ServiceCollection().BuildServiceProvider(), accountRepo);
+
+        await sut.LoadPersistedAccountsAsync(CancellationToken.None);
+
+        sut.SelectedAccount.ShouldNotBeNull();
+        sut.SelectedAccount!.Email.ShouldBe("bob@x.com");
     }
 }

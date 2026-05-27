@@ -22,12 +22,12 @@ public class GivenAnAccountOnboardingServiceIntegration(DatabaseFixture db) : IC
     private AccountRepository CreateAccountRepo() =>
         new(new TestDbContextFactory(db.Connection));
 
-    private static OneDriveAccount CreateAccount(params string[] folderIds) =>
+    private static OneDriveAccount CreateAccount(params string[] folderNames) =>
         new()
         {
             AccountId = Guid.NewGuid().ToString(),
             Profile = new AccountProfile("Test User", "test@example.com"),
-            SelectedFolderIds = folderIds
+            SelectedFolders = folderNames.Select((name, i) => new SelectedFolder($"graph-id-{i}", name)).ToList()
         };
 
     [Fact]
@@ -75,5 +75,39 @@ public class GivenAnAccountOnboardingServiceIntegration(DatabaseFixture db) : IC
         var rules = await CreateSyncRuleRepo().GetByAccountAsync(new AccountId(account.AccountId), CancellationToken.None);
 
         rules.ShouldBeEmpty();
+    }
+
+    [Fact]
+    public async Task when_complete_onboarding_is_called_then_sync_rule_remote_path_is_slash_prefixed_folder_name()
+    {
+        var account = new OneDriveAccount
+        {
+            AccountId = Guid.NewGuid().ToString(),
+            Profile = new AccountProfile("Test User", "test@example.com"),
+            SelectedFolders = [new SelectedFolder("graph-item-id-abc123", "Documents")]
+        };
+        var sut = CreateSut();
+
+        await sut.CompleteOnboardingAsync(account, CancellationToken.None);
+        var rules = await CreateSyncRuleRepo().GetByAccountAsync(new AccountId(account.AccountId), CancellationToken.None);
+
+        rules[0].RemotePath.ShouldBe("/Documents");
+    }
+
+    [Fact]
+    public async Task when_complete_onboarding_is_called_then_sync_rule_remote_path_does_not_contain_graph_item_id()
+    {
+        var account = new OneDriveAccount
+        {
+            AccountId = Guid.NewGuid().ToString(),
+            Profile = new AccountProfile("Test User", "test@example.com"),
+            SelectedFolders = [new SelectedFolder("graph-item-id-abc123", "Pictures")]
+        };
+        var sut = CreateSut();
+
+        await sut.CompleteOnboardingAsync(account, CancellationToken.None);
+        var rules = await CreateSyncRuleRepo().GetByAccountAsync(new AccountId(account.AccountId), CancellationToken.None);
+
+        rules[0].RemotePath.ShouldNotContain("graph-item-id-abc123");
     }
 }
