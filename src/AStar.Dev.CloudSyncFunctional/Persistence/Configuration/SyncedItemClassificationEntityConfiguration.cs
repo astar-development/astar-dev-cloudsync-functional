@@ -12,5 +12,9 @@ public sealed class SyncedItemClassificationEntityConfiguration : IEntityTypeCon
     {
         builder.HasKey(e => e.Id);
         builder.Property(e => e.SyncedItemId).HasConversion(SqliteTypeConverters.SyncedItemIdConverter);
+        builder.HasOne<SyncedItemEntity>()
+            .WithMany()
+            .HasForeignKey(e => e.SyncedItemId)
+            .OnDelete(DeleteBehavior.Cascade);
     }
 }

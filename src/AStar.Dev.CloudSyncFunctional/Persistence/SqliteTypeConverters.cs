@@ -58,6 +58,10 @@ public static class SqliteTypeConverters
     public static ValueConverter<RemotePath, string> RemotePathConverter { get; } =
         new(p => p.Value, str => new RemotePath(str));
 
+    /// <summary>Converts a non-nullable <see cref="DateTimeOffset"/> to and from UTC ticks.</summary>
+    public static ValueConverter<DateTimeOffset, long> DateTimeOffsetToTicks { get; } =
+        new(dt => dt.UtcTicks, ticks => new DateTimeOffset(ticks, TimeSpan.Zero));
+
     /// <summary>Converts a nullable <see cref="DateTimeOffset"/> to and from a nullable UTC ticks <see langword="long"/>.</summary>
     public static ValueConverter<DateTimeOffset?, long?> NullableDateTimeOffsetToTicks { get; } =
         new(dt => dt.HasValue ? dt.Value.UtcTicks : (long?)null,

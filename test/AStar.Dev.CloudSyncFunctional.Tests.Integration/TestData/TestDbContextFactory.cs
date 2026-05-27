@@ -16,4 +16,8 @@ internal sealed class TestDbContextFactory : IDbContextFactory<AppDbContext>
 
     /// <inheritdoc/>
     public AppDbContext CreateDbContext() => new(options);
+
+    /// <inheritdoc/>
+    public Task<AppDbContext> CreateDbContextAsync(CancellationToken cancellationToken = default)
+        => Task.FromResult(new AppDbContext(options));
 }

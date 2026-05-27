@@ -13,5 +13,10 @@ public sealed class SyncedItemEntityConfiguration : IEntityTypeConfiguration<Syn
         builder.HasKey(e => e.Id);
         builder.Property(e => e.Id).HasConversion(SqliteTypeConverters.SyncedItemIdConverter);
         builder.Property(e => e.AccountId).HasConversion(SqliteTypeConverters.AccountIdConverter);
+        builder.Property(e => e.RemoteModifiedAt).HasConversion(SqliteTypeConverters.DateTimeOffsetToTicks);
+        builder.HasOne<AccountEntity>()
+            .WithMany()
+            .HasForeignKey(e => e.AccountId)
+            .OnDelete(DeleteBehavior.Cascade);
     }
 }

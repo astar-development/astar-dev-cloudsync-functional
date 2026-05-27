@@ -13,6 +13,9 @@ public sealed class AccountEntityConfiguration : IEntityTypeConfiguration<Accoun
         builder.HasKey(e => e.Id);
         builder.Property(e => e.Id).HasConversion(SqliteTypeConverters.AccountIdConverter);
         builder.Property(e => e.DriveId).HasConversion(SqliteTypeConverters.DriveIdConverter);
+        builder.Property(e => e.LastSyncedAt)
+            .HasConversion(SqliteTypeConverters.NullableDateTimeOffsetToTicks)
+            .IsRequired(false);
         builder.ComplexProperty(e => e.Profile, p =>
         {
             p.Property(prof => prof.DisplayName).HasConversion(SqliteTypeConverters.DisplayNameConverter).HasColumnName("DisplayName");

@@ -12,5 +12,10 @@ public sealed class DriveStateEntityConfiguration : IEntityTypeConfiguration<Dri
     {
         builder.HasKey(e => e.AccountId);
         builder.Property(e => e.AccountId).HasConversion(SqliteTypeConverters.AccountIdConverter);
+        builder.Property(e => e.LastCheckedAt).HasConversion(SqliteTypeConverters.DateTimeOffsetToTicks);
+        builder.HasOne<AccountEntity>()
+            .WithMany()
+            .HasForeignKey(e => e.AccountId)
+            .OnDelete(DeleteBehavior.Cascade);
     }
 }

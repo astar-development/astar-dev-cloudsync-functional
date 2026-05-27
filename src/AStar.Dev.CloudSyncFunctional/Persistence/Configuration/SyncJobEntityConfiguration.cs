@@ -13,5 +13,10 @@ public sealed class SyncJobEntityConfiguration : IEntityTypeConfiguration<SyncJo
         builder.HasKey(e => e.Id);
         builder.Property(e => e.Id).HasConversion(SqliteTypeConverters.SyncJobIdConverter);
         builder.Property(e => e.AccountId).HasConversion(SqliteTypeConverters.AccountIdConverter);
+        builder.Property(e => e.CreatedAt).HasConversion(SqliteTypeConverters.DateTimeOffsetToTicks);
+        builder.HasOne<AccountEntity>()
+            .WithMany()
+            .HasForeignKey(e => e.AccountId)
+            .OnDelete(DeleteBehavior.Cascade);
     }
 }

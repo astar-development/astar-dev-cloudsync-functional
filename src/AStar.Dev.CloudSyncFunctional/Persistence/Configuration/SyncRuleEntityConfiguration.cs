@@ -13,5 +13,9 @@ public sealed class SyncRuleEntityConfiguration : IEntityTypeConfiguration<SyncR
         builder.HasKey(e => e.Id);
         builder.Property(e => e.Id).HasConversion(SqliteTypeConverters.SyncRuleIdConverter);
         builder.Property(e => e.AccountId).HasConversion(SqliteTypeConverters.AccountIdConverter);
+        builder.HasOne<AccountEntity>()
+            .WithMany()
+            .HasForeignKey(e => e.AccountId)
+            .OnDelete(DeleteBehavior.Cascade);
     }
 }
