@@ -56,7 +56,7 @@ public partial class App : Application
         var clientId = configuration["MicrosoftIdentity:ClientId"]
             ?? throw new InvalidOperationException("MicrosoftIdentity:ClientId is not configured. Set it in appsettings.json or user secrets.");
 
-        services.AddSingleton<IPublicClientApplication>(_ =>
+        services.AddSingleton(_ =>
             PublicClientApplicationBuilder
                 .Create(clientId)
                 .WithAuthority("https://login.microsoftonline.com/consumers")

@@ -20,6 +20,9 @@ mono_crash.*
 # graphify
 graphify-out/
 
+# JetBrains Rider
+.idea/
+
 # Build results
 [Dd]ebug/
 [Dd]ebugPublic/

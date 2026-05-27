@@ -15,6 +15,7 @@
         Width="1280" Height="820"
         MinWidth="960" MinHeight="600"
         ExtendClientAreaToDecorationsHint="True"
+        Icon="avares://AStar.Dev.CloudSyncFunctional/Assets/astar.png"
         Background="{DynamicResource Chrome}">
     <Grid RowDefinitions="38,*">
 
@@ -219,7 +220,7 @@
                         Padding="14,8">
                     <Grid ColumnDefinitions="Auto,*,Auto,Auto">
                         <controls:AppButton Grid.Column="0"
-                                            Kind="Ghost" ButtonSize="Sm"
+                                            Kind="Ghost" ButtonSize="Small"
                                             Label="Pause all"/>
                         <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="4">
                             <Button x:Name="BellButton"
