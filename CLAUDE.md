@@ -103,6 +103,7 @@ Ten rules files in `.claude/rules/` cover the implementation patterns for this p
 | DI lifetime guidelines, AppDbContext factory, unhandled exceptions | `@.claude/rules/onedrive-di.md` |
 | Account onboarding — wizard completion, default sync path, sync rule seeding | `@.claude/rules/onedrive-onboarding.md` |
 | In-app log viewer — Serilog sink, ring buffer, PII scrubbing, reactive stream | `@.claude/rules/onedrive-logviewer.md` |
+| **Secrets and configuration — no hardcoded credentials, appsettings + user secrets pattern** | `@.claude/rules/security.md` |
 
 ## Code Exploration
 

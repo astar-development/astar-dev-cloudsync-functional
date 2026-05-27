@@ -6,6 +6,7 @@ using AStar.Dev.CloudSyncFunctional.Workspace;
 using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Identity.Client;
@@ -24,8 +25,13 @@ public partial class App : Application
     /// <inheritdoc/>
     public override void OnFrameworkInitializationCompleted()
     {
+        var configuration = new ConfigurationBuilder()
+            .AddJsonFile("appsettings.json", optional: false, reloadOnChange: false)
+            .AddUserSecrets<App>()
+            .Build();
+
         var services = new ServiceCollection();
-        ConfigureServices(services);
+        ConfigureServices(services, configuration);
         _serviceProvider = services.BuildServiceProvider();
 
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
@@ -34,13 +40,16 @@ public partial class App : Application
         base.OnFrameworkInitializationCompleted();
     }
 
-    private static void ConfigureServices(IServiceCollection services)
+    private static void ConfigureServices(IServiceCollection services, IConfiguration configuration)
     {
         services.AddLogging(builder => builder.AddConsole().SetMinimumLevel(MELogLevel.Debug));
 
+        var clientId = configuration["MicrosoftIdentity:ClientId"]
+            ?? throw new InvalidOperationException("MicrosoftIdentity:ClientId is not configured. Set it in appsettings.json or user secrets.");
+
         services.AddSingleton<IPublicClientApplication>(_ =>
             PublicClientApplicationBuilder
-                .Create("00000000-0000-0000-0000-000000000000")
+                .Create(clientId)
                 .WithAuthority("https://login.microsoftonline.com/consumers")
                 .WithRedirectUri("http://localhost")
                 .Build());
