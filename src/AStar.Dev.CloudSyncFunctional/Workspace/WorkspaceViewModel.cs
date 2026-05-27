@@ -2,6 +2,8 @@ using System.Collections.ObjectModel;
 using AStar.Dev.CloudSyncFunctional.Accounts;
 using AStar.Dev.CloudSyncFunctional.Domain;
 using AStar.Dev.CloudSyncFunctional.FolderTree;
+using AStar.Dev.CloudSyncFunctional.Persistence.Entities;
+using AStar.Dev.CloudSyncFunctional.Persistence.Repositories;
 using AStar.Dev.CloudSyncFunctional.Wizard;
 using Microsoft.Extensions.DependencyInjection;
 using ReactiveUI;
@@ -13,6 +15,7 @@ namespace AStar.Dev.CloudSyncFunctional.Workspace;
 public class WorkspaceViewModel : ReactiveObject
 {
     private readonly IServiceProvider _serviceProvider;
+    private readonly IAccountRepository? _accountRepository;
 
     /// <summary>Gets all cloud storage accounts registered in the workspace.</summary>
     public ObservableCollection<AccountViewModel> Accounts { get; } = BuildAccounts();
@@ -70,6 +73,21 @@ public class WorkspaceViewModel : ReactiveObject
 
     /// <summary>Gets a formatted subtitle summarising account count and total storage capacity.</summary>
     public string WorkspaceSubtitle => $"{Accounts.Count} accounts · {Accounts.Sum(a => a.TotalBytes) / 1_099_511_627_776.0:F1} TB total";
+
+    /// <summary>Initialises a new <see cref="WorkspaceViewModel"/> using the provided service provider and account repository.</summary>
+    /// <param name="serviceProvider">The DI container used to resolve the wizard ViewModel on demand.</param>
+    /// <param name="accountRepository">Repository used to load persisted accounts on startup.</param>
+    public WorkspaceViewModel(IServiceProvider serviceProvider, IAccountRepository accountRepository)
+        : this(serviceProvider)
+    {
+        _accountRepository = accountRepository;
+    }
+
+    /// <summary>Loads persisted accounts from the database and populates <see cref="Accounts"/>.</summary>
+    /// <param name="ct">Cancellation token.</param>
+    /// <returns>A task that completes when accounts are loaded and added to the collection.</returns>
+    public Task LoadPersistedAccountsAsync(CancellationToken ct = default)
+        => throw new NotImplementedException();
 
     /// <summary>Initialises a new <see cref="WorkspaceViewModel"/> using the provided service provider.</summary>
     /// <param name="serviceProvider">The DI container used to resolve the wizard ViewModel on demand.</param>
