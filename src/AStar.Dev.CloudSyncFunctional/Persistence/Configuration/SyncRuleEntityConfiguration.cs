@@ -1,0 +1,17 @@
+using AStar.Dev.CloudSyncFunctional.Persistence.Entities;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata.Builders;
+
+namespace AStar.Dev.CloudSyncFunctional.Persistence.Configuration;
+
+/// <summary>EF Core entity configuration for <see cref="SyncRuleEntity"/>.</summary>
+public sealed class SyncRuleEntityConfiguration : IEntityTypeConfiguration<SyncRuleEntity>
+{
+    /// <inheritdoc/>
+    public void Configure(EntityTypeBuilder<SyncRuleEntity> builder)
+    {
+        builder.HasKey(e => e.Id);
+        builder.Property(e => e.Id).HasConversion(SqliteTypeConverters.SyncRuleIdConverter);
+        builder.Property(e => e.AccountId).HasConversion(SqliteTypeConverters.AccountIdConverter);
+    }
+}
