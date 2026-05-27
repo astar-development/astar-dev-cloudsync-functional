@@ -6,6 +6,7 @@ using AStar.Dev.CloudSyncFunctional.Domain;
 using AStar.Dev.CloudSyncFunctional.Graph;
 using AStar.Dev.CloudSyncFunctional.Onboarding;
 using AStar.Dev.FunctionalParadigm;
+using Avalonia.Threading;
 using ReactiveUI;
 using RxUnit = System.Reactive.Unit;
 
@@ -187,11 +188,14 @@ public sealed class AddAccountWizardViewModel : ReactiveObject, IDisposable
         _authCts?.Dispose();
         _authCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
 
+        using var timeoutCts = new CancellationTokenSource(TimeSpan.FromSeconds(60));
+        using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(_authCts.Token, timeoutCts.Token);
+
         IsWaitingForAuth = true;
         SignInHasError = false;
         SignInStatusText = "Opening browser…";
 
-        await _authService.SignInInteractiveAsync(_authCts.Token)
+        await _authService.SignInInteractiveAsync(linkedCts.Token)
             .MatchAsync(
                 ok =>
                 {
@@ -205,7 +209,12 @@ public sealed class AddAccountWizardViewModel : ReactiveObject, IDisposable
                 error =>
                 {
                     IsWaitingForAuth = false;
-                    if (error is AuthCancelledError)
+                    if (error is AuthCancelledError && timeoutCts.IsCancellationRequested)
+                    {
+                        SignInHasError = true;
+                        SignInStatusText = "Sign-in timed out. Please try again.";
+                    }
+                    else if (error is AuthCancelledError)
                     {
                         CurrentStep = WizardStep.ProviderSelection;
                         SignInStatusText = string.Empty;
@@ -225,16 +234,22 @@ public sealed class AddAccountWizardViewModel : ReactiveObject, IDisposable
             .MatchAsync(
                 folders =>
                 {
-                    Folders.Clear();
-                    foreach (var folder in folders)
-                        Folders.Add(new WizardFolderItem { FolderId = folder.Id, Name = folder.Name });
-                    IsLoadingFolders = false;
+                    Dispatcher.UIThread.Post(() =>
+                    {
+                        Folders.Clear();
+                        foreach (var folder in folders)
+                            Folders.Add(new WizardFolderItem { FolderId = folder.Id, Name = folder.Name });
+                        IsLoadingFolders = false;
+                    });
                 },
                 error =>
                 {
-                    HasError = true;
-                    ErrorMessage = error.Message;
-                    IsLoadingFolders = false;
+                    Dispatcher.UIThread.Post(() =>
+                    {
+                        HasError = true;
+                        ErrorMessage = error.Message;
+                        IsLoadingFolders = false;
+                    });
                 });
     }
 
