@@ -147,10 +147,10 @@ public sealed class AddAccountWizardViewModel : ReactiveObject, IDisposable
 
         var canSignIn = this.WhenAnyValue(x => x.IsWaitingForAuth, waiting => !waiting);
 
-        SelectProvider = ReactiveCommand.CreateFromTask<ProviderKind, RxUnit>((kind, ct) => ExecuteSelectProviderAsync(kind, ct));
-        SignIn = ReactiveCommand.CreateFromTask(ct => ExecuteSignInAsync(ct), canSignIn);
+        SelectProvider = ReactiveCommand.CreateFromTask<ProviderKind, RxUnit>(ExecuteSelectProviderAsync);
+        SignIn = ReactiveCommand.CreateFromTask(ExecuteSignInAsync, canSignIn);
         Back = ReactiveCommand.Create(ExecuteBack);
-        AddAccount = ReactiveCommand.CreateFromTask(ct => ExecuteAddAccountAsync(ct));
+        AddAccount = ReactiveCommand.CreateFromTask(ExecuteAddAccountAsync);
         Cancel = ReactiveCommand.CreateFromTask(ExecuteCancelAsync);
     }
 
@@ -165,7 +165,7 @@ public sealed class AddAccountWizardViewModel : ReactiveObject, IDisposable
     /// <param name="account">The account to pass with the event.</param>
     internal void SimulateCompleted(OneDriveAccount account) => Completed?.Invoke(this, account);
 
-    private async Task<RxUnit> ExecuteSelectProviderAsync(ProviderKind kind, CancellationToken ct = default)
+    private async Task<RxUnit> ExecuteSelectProviderAsync(ProviderKind kind, CancellationToken cancellationToken = default)
     {
         ShowNotImplemented = false;
         NotImplementedMessage = string.Empty;
@@ -183,10 +183,10 @@ public sealed class AddAccountWizardViewModel : ReactiveObject, IDisposable
         return RxUnit.Default;
     }
 
-    private async Task ExecuteSignInAsync(CancellationToken ct)
+    private async Task ExecuteSignInAsync(CancellationToken cancellationToken)
     {
         _authCts?.Dispose();
-        _authCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
+        _authCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
 
         using var timeoutCts = new CancellationTokenSource(TimeSpan.FromSeconds(60));
         using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(_authCts.Token, timeoutCts.Token);
@@ -227,10 +227,10 @@ public sealed class AddAccountWizardViewModel : ReactiveObject, IDisposable
                 });
     }
 
-    private async Task LoadFoldersAsync(AuthResult authResult, CancellationToken ct)
+    private async Task LoadFoldersAsync(AuthResult authResult, CancellationToken cancellationToken)
     {
         IsLoadingFolders = true;
-        await _graphService.GetRootFoldersAsync(authResult.AccountId, authResult.AccessToken, ct)
+        await _graphService.GetRootFoldersAsync(authResult.AccountId, authResult.AccessToken, cancellationToken)
             .MatchAsync(
                 folders =>
                 {
@@ -266,7 +266,7 @@ public sealed class AddAccountWizardViewModel : ReactiveObject, IDisposable
         };
     }
 
-    private async Task ExecuteAddAccountAsync(CancellationToken ct)
+    private async Task ExecuteAddAccountAsync(CancellationToken cancellationToken)
     {
         if (_authResult is null)
             return;
@@ -278,7 +278,7 @@ public sealed class AddAccountWizardViewModel : ReactiveObject, IDisposable
             SelectedFolders = Folders.Where(f => f.IsSelected).Select(f => new SelectedFolder(f.FolderId, f.Name)).ToList()
         };
 
-        await _onboardingService.CompleteOnboardingAsync(account, ct)
+        await _onboardingService.CompleteOnboardingAsync(account, cancellationToken)
             .MatchAsync(
                 finalAccount => Completed?.Invoke(this, finalAccount),
                 error =>
@@ -288,7 +288,7 @@ public sealed class AddAccountWizardViewModel : ReactiveObject, IDisposable
                 });
     }
 
-    private Task ExecuteCancelAsync(CancellationToken ct = default)
+    private Task ExecuteCancelAsync(CancellationToken cancellationToken = default)
     {
         _authCts?.Cancel();
         Cancelled?.Invoke(this, EventArgs.Empty);

@@ -14,13 +14,13 @@ public sealed partial class AccountOnboardingService(IAccountRepository accountR
         ..Enumerable.Range(0, 32).Select(i => (char)i)];
 
     /// <inheritdoc />
-    public async Task<Result<OneDriveAccount, PersistenceError>> CompleteOnboardingAsync(OneDriveAccount account, CancellationToken ct = default)
+    public async Task<Result<OneDriveAccount, PersistenceError>> CompleteOnboardingAsync(OneDriveAccount account, CancellationToken cancellationToken = default)
     {
         account.IsActive = true;
         var entity = MapToEntity(account);
 
-        return await accountRepository.UpsertAsync(entity, ct)
-            .BindAsync(_ => UpsertSyncRulesAsync(account, ct))
+        return await accountRepository.UpsertAsync(entity, cancellationToken)
+            .BindAsync(_ => UpsertSyncRulesAsync(account, cancellationToken))
             .MatchAsync<Unit, PersistenceError, Result<OneDriveAccount, PersistenceError>>(
                 _ =>
                 {
@@ -34,7 +34,7 @@ public sealed partial class AccountOnboardingService(IAccountRepository accountR
                 });
     }
 
-    private async Task<Result<Unit, PersistenceError>> UpsertSyncRulesAsync(OneDriveAccount account, CancellationToken ct)
+    private async Task<Result<Unit, PersistenceError>> UpsertSyncRulesAsync(OneDriveAccount account, CancellationToken cancellationToken)
     {
         foreach (var folder in account.SelectedFolders)
         {
@@ -46,7 +46,7 @@ public sealed partial class AccountOnboardingService(IAccountRepository accountR
                 RuleType = RuleType.Include
             };
 
-            var stopResult = await syncRuleRepository.UpsertAsync(rule, ct)
+            var stopResult = await syncRuleRepository.UpsertAsync(rule, cancellationToken)
                 .MatchAsync<Unit, PersistenceError, Result<Unit, PersistenceError>?>(
                     _ => null,
                     error => new Fail<Unit, PersistenceError>(error))

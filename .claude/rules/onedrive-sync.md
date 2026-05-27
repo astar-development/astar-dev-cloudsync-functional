@@ -90,7 +90,7 @@ After writing the file:
 A discrete `ISyncedItemRegistrar` handles two registration tasks that occur during the build phase (not job execution):
 
 ```csharp
-Task RegisterFolderAsync(AccountId accountId, FolderDeltaItem item, string remotePath, string localPath, Dictionary<string, SyncedItemEntity> syncedItems, CancellationToken ct);
+Task RegisterFolderAsync(AccountId accountId, FolderDeltaItem item, string remotePath, string localPath, Dictionary<string, SyncedItemEntity> syncedItems, CancellationToken cancellationToken);
 ```
 
 - Creates the local directory via `IFileSystem` if it does not exist.
@@ -163,7 +163,7 @@ Set `fileSystemInfo.lastModifiedDateTime` from the local file's `LastWriteTimeUt
 - Returns `Result<Unit, SyncError>`.
 
 ```csharp
-Task<Result<Unit, SyncError>> DownloadAsync(string url, string localPath, DateTimeOffset remoteModified, IProgress<long>? progress = null, CancellationToken ct = default);
+Task<Result<Unit, SyncError>> DownloadAsync(string url, string localPath, DateTimeOffset remoteModified, IProgress<long>? progress = null, CancellationToken cancellationToken = default);
 ```
 
 ## Conflict detection
@@ -216,7 +216,7 @@ record SyncConflict(
 
 ```csharp
 // ISyncPipeline
-Task RunAsync(IEnumerable<SyncJob> jobs, string accessToken, Action<SyncProgressEventArgs> onProgress, Action<JobCompletedEventArgs> onJobCompleted, string accountId, int workerCount, CancellationToken ct = default);
+Task RunAsync(IEnumerable<SyncJob> jobs, string accessToken, Action<SyncProgressEventArgs> onProgress, Action<JobCompletedEventArgs> onJobCompleted, string accountId, int workerCount, CancellationToken cancellationToken = default);
 ```
 
 Never hard-code `workerCount` — always pass `account.SyncConfig.WorkerCount`.
@@ -228,8 +228,8 @@ event EventHandler<SyncProgressEventArgs>? SyncProgressChanged;
 event EventHandler<JobCompletedEventArgs>?  JobCompleted;
 event EventHandler<SyncConflict>?           ConflictDetected;
 
-Task<Result<Unit, SyncError>> SyncAccountAsync(OneDriveAccount account, CancellationToken ct = default);
-Task<Result<Unit, SyncError>> ResolveConflictAsync(SyncConflict conflict, ConflictPolicy policy, CancellationToken ct = default);
+Task<Result<Unit, SyncError>> SyncAccountAsync(OneDriveAccount account, CancellationToken cancellationToken = default);
+Task<Result<Unit, SyncError>> ResolveConflictAsync(SyncConflict conflict, ConflictPolicy policy, CancellationToken cancellationToken = default);
 ```
 
 ## SyncProgressEventArgs

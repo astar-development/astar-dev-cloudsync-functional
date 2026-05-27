@@ -12,22 +12,22 @@ public interface IAccountRepository
     /// <param name="id">The account identifier.</param>
     /// <param name="ct">Cancellation token.</param>
     /// <returns>The account if found, otherwise None.</returns>
-    Task<Option<AccountEntity, PersistenceError>> GetByIdAsync(AccountId id, CancellationToken ct = default);
+    Task<Option<AccountEntity, PersistenceError>> GetByIdAsync(AccountId id, CancellationToken cancellationToken = default);
 
     /// <summary>Retrieves all accounts.</summary>
     /// <param name="ct">Cancellation token.</param>
     /// <returns>All stored accounts.</returns>
-    Task<IReadOnlyList<AccountEntity>> GetAllAsync(CancellationToken ct = default);
+    Task<IReadOnlyList<AccountEntity>> GetAllAsync(CancellationToken cancellationToken = default);
 
     /// <summary>Upserts an account.</summary>
     /// <param name="entity">The account to upsert.</param>
     /// <param name="ct">Cancellation token.</param>
     /// <returns>Ok on success, Fail on error.</returns>
-    Task<Result<Unit, PersistenceError>> UpsertAsync(AccountEntity entity, CancellationToken ct = default);
+    Task<Result<Unit, PersistenceError>> UpsertAsync(AccountEntity entity, CancellationToken cancellationToken = default);
 
     /// <summary>Deletes an account and all its child entities.</summary>
     /// <param name="id">The account identifier.</param>
     /// <param name="ct">Cancellation token.</param>
     /// <returns>Ok on success, Fail on error.</returns>
-    Task<Result<Unit, PersistenceError>> DeleteAsync(AccountId id, CancellationToken ct = default);
+    Task<Result<Unit, PersistenceError>> DeleteAsync(AccountId id, CancellationToken cancellationToken = default);
 }

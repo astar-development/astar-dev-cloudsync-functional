@@ -9,5 +9,5 @@ public interface ITokenCacheService
     /// <param name="app">The MSAL application whose token cache is registered.</param>
     /// <param name="ct">Token to cancel the operation.</param>
     /// <returns>A task that completes when registration is done.</returns>
-    Task RegisterAsync(IPublicClientApplication app, CancellationToken ct = default);
+    Task RegisterAsync(IPublicClientApplication app, CancellationToken cancellationToken = default);
 }

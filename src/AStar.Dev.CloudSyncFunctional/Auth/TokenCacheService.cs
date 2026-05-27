@@ -15,7 +15,7 @@ public sealed partial class TokenCacheService(ILogger<TokenCacheService> logger)
     private static readonly string CacheDir = BuildCacheDir();
 
     /// <inheritdoc />
-    public async Task RegisterAsync(IPublicClientApplication app, CancellationToken ct = default)
+    public async Task RegisterAsync(IPublicClientApplication app, CancellationToken cancellationToken = default)
     {
         try
         {

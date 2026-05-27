@@ -9,7 +9,7 @@
 /// Persists a new account and its initial sync configuration after the wizard completes.
 /// Returns the finalised <see cref="OneDriveAccount"/> with all defaults applied.
 /// </summary>
-Task<Result<OneDriveAccount, PersistenceError>> CompleteOnboardingAsync(OneDriveAccount account, CancellationToken ct = default);
+Task<Result<OneDriveAccount, PersistenceError>> CompleteOnboardingAsync(OneDriveAccount account, CancellationToken cancellationToken = default);
 ```
 
 ## Responsibilities (in order)

@@ -10,10 +10,10 @@ namespace AStar.Dev.CloudSyncFunctional.Persistence.Repositories;
 public sealed class AccountRepository(IDbContextFactory<AppDbContext> dbFactory) : IAccountRepository
 {
     /// <inheritdoc/>
-    public async Task<Option<AccountEntity, PersistenceError>> GetByIdAsync(AccountId id, CancellationToken ct = default)
+    public async Task<Option<AccountEntity, PersistenceError>> GetByIdAsync(AccountId id, CancellationToken cancellationToken = default)
     {
-        await using var context = await dbFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
-        var entity = await context.Accounts.FindAsync([id], ct).ConfigureAwait(false);
+        await using var context = await dbFactory.CreateDbContextAsync(cancellationToken).ConfigureAwait(false);
+        var entity = await context.Accounts.FindAsync([id], cancellationToken).ConfigureAwait(false);
 
         return entity is null
             ? new None<AccountEntity, PersistenceError>(PersistenceErrorFactory.Unexpected("Account not found."))
@@ -21,25 +21,25 @@ public sealed class AccountRepository(IDbContextFactory<AppDbContext> dbFactory)
     }
 
     /// <inheritdoc/>
-    public async Task<IReadOnlyList<AccountEntity>> GetAllAsync(CancellationToken ct = default)
+    public async Task<IReadOnlyList<AccountEntity>> GetAllAsync(CancellationToken cancellationToken = default)
     {
-        await using var context = await dbFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
+        await using var context = await dbFactory.CreateDbContextAsync(cancellationToken).ConfigureAwait(false);
 
-        return await context.Accounts.AsNoTracking().ToListAsync(ct).ConfigureAwait(false);
+        return await context.Accounts.AsNoTracking().ToListAsync(cancellationToken).ConfigureAwait(false);
     }
 
     /// <inheritdoc/>
-    public async Task<Result<Unit, PersistenceError>> UpsertAsync(AccountEntity entity, CancellationToken ct = default)
+    public async Task<Result<Unit, PersistenceError>> UpsertAsync(AccountEntity entity, CancellationToken cancellationToken = default)
     {
         try
         {
-            await using var context = await dbFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
-            var existing = await context.Accounts.FindAsync([entity.Id], ct).ConfigureAwait(false);
+            await using var context = await dbFactory.CreateDbContextAsync(cancellationToken).ConfigureAwait(false);
+            var existing = await context.Accounts.FindAsync([entity.Id], cancellationToken).ConfigureAwait(false);
             if (existing is null)
                 context.Accounts.Add(entity);
             else
                 context.Entry(existing).CurrentValues.SetValues(entity);
-            await context.SaveChangesAsync(ct).ConfigureAwait(false);
+            await context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
 
             return new Ok<Unit, PersistenceError>(Unit.Default);
         }
@@ -54,16 +54,16 @@ public sealed class AccountRepository(IDbContextFactory<AppDbContext> dbFactory)
     }
 
     /// <inheritdoc/>
-    public async Task<Result<Unit, PersistenceError>> DeleteAsync(AccountId id, CancellationToken ct = default)
+    public async Task<Result<Unit, PersistenceError>> DeleteAsync(AccountId id, CancellationToken cancellationToken = default)
     {
         try
         {
-            await using var context = await dbFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
-            var existing = await context.Accounts.FindAsync([id], ct).ConfigureAwait(false);
+            await using var context = await dbFactory.CreateDbContextAsync(cancellationToken).ConfigureAwait(false);
+            var existing = await context.Accounts.FindAsync([id], cancellationToken).ConfigureAwait(false);
             if (existing is not null)
             {
                 context.Accounts.Remove(existing);
-                await context.SaveChangesAsync(ct).ConfigureAwait(false);
+                await context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
             }
 
             return new Ok<Unit, PersistenceError>(Unit.Default);

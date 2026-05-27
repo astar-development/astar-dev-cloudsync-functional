@@ -24,7 +24,7 @@ Use `Interlocked.Exchange` to prevent concurrent sync passes:
 ```csharp
 private long _runningFlag;
 
-private async Task RunSyncPassAsync(CancellationToken ct)
+private async Task RunSyncPassAsync(CancellationToken cancellationToken)
 {
     if (Interlocked.Exchange(ref _runningFlag, 1) == 1) return;
     try { /* sync all accounts */ }
@@ -76,15 +76,15 @@ event EventHandler<string>? SyncCompleted;
 void StartSync(TimeSpan? interval = null);
 void StopSync();
 void SetInterval(TimeSpan interval);
-Task TriggerNowAsync(CancellationToken ct = default);
-Task TriggerAccountAsync(string accountId, CancellationToken ct = default);
-Task TriggerAccountAsync(OneDriveAccount account, CancellationToken ct = default);
+Task TriggerNowAsync(CancellationToken cancellationToken = default);
+Task TriggerAccountAsync(string accountId, CancellationToken cancellationToken = default);
+Task TriggerAccountAsync(OneDriveAccount account, CancellationToken cancellationToken = default);
 Task CancelAccountSyncAsync(string accountId);
 ```
 
 ## CancellationToken rules
 
-- **Every** public async method takes `CancellationToken ct = default` as the final parameter.
+- **Every** public async method takes `CancellationToken cancellationToken = default` as the final parameter.
 - Propagate `ct` to every downstream `await` — never pass `CancellationToken.None` unless you are deliberately starting unlinked work (e.g. timer-tick root, post-cancellation cleanup).
 - Catch `OperationCanceledException` at the service boundary only — do not swallow it inside pipeline steps.
 - Use `CancellationTokenSource.CreateLinkedTokenSource(ct)` when you need per-account cancellation composable with an outer token.

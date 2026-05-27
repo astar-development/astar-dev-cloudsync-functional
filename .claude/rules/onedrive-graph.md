@@ -19,7 +19,7 @@ public GraphServiceClient CreateClient(string accessToken)
 
 private sealed class StaticAccessTokenProvider(string token) : IAccessTokenProvider
 {
-    public Task<string> GetAuthorizationTokenAsync(Uri uri, ..., CancellationToken ct = default)
+    public Task<string> GetAuthorizationTokenAsync(Uri uri, ..., CancellationToken cancellationToken = default)
         => Task.FromResult(token);
 
     public AllowedHostsValidator AllowedHostsValidator { get; } = new(["graph.microsoft.com"]);
@@ -88,7 +88,7 @@ Recursively enumerates a folder subtree. Use a `HashSet<string>` of visited IDs 
 
 ```csharp
 static async Task EnumerateSubFolderAsync(GraphServiceClient client, DriveId driveId, string parentId,
-    string relativePath, List<DeltaItem> items, HashSet<string> visited, CancellationToken ct)
+    string relativePath, List<DeltaItem> items, HashSet<string> visited, CancellationToken cancellationToken)
 {
     if (!visited.Add(parentId)) return;  // cycle guard
 
@@ -188,15 +188,15 @@ var downloadUrl  = ExtractDownloadUrl(item);              // Option<string>
 ## IGraphService contract
 
 ```csharp
-Task<Result<DriveId, GraphError>>             GetDriveIdAsync(string accountId, string accessToken, CancellationToken ct = default);
-Task<Result<List<DriveFolder>, GraphError>>   GetRootFoldersAsync(string accountId, string accessToken, CancellationToken ct = default);
-Task<Result<List<DriveFolder>, GraphError>>   GetChildFoldersAsync(string accessToken, DriveId driveId, string parentFolderId, CancellationToken ct = default);
-Task<Result<(long Total, long Used), GraphError>> GetQuotaAsync(string accountId, string accessToken, CancellationToken ct = default);
-Task<Result<List<DeltaItem>, GraphError>>   EnumerateFolderAsync(string accessToken, DriveId driveId, string folderId, string remotePath, CancellationToken ct = default);
-Task<Option<string>>                        GetFolderIdByPathAsync(string accessToken, DriveId driveId, string remotePath, CancellationToken ct = default);
-Task<Result<string, GraphError>>            GetDownloadUrlAsync(string accountId, string accessToken, string itemId, CancellationToken ct = default);
-Task<Result<string, GraphError>>            UploadFileAsync(string accountId, string accessToken, string localPath, string remotePath, string parentFolderId, CancellationToken ct = default);
-Task<Result<Unit, GraphError>>              DeleteItemAsync(string accountId, string accessToken, string itemId, CancellationToken ct = default);
+Task<Result<DriveId, GraphError>>             GetDriveIdAsync(string accountId, string accessToken, CancellationToken cancellationToken = default);
+Task<Result<List<DriveFolder>, GraphError>>   GetRootFoldersAsync(string accountId, string accessToken, CancellationToken cancellationToken = default);
+Task<Result<List<DriveFolder>, GraphError>>   GetChildFoldersAsync(string accessToken, DriveId driveId, string parentFolderId, CancellationToken cancellationToken = default);
+Task<Result<(long Total, long Used), GraphError>> GetQuotaAsync(string accountId, string accessToken, CancellationToken cancellationToken = default);
+Task<Result<List<DeltaItem>, GraphError>>   EnumerateFolderAsync(string accessToken, DriveId driveId, string folderId, string remotePath, CancellationToken cancellationToken = default);
+Task<Option<string>>                        GetFolderIdByPathAsync(string accessToken, DriveId driveId, string remotePath, CancellationToken cancellationToken = default);
+Task<Result<string, GraphError>>            GetDownloadUrlAsync(string accountId, string accessToken, string itemId, CancellationToken cancellationToken = default);
+Task<Result<string, GraphError>>            UploadFileAsync(string accountId, string accessToken, string localPath, string remotePath, string parentFolderId, CancellationToken cancellationToken = default);
+Task<Result<Unit, GraphError>>              DeleteItemAsync(string accountId, string accessToken, string itemId, CancellationToken cancellationToken = default);
 void                                      EvictCachedDriveContext(string accountId);
 ```
 

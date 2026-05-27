@@ -9,21 +9,21 @@ public sealed partial class GraphService(IGraphClientFactory clientFactory, ILog
     private static readonly string[] ChildrenSelect = ["id", "name", "folder", "parentReference"];
 
     /// <inheritdoc />
-    public async Task<Result<List<DriveFolder>, GraphError>> GetRootFoldersAsync(string accountId, string accessToken, CancellationToken ct = default)
+    public async Task<Result<List<DriveFolder>, GraphError>> GetRootFoldersAsync(string accountId, string accessToken, CancellationToken cancellationToken = default)
     {
         try
         {
             var client = clientFactory.CreateClient(accessToken);
-            var drive = await client.Me.Drive.GetAsync(cancellationToken: ct).ConfigureAwait(false);
+            var drive = await client.Me.Drive.GetAsync(cancellationToken: cancellationToken).ConfigureAwait(false);
             if (drive?.Id is null)
                 return new Fail<List<DriveFolder>, GraphError>(GraphErrorFactory.Unexpected("Drive ID was null."));
 
-            var root = await client.Drives[drive.Id].Root.GetAsync(cancellationToken: ct).ConfigureAwait(false);
+            var root = await client.Drives[drive.Id].Root.GetAsync(cancellationToken: cancellationToken).ConfigureAwait(false);
             if (root?.Id is null)
                 return new Fail<List<DriveFolder>, GraphError>(GraphErrorFactory.Unexpected("Root item ID was null."));
 
             var page = await client.Drives[drive.Id].Items[root.Id].Children
-                .GetAsync(req => req.QueryParameters.Select = ChildrenSelect, ct)
+                .GetAsync(req => req.QueryParameters.Select = ChildrenSelect, cancellationToken: cancellationToken)
                 .ConfigureAwait(false);
 
             var folders = new List<DriveFolder>();
@@ -36,7 +36,7 @@ public sealed partial class GraphService(IGraphClientFactory clientFactory, ILog
                     break;
 
                 page = await client.Drives[drive.Id].Items[root.Id].Children
-                    .WithUrl(page.OdataNextLink).GetAsync(cancellationToken: ct)
+                    .WithUrl(page.OdataNextLink).GetAsync(cancellationToken: cancellationToken)
                     .ConfigureAwait(false);
             }
 
