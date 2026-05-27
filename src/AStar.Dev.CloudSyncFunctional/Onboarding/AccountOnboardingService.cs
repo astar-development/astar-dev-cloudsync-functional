@@ -9,5 +9,13 @@ public sealed partial class AccountOnboardingService(ILogger<AccountOnboardingSe
 {
     /// <inheritdoc />
     public Task<Result<OneDriveAccount, PersistenceError>> CompleteOnboardingAsync(OneDriveAccount account, CancellationToken ct = default)
-        => throw new NotImplementedException();
+    {
+        account.IsActive = true;
+        LogOnboardingComplete(logger, account.AccountId);
+
+        return Task.FromResult<Result<OneDriveAccount, PersistenceError>>(new Ok<OneDriveAccount, PersistenceError>(account));
+    }
+
+    [LoggerMessage(Level = LogLevel.Information, Message = "Account onboarding completed for {AccountId}")]
+    private static partial void LogOnboardingComplete(ILogger logger, string accountId);
 }

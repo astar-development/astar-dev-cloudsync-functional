@@ -88,7 +88,16 @@ public static class ResultExtensions
     /// <returns>A task that completes after the appropriate action runs.</returns>
     public static async Task MatchAsync<TResult, TError>(this Task<Result<TResult, TError>> taskResult, Action<TResult> onSuccess, Action<TError> onFailure)
     {
-        _ = await taskResult.ConfigureAwait(false); // stub: awaits but never calls callbacks
+        var result = await taskResult.ConfigureAwait(false);
+        switch (result)
+        {
+            case Ok<TResult, TError> ok:
+                onSuccess(ok.Value);
+                break;
+            case Fail<TResult, TError> fail:
+                onFailure(fail.Error);
+                break;
+        }
     }
 
     /// <summary>Asynchronously collapses the result to a single output value by handling both cases.</summary>
@@ -101,8 +110,8 @@ public static class ResultExtensions
     /// <returns>A task that produces the value from whichever branch was taken.</returns>
     public static async Task<TOut> MatchAsync<TResult, TError, TOut>(this Task<Result<TResult, TError>> taskResult, Func<TResult, TOut> onSuccess, Func<TError, TOut> onFailure)
     {
-        _ = await taskResult.ConfigureAwait(false); // stub: never calls functions
+        var result = await taskResult.ConfigureAwait(false);
 
-        return default!;
+        return result.Match(onSuccess, onFailure);
     }
 }

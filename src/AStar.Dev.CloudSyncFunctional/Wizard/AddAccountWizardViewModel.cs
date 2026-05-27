@@ -5,6 +5,7 @@ using AStar.Dev.CloudSyncFunctional.Auth;
 using AStar.Dev.CloudSyncFunctional.Domain;
 using AStar.Dev.CloudSyncFunctional.Graph;
 using AStar.Dev.CloudSyncFunctional.Onboarding;
+using AStar.Dev.FunctionalParadigm;
 using ReactiveUI;
 using RxUnit = System.Reactive.Unit;
 
@@ -14,6 +15,11 @@ namespace AStar.Dev.CloudSyncFunctional.Wizard;
 public sealed class AddAccountWizardViewModel : ReactiveObject, IDisposable
 {
     private readonly CompositeDisposable _disposables = new();
+    private readonly IAuthService _authService;
+    private readonly IGraphService _graphService;
+    private readonly IAccountOnboardingService _onboardingService;
+    private CancellationTokenSource? _authCts;
+    private AuthResult? _authResult;
 
     /// <summary>Gets or sets the current wizard step.</summary>
     public WizardStep CurrentStep
@@ -134,19 +140,144 @@ public sealed class AddAccountWizardViewModel : ReactiveObject, IDisposable
     /// <param name="onboardingService">The service that persists the completed account.</param>
     public AddAccountWizardViewModel(IAuthService authService, IGraphService graphService, IAccountOnboardingService onboardingService)
     {
+        _authService = authService;
+        _graphService = graphService;
+        _onboardingService = onboardingService;
+
         var canSignIn = this.WhenAnyValue(x => x.IsWaitingForAuth, waiting => !waiting);
 
-        SelectProvider = ReactiveCommand.CreateFromTask<ProviderKind, RxUnit>((kind, ct) => Task.FromResult(RxUnit.Default));
-        SignIn = ReactiveCommand.CreateFromTask(ct => Task.CompletedTask, canSignIn);
-        Back = ReactiveCommand.Create(() => { });
-        AddAccount = ReactiveCommand.CreateFromTask(ct => Task.CompletedTask);
-        Cancel = ReactiveCommand.CreateFromTask(ct => Task.CompletedTask);
+        SelectProvider = ReactiveCommand.CreateFromTask<ProviderKind, RxUnit>((kind, ct) => ExecuteSelectProviderAsync(kind, ct));
+        SignIn = ReactiveCommand.CreateFromTask(ct => ExecuteSignInAsync(ct), canSignIn);
+        Back = ReactiveCommand.Create(ExecuteBack);
+        AddAccount = ReactiveCommand.CreateFromTask(ct => ExecuteAddAccountAsync(ct));
+        Cancel = ReactiveCommand.CreateFromTask(ExecuteCancelAsync);
     }
 
     /// <inheritdoc/>
-    public void Dispose() => _disposables.Dispose();
+    public void Dispose()
+    {
+        _disposables.Dispose();
+        _authCts?.Dispose();
+    }
 
     /// <summary>Test helper that raises the <see cref="Completed"/> event directly.</summary>
     /// <param name="account">The account to pass with the event.</param>
     internal void SimulateCompleted(OneDriveAccount account) => Completed?.Invoke(this, account);
+
+    private async Task<RxUnit> ExecuteSelectProviderAsync(ProviderKind kind, CancellationToken ct = default)
+    {
+        ShowNotImplemented = false;
+        NotImplementedMessage = string.Empty;
+
+        if (kind == ProviderKind.OneDrive)
+        {
+            CurrentStep = WizardStep.SignIn;
+        }
+        else
+        {
+            ShowNotImplemented = true;
+            NotImplementedMessage = "Coming soon — not implemented yet";
+        }
+
+        return RxUnit.Default;
+    }
+
+    private async Task ExecuteSignInAsync(CancellationToken ct)
+    {
+        _authCts?.Dispose();
+        _authCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
+
+        IsWaitingForAuth = true;
+        SignInHasError = false;
+        SignInStatusText = "Opening browser…";
+
+        await _authService.SignInInteractiveAsync(_authCts.Token)
+            .MatchAsync(
+                ok =>
+                {
+                    _authResult = ok;
+                    IsSignedIn = true;
+                    IsWaitingForAuth = false;
+                    SignInStatusText = $"Signed in as {ok.Profile.Email}";
+                    CurrentStep = WizardStep.SelectFolders;
+                    _ = LoadFoldersAsync(ok, CancellationToken.None);
+                },
+                error =>
+                {
+                    IsWaitingForAuth = false;
+                    if (error is AuthCancelledError)
+                    {
+                        CurrentStep = WizardStep.ProviderSelection;
+                        SignInStatusText = string.Empty;
+                    }
+                    else
+                    {
+                        SignInHasError = true;
+                        SignInStatusText = error.Message;
+                    }
+                });
+    }
+
+    private async Task LoadFoldersAsync(AuthResult authResult, CancellationToken ct)
+    {
+        IsLoadingFolders = true;
+        await _graphService.GetRootFoldersAsync(authResult.AccountId, authResult.AccessToken, ct)
+            .MatchAsync(
+                folders =>
+                {
+                    Folders.Clear();
+                    foreach (var folder in folders)
+                        Folders.Add(new WizardFolderItem { FolderId = folder.Id, Name = folder.Name });
+                    IsLoadingFolders = false;
+                },
+                error =>
+                {
+                    HasError = true;
+                    ErrorMessage = error.Message;
+                    IsLoadingFolders = false;
+                });
+    }
+
+    private void ExecuteBack()
+    {
+        SignInHasError = false;
+        SignInStatusText = string.Empty;
+        ShowNotImplemented = false;
+        CurrentStep = CurrentStep switch
+        {
+            WizardStep.SignIn => WizardStep.ProviderSelection,
+            WizardStep.SelectFolders => WizardStep.SignIn,
+            _ => WizardStep.ProviderSelection
+        };
+    }
+
+    private async Task ExecuteAddAccountAsync(CancellationToken ct)
+    {
+        if (_authResult is null)
+            return;
+
+        var account = new OneDriveAccount
+        {
+            AccountId = _authResult.AccountId,
+            Profile = _authResult.Profile,
+            SelectedFolderIds = Folders.Where(f => f.IsSelected).Select(f => f.FolderId).ToList()
+        };
+
+        await _onboardingService.CompleteOnboardingAsync(account, ct)
+            .MatchAsync(
+                finalAccount => Completed?.Invoke(this, finalAccount),
+                error =>
+                {
+                    HasError = true;
+                    ErrorMessage = error.Message;
+                });
+    }
+
+    private Task ExecuteCancelAsync(CancellationToken ct = default)
+    {
+        _authCts?.Cancel();
+        Cancelled?.Invoke(this, EventArgs.Empty);
+
+        return Task.CompletedTask;
+    }
 }

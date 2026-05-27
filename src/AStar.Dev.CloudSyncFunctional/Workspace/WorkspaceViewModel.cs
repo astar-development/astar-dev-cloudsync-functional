@@ -77,12 +77,48 @@ public class WorkspaceViewModel : ReactiveObject
     {
         _serviceProvider = serviceProvider;
         SelectedAccount = Accounts[0];
-        OpenAddAccountWizard = ReactiveCommand.Create(() => { }); // stub: does not set CurrentOverlay
+        OpenAddAccountWizard = ReactiveCommand.Create(ExecuteOpenAddAccountWizard);
     }
 
     /// <summary>Initialises a new <see cref="WorkspaceViewModel"/> with no DI services (design-time and test use).</summary>
     public WorkspaceViewModel() : this(EmptyServiceProvider.Instance)
     {
+    }
+
+    private void ExecuteOpenAddAccountWizard()
+    {
+        var wizard = _serviceProvider.GetRequiredService<AddAccountWizardViewModel>();
+        wizard.Completed += OnWizardCompleted;
+        wizard.Cancelled += OnWizardCancelled;
+        CurrentOverlay = wizard;
+    }
+
+    private void OnWizardCompleted(object? sender, OneDriveAccount account)
+    {
+        DetachAndDisposeWizard(sender);
+        CurrentOverlay = null;
+        Accounts.Add(new AccountViewModel
+        {
+            Kind = ProviderKind.OneDrive,
+            Name = account.Profile.DisplayName,
+            Email = account.Profile.Email,
+            Status = SyncStatus.Ok,
+            FolderCount = account.SelectedFolderIds.Count
+        });
+        SelectedAccount = Accounts[^1];
+        this.RaisePropertyChanged(nameof(WorkspaceSubtitle));
+    }
+
+    private void OnWizardCancelled(object? sender, EventArgs e)
+    {
+        DetachAndDisposeWizard(sender);
+        CurrentOverlay = null;
+    }
+
+    private static void DetachAndDisposeWizard(object? sender)
+    {
+        if (sender is AddAccountWizardViewModel wizard)
+            wizard.Dispose();
     }
 
     private static ObservableCollection<AccountViewModel> BuildAccounts() =>
