@@ -1,15 +1,28 @@
 using AStar.Dev.CloudSyncFunctional.Auth;
 using AStar.Dev.CloudSyncFunctional.Domain;
 using AStar.Dev.CloudSyncFunctional.Onboarding;
+using AStar.Dev.CloudSyncFunctional.Persistence.Entities;
+using AStar.Dev.CloudSyncFunctional.Persistence.Repositories;
 using AStar.Dev.FunctionalParadigm;
 using Microsoft.Extensions.Logging;
+using FpUnit = AStar.Dev.FunctionalParadigm.Unit;
 
 namespace AStar.Dev.CloudSyncFunctional.Tests.Unit.Onboarding;
 
 public class GivenAnAccountOnboardingService
 {
-    private static AccountOnboardingService CreateSut() =>
-        new(Substitute.For<ILogger<AccountOnboardingService>>());
+    private static AccountOnboardingService CreateSut()
+    {
+        var accountRepo = Substitute.For<IAccountRepository>();
+        accountRepo.UpsertAsync(Arg.Any<AccountEntity>(), Arg.Any<CancellationToken>())
+            .Returns(Task.FromResult<Result<FpUnit, PersistenceError>>(new Ok<FpUnit, PersistenceError>(FpUnit.Default)));
+
+        var syncRuleRepo = Substitute.For<ISyncRuleRepository>();
+        syncRuleRepo.UpsertAsync(Arg.Any<SyncRuleEntity>(), Arg.Any<CancellationToken>())
+            .Returns(Task.FromResult<Result<FpUnit, PersistenceError>>(new Ok<FpUnit, PersistenceError>(FpUnit.Default)));
+
+        return new AccountOnboardingService(accountRepo, syncRuleRepo, Substitute.For<ILogger<AccountOnboardingService>>());
+    }
 
     private static OneDriveAccount CreateAccount() =>
         new()

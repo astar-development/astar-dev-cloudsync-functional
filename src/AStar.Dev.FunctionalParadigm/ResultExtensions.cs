@@ -114,4 +114,23 @@ public static class ResultExtensions
 
         return result.Match(onSuccess, onFailure);
     }
+
+    /// <summary>Asynchronously chains an operation that also returns a result, propagating failure.</summary>
+    /// <typeparam name="TResult">The input success type.</typeparam>
+    /// <typeparam name="TMapped">The output success type.</typeparam>
+    /// <typeparam name="TError">The error type.</typeparam>
+    /// <param name="taskResult">The task producing the result to bind.</param>
+    /// <param name="binder">The async chained operation to invoke on success.</param>
+    /// <returns>The result of the chained operation, or the original failure propagated as the new error type.</returns>
+    public static async Task<Result<TMapped, TError>> BindAsync<TResult, TMapped, TError>(this Task<Result<TResult, TError>> taskResult, Func<TResult, Task<Result<TMapped, TError>>> binder)
+    {
+        var result = await taskResult.ConfigureAwait(false);
+
+        return result switch
+        {
+            Ok<TResult, TError> ok => await binder(ok.Value).ConfigureAwait(false),
+            Fail<TResult, TError> fail => new Fail<TMapped, TError>(fail.Error),
+            _ => throw new InvalidOperationException("Unexpected result type.")
+        };
+    }
 }
