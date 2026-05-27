@@ -22,12 +22,12 @@ public class GivenAnAccountOnboardingServiceIntegration(DatabaseFixture db) : IC
     private AccountRepository CreateAccountRepo() =>
         new(new TestDbContextFactory(db.Connection));
 
-    private static OneDriveAccount CreateAccount(params string[] folderIds) =>
+    private static OneDriveAccount CreateAccount(params string[] folderNames) =>
         new()
         {
             AccountId = Guid.NewGuid().ToString(),
             Profile = new AccountProfile("Test User", "test@example.com"),
-            SelectedFolderIds = folderIds
+            SelectedFolders = folderNames.Select((name, i) => new SelectedFolder($"graph-id-{i}", name)).ToList()
         };
 
     [Fact]

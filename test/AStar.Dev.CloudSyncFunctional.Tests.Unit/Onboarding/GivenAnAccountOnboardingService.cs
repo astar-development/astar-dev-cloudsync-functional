@@ -29,7 +29,7 @@ public class GivenAnAccountOnboardingService
         {
             AccountId = "test-account-id",
             Profile = new AccountProfile("Test User", "test@example.com"),
-            SelectedFolderIds = ["folder-1", "folder-2"]
+            SelectedFolders = [new SelectedFolder("folder-1-id", "folder-1"), new SelectedFolder("folder-2-id", "folder-2")]
         };
 
     [Fact]

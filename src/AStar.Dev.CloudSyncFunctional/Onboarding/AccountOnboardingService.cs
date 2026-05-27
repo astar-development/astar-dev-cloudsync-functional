@@ -36,13 +36,13 @@ public sealed partial class AccountOnboardingService(IAccountRepository accountR
 
     private async Task<Result<Unit, PersistenceError>> UpsertSyncRulesAsync(OneDriveAccount account, CancellationToken ct)
     {
-        foreach (var folderId in account.SelectedFolderIds)
+        foreach (var folder in account.SelectedFolders)
         {
             var rule = new SyncRuleEntity
             {
                 Id = new SyncRuleId(Guid.NewGuid().ToString()),
                 AccountId = new AccountId(account.AccountId),
-                RemotePath = folderId,
+                RemotePath = $"/{folder.Name}",
                 RuleType = RuleType.Include
             };
 

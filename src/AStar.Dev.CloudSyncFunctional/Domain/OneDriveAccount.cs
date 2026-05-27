@@ -19,7 +19,4 @@ public sealed class OneDriveAccount
 
     /// <summary>Gets the folders selected for sync, carrying both Graph item ID and display name.</summary>
     public IReadOnlyList<SelectedFolder> SelectedFolders { get; init; } = [];
-
-    /// <summary>Gets the IDs of folders selected for sync.</summary>
-    public IReadOnlyList<string> SelectedFolderIds { get; init; } = [];
 }

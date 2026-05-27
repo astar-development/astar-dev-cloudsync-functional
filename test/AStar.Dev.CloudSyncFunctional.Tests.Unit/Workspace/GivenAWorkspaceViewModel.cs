@@ -213,7 +213,7 @@ public class GivenAWorkspaceViewModel : IClassFixture<ReactiveUiFixture>
         var auth = Substitute.For<IAuthService>();
         var graph = Substitute.For<IGraphService>();
         var onboarding = Substitute.For<IAccountOnboardingService>();
-        var account = new OneDriveAccount { AccountId = "id", Profile = new AccountProfile("Name", "email@x.com"), SelectedFolderIds = [] };
+        var account = new OneDriveAccount { AccountId = "id", Profile = new AccountProfile("Name", "email@x.com"), SelectedFolders = [] };
         onboarding.CompleteOnboardingAsync(Arg.Any<OneDriveAccount>(), Arg.Any<CancellationToken>())
             .Returns(Task.FromResult<Result<OneDriveAccount, PersistenceError>>(new Ok<OneDriveAccount, PersistenceError>(account)));
 
@@ -235,7 +235,7 @@ public class GivenAWorkspaceViewModel : IClassFixture<ReactiveUiFixture>
         var auth = Substitute.For<IAuthService>();
         var graph = Substitute.For<IGraphService>();
         var onboarding = Substitute.For<IAccountOnboardingService>();
-        var account = new OneDriveAccount { AccountId = "id", Profile = new AccountProfile("New User", "new@x.com"), SelectedFolderIds = ["f1"] };
+        var account = new OneDriveAccount { AccountId = "id", Profile = new AccountProfile("New User", "new@x.com"), SelectedFolders = [new SelectedFolder("f1-id", "f1")] };
         onboarding.CompleteOnboardingAsync(Arg.Any<OneDriveAccount>(), Arg.Any<CancellationToken>())
             .Returns(Task.FromResult<Result<OneDriveAccount, PersistenceError>>(new Ok<OneDriveAccount, PersistenceError>(account)));
 

@@ -275,7 +275,7 @@ public sealed class AddAccountWizardViewModel : ReactiveObject, IDisposable
         {
             AccountId = _authResult.AccountId,
             Profile = _authResult.Profile,
-            SelectedFolderIds = Folders.Where(f => f.IsSelected).Select(f => f.FolderId).ToList()
+            SelectedFolders = Folders.Where(f => f.IsSelected).Select(f => new SelectedFolder(f.FolderId, f.Name)).ToList()
         };
 
         await _onboardingService.CompleteOnboardingAsync(account, ct)
