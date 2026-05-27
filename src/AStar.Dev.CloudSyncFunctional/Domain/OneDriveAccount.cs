@@ -1,0 +1,22 @@
+using AStar.Dev.CloudSyncFunctional.Auth;
+
+namespace AStar.Dev.CloudSyncFunctional.Domain;
+
+/// <summary>Represents an authenticated OneDrive account and its sync configuration.</summary>
+public sealed class OneDriveAccount
+{
+    /// <summary>Gets the MSAL HomeAccountId identifier.</summary>
+    public string AccountId { get; init; } = string.Empty;
+
+    /// <summary>Gets the account's display name and email.</summary>
+    public AccountProfile Profile { get; init; } = new(string.Empty, string.Empty);
+
+    /// <summary>Gets or sets whether this account is active for sync.</summary>
+    public bool IsActive { get; set; }
+
+    /// <summary>Gets the Graph drive ID for this account's OneDrive.</summary>
+    public string? DriveId { get; init; }
+
+    /// <summary>Gets the IDs of folders the user selected for sync.</summary>
+    public IReadOnlyList<string> SelectedFolderIds { get; init; } = [];
+}

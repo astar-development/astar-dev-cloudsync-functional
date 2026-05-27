@@ -6,6 +6,7 @@
         xmlns:controls="clr-namespace:AStar.Dev.CloudSyncFunctional.Controls"
         xmlns:accounts="clr-namespace:AStar.Dev.CloudSyncFunctional.Accounts"
         xmlns:folderTree="clr-namespace:AStar.Dev.CloudSyncFunctional.FolderTree"
+        xmlns:wizard="clr-namespace:AStar.Dev.CloudSyncFunctional.Wizard"
         xmlns:lucide="clr-namespace:Lucide.Avalonia;assembly=Lucide.Avalonia"
         mc:Ignorable="d" d:DesignWidth="1280" d:DesignHeight="820"
         x:Class="AStar.Dev.CloudSyncFunctional.MainWindow"
@@ -54,7 +55,7 @@
             </StackPanel>
         </Grid>
 
-        <!-- Content: Sidebar + Main Pane -->
+        <!-- Content: Sidebar + Main Pane + Wizard Overlay -->
         <Grid Grid.Row="1" ColumnDefinitions="286,*">
 
             <!-- Sidebar (Col 0, SurfaceAlt background) -->
@@ -181,11 +182,15 @@
                 </ScrollViewer>
 
                 <!-- + Add account button -->
-                <Border Grid.Row="4"
+                <Button Grid.Row="4"
+                        Command="{Binding OpenAddAccountWizard}"
                         Height="32" CornerRadius="6"
                         BorderThickness="1"
                         BorderBrush="{DynamicResource BorderStrong}"
-                        Cursor="Hand" Margin="14,8">
+                        Background="Transparent"
+                        Cursor="Hand" Margin="14,8"
+                        Padding="0"
+                        HorizontalContentAlignment="Stretch">
                     <StackPanel Orientation="Horizontal" Spacing="6"
                                 HorizontalAlignment="Center"
                                 VerticalAlignment="Center">
@@ -197,7 +202,7 @@
                                    Foreground="{DynamicResource Ink3}"
                                    VerticalAlignment="Center"/>
                     </StackPanel>
-                </Border>
+                </Button>
 
                 <!-- ThroughputCard (pinned below scroll) -->
                 <controls:ThroughputCard Grid.Row="5"
@@ -285,6 +290,19 @@
                                     QueueSummary="{Binding QueueSummary}"
                                     Version="{Binding Version}"/>
             </Grid>
+
+            <!-- Wizard overlay (spans both columns) -->
+            <ContentControl Grid.Column="0" Grid.ColumnSpan="2"
+                            Content="{Binding CurrentOverlay}"
+                            HorizontalContentAlignment="Stretch"
+                            VerticalContentAlignment="Stretch"
+                            IsVisible="{Binding CurrentOverlay, Converter={x:Static ObjectConverters.IsNotNull}}">
+                <ContentControl.DataTemplates>
+                    <DataTemplate DataType="wizard:AddAccountWizardViewModel">
+                        <wizard:AddAccountWizardView />
+                    </DataTemplate>
+                </ContentControl.DataTemplates>
+            </ContentControl>
         </Grid>
     </Grid>
 </Window>

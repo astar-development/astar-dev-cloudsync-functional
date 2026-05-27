@@ -1,15 +1,19 @@
-using System;
 using System.Collections.ObjectModel;
-using System.Linq;
 using AStar.Dev.CloudSyncFunctional.Accounts;
+using AStar.Dev.CloudSyncFunctional.Domain;
 using AStar.Dev.CloudSyncFunctional.FolderTree;
+using AStar.Dev.CloudSyncFunctional.Wizard;
+using Microsoft.Extensions.DependencyInjection;
 using ReactiveUI;
+using RxUnit = System.Reactive.Unit;
 
 namespace AStar.Dev.CloudSyncFunctional.Workspace;
 
 /// <summary>Root view-model for the application workspace. Holds all accounts and summary statistics.</summary>
 public class WorkspaceViewModel : ReactiveObject
 {
+    private readonly IServiceProvider _serviceProvider;
+
     /// <summary>Gets all cloud storage accounts registered in the workspace.</summary>
     public ObservableCollection<AccountViewModel> Accounts { get; } = BuildAccounts();
 
@@ -24,6 +28,16 @@ public class WorkspaceViewModel : ReactiveObject
                 account.IsSelected = account == value;
         }
     }
+
+    /// <summary>Gets or sets the current overlay content (e.g. the add-account wizard). Null means no overlay.</summary>
+    public ReactiveObject? CurrentOverlay
+    {
+        get;
+        set => this.RaiseAndSetIfChanged(ref field, value);
+    }
+
+    /// <summary>Gets the command that opens the add-account wizard overlay.</summary>
+    public ReactiveCommand<RxUnit, RxUnit> OpenAddAccountWizard { get; }
 
     /// <summary>Gets hourly transfer buckets for today (24 values, index = hour).</summary>
     public int[] TodayBuckets { get; } =
@@ -57,10 +71,18 @@ public class WorkspaceViewModel : ReactiveObject
     /// <summary>Gets a formatted subtitle summarising account count and total storage capacity.</summary>
     public string WorkspaceSubtitle => $"{Accounts.Count} accounts · {Accounts.Sum(a => a.TotalBytes) / 1_099_511_627_776.0:F1} TB total";
 
-    /// <summary>Initialises a new <see cref="WorkspaceViewModel"/> and selects the first account.</summary>
-    public WorkspaceViewModel()
+    /// <summary>Initialises a new <see cref="WorkspaceViewModel"/> using the provided service provider.</summary>
+    /// <param name="serviceProvider">The DI container used to resolve the wizard ViewModel on demand.</param>
+    public WorkspaceViewModel(IServiceProvider serviceProvider)
     {
+        _serviceProvider = serviceProvider;
         SelectedAccount = Accounts[0];
+        OpenAddAccountWizard = ReactiveCommand.Create(() => { }); // stub: does not set CurrentOverlay
+    }
+
+    /// <summary>Initialises a new <see cref="WorkspaceViewModel"/> with no DI services (design-time and test use).</summary>
+    public WorkspaceViewModel() : this(EmptyServiceProvider.Instance)
+    {
     }
 
     private static ObservableCollection<AccountViewModel> BuildAccounts() =>
@@ -175,5 +197,15 @@ public class WorkspaceViewModel : ReactiveObject
         };
 
         return [documentsNode, engineeringNode];
+    }
+
+    private sealed class EmptyServiceProvider : IServiceProvider
+    {
+        public static EmptyServiceProvider Instance { get; } = new();
+
+        /// <summary>Returns null for all service types.</summary>
+        /// <param name="serviceType">The requested service type.</param>
+        /// <returns>Always null.</returns>
+        public object? GetService(Type serviceType) => null;
     }
 }

@@ -7,12 +7,18 @@ namespace AStar.Dev.CloudSyncFunctional;
 /// <summary>The main application window containing the titlebar, sidebar, and main pane.</summary>
 public partial class MainWindow : Window
 {
-    /// <summary>Initializes the main window, sets the workspace as the data context, and wires chrome controls.</summary>
-    public MainWindow()
+    /// <summary>Initializes the main window with the provided workspace ViewModel.</summary>
+    /// <param name="viewModel">The workspace ViewModel resolved from DI.</param>
+    public MainWindow(WorkspaceViewModel viewModel)
     {
         InitializeComponent();
-        DataContext = new WorkspaceViewModel();
+        DataContext = viewModel;
         WireChrome();
+    }
+
+    /// <summary>Initializes the main window with a default design-time workspace ViewModel.</summary>
+    public MainWindow() : this(new WorkspaceViewModel())
+    {
     }
 
     private void WireChrome()

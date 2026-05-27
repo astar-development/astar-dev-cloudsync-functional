@@ -8,7 +8,7 @@
     <TargetFramework>net10.0</TargetFramework>
     <TestingPlatformDotnetTestSupport>true</TestingPlatformDotnetTestSupport>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
-    <NoWarn>NU1902;CA1859</NoWarn>
+    <NoWarn>NU1902;NU1903;CA1859</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>
@@ -18,11 +18,16 @@
   <ItemGroup>
     <Using Include="Xunit" />
     <Using Include="Shouldly" />
+    <Using Include="NSubstitute" />
+    <Using Include="System.Reactive.Linq" />
+    <Using Include="Microsoft.Extensions.DependencyInjection" />
   </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="xunit.v3.mtp-v2" Version="3.2.2" />
     <PackageReference Include="Shouldly" Version="4.3.0" />
+    <PackageReference Include="NSubstitute" Version="5.3.0" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.0" />
     <PackageReference Include="coverlet.collector" Version="10.0.1">
         <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         <PrivateAssets>all</PrivateAssets>

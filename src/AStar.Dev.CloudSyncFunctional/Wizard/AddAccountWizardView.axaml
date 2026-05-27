@@ -1,0 +1,201 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:wizard="clr-namespace:AStar.Dev.CloudSyncFunctional.Wizard"
+             xmlns:controls="clr-namespace:AStar.Dev.CloudSyncFunctional.Controls"
+             xmlns:accounts="clr-namespace:AStar.Dev.CloudSyncFunctional.Accounts"
+             xmlns:lucide="clr-namespace:Lucide.Avalonia;assembly=Lucide.Avalonia"
+             x:Class="AStar.Dev.CloudSyncFunctional.Wizard.AddAccountWizardView"
+             x:DataType="wizard:AddAccountWizardViewModel"
+             VerticalContentAlignment="Stretch"
+             HorizontalContentAlignment="Stretch">
+    <Grid Background="{DynamicResource Bg}" RowDefinitions="*,Auto">
+        <ScrollViewer Grid.Row="0"
+                      VerticalScrollBarVisibility="Auto"
+                      HorizontalScrollBarVisibility="Disabled"
+                      MinHeight="0">
+            <StackPanel MaxWidth="520" HorizontalAlignment="Center" Margin="32,40,32,24" Spacing="24">
+
+                <!-- Step 1: Provider Selection -->
+                <StackPanel IsVisible="{Binding IsProviderSelectionStep}" Spacing="20">
+                    <StackPanel Spacing="6">
+                        <TextBlock Text="Add account"
+                                   FontFamily="{StaticResource PlusJakartaSans}"
+                                   FontSize="22" FontWeight="Bold"
+                                   Foreground="{DynamicResource Ink}"/>
+                        <TextBlock Text="Choose a cloud storage provider to connect."
+                                   FontFamily="{StaticResource PlusJakartaSans}"
+                                   FontSize="13"
+                                   Foreground="{DynamicResource Ink3}"/>
+                    </StackPanel>
+
+                    <!-- Not-implemented banner -->
+                    <Border IsVisible="{Binding ShowNotImplemented}"
+                            Background="{DynamicResource Warn}" CornerRadius="6" Padding="12,8">
+                        <TextBlock Text="{Binding NotImplementedMessage}"
+                                   FontFamily="{StaticResource PlusJakartaSans}"
+                                   FontSize="12" Foreground="{DynamicResource Ink}"/>
+                    </Border>
+
+                    <!-- Provider tiles -->
+                    <StackPanel Spacing="12">
+                        <!-- OneDrive -->
+                        <Button Command="{Binding SelectProvider}"
+                                CommandParameter="{x:Static accounts:ProviderKind.OneDrive}"
+                                Background="Transparent" Padding="0"
+                                HorizontalContentAlignment="Stretch"
+                                BorderThickness="0">
+                            <Border CornerRadius="8" BorderThickness="1" BorderBrush="{DynamicResource Border}"
+                                    Background="{DynamicResource Surface}" Padding="16">
+                                <Grid ColumnDefinitions="Auto,*">
+                                    <controls:ProviderMark Grid.Column="0" Kind="OneDrive" Size="36" Margin="0,0,12,0"/>
+                                    <StackPanel Grid.Column="1" Spacing="2" VerticalAlignment="Center">
+                                        <TextBlock Text="OneDrive"
+                                                   FontFamily="{StaticResource PlusJakartaSans}"
+                                                   FontSize="13" FontWeight="SemiBold"
+                                                   Foreground="{DynamicResource Ink}"/>
+                                        <TextBlock Text="Connect your personal or work Microsoft OneDrive."
+                                                   FontFamily="{StaticResource PlusJakartaSans}"
+                                                   FontSize="11" Foreground="{DynamicResource Ink3}"/>
+                                    </StackPanel>
+                                </Grid>
+                            </Border>
+                        </Button>
+
+                        <!-- Google Drive -->
+                        <Button Command="{Binding SelectProvider}"
+                                CommandParameter="{x:Static accounts:ProviderKind.GoogleDrive}"
+                                Background="Transparent" Padding="0"
+                                HorizontalContentAlignment="Stretch"
+                                BorderThickness="0">
+                            <Border CornerRadius="8" BorderThickness="1" BorderBrush="{DynamicResource Border}"
+                                    Background="{DynamicResource Surface}" Padding="16">
+                                <Grid ColumnDefinitions="Auto,*">
+                                    <controls:ProviderMark Grid.Column="0" Kind="GoogleDrive" Size="36" Margin="0,0,12,0"/>
+                                    <StackPanel Grid.Column="1" Spacing="2" VerticalAlignment="Center">
+                                        <TextBlock Text="Google Drive"
+                                                   FontFamily="{StaticResource PlusJakartaSans}"
+                                                   FontSize="13" FontWeight="SemiBold"
+                                                   Foreground="{DynamicResource Ink}"/>
+                                        <TextBlock Text="Connect your Google Drive. (Coming soon)"
+                                                   FontFamily="{StaticResource PlusJakartaSans}"
+                                                   FontSize="11" Foreground="{DynamicResource Ink3}"/>
+                                    </StackPanel>
+                                </Grid>
+                            </Border>
+                        </Button>
+
+                        <!-- Dropbox -->
+                        <Button Command="{Binding SelectProvider}"
+                                CommandParameter="{x:Static accounts:ProviderKind.Dropbox}"
+                                Background="Transparent" Padding="0"
+                                HorizontalContentAlignment="Stretch"
+                                BorderThickness="0">
+                            <Border CornerRadius="8" BorderThickness="1" BorderBrush="{DynamicResource Border}"
+                                    Background="{DynamicResource Surface}" Padding="16">
+                                <Grid ColumnDefinitions="Auto,*">
+                                    <controls:ProviderMark Grid.Column="0" Kind="Dropbox" Size="36" Margin="0,0,12,0"/>
+                                    <StackPanel Grid.Column="1" Spacing="2" VerticalAlignment="Center">
+                                        <TextBlock Text="Dropbox"
+                                                   FontFamily="{StaticResource PlusJakartaSans}"
+                                                   FontSize="13" FontWeight="SemiBold"
+                                                   Foreground="{DynamicResource Ink}"/>
+                                        <TextBlock Text="Connect your Dropbox. (Coming soon)"
+                                                   FontFamily="{StaticResource PlusJakartaSans}"
+                                                   FontSize="11" Foreground="{DynamicResource Ink3}"/>
+                                    </StackPanel>
+                                </Grid>
+                            </Border>
+                        </Button>
+                    </StackPanel>
+                </StackPanel>
+
+                <!-- Step 2: Sign In -->
+                <StackPanel IsVisible="{Binding IsSignInStep}" Spacing="20">
+                    <StackPanel Spacing="6">
+                        <TextBlock Text="Sign in with Microsoft"
+                                   FontFamily="{StaticResource PlusJakartaSans}"
+                                   FontSize="22" FontWeight="Bold"
+                                   Foreground="{DynamicResource Ink}"/>
+                        <TextBlock Text="Your browser will open for authentication."
+                                   FontFamily="{StaticResource PlusJakartaSans}"
+                                   FontSize="13" Foreground="{DynamicResource Ink3}"/>
+                    </StackPanel>
+
+                    <Border IsVisible="{Binding SignInHasError}"
+                            Background="{DynamicResource Error}" CornerRadius="6" Padding="12,8">
+                        <TextBlock Text="{Binding SignInStatusText}"
+                                   FontFamily="{StaticResource PlusJakartaSans}"
+                                   FontSize="12" Foreground="{DynamicResource Ink}"/>
+                    </Border>
+
+                    <StackPanel Spacing="4">
+                        <TextBlock IsVisible="{Binding IsWaitingForAuth}"
+                                   Text="{Binding SignInStatusText}"
+                                   FontFamily="{StaticResource PlusJakartaSans}"
+                                   FontSize="12" Foreground="{DynamicResource Ink3}"/>
+                        <controls:AppButton Command="{Binding SignIn}"
+                                            IsEnabled="{Binding !IsWaitingForAuth}"
+                                            Label="Sign in with Microsoft"
+                                            Kind="Primary"/>
+                    </StackPanel>
+                </StackPanel>
+
+                <!-- Step 3: Select Folders -->
+                <StackPanel IsVisible="{Binding IsSelectFoldersStep}" Spacing="20">
+                    <StackPanel Spacing="6">
+                        <TextBlock Text="Select folders to sync"
+                                   FontFamily="{StaticResource PlusJakartaSans}"
+                                   FontSize="22" FontWeight="Bold"
+                                   Foreground="{DynamicResource Ink}"/>
+                        <TextBlock Text="Choose which OneDrive folders to sync locally."
+                                   FontFamily="{StaticResource PlusJakartaSans}"
+                                   FontSize="13" Foreground="{DynamicResource Ink3}"/>
+                    </StackPanel>
+
+                    <Border IsVisible="{Binding HasError}"
+                            Background="{DynamicResource Error}" CornerRadius="6" Padding="12,8">
+                        <TextBlock Text="{Binding ErrorMessage}"
+                                   FontFamily="{StaticResource PlusJakartaSans}"
+                                   FontSize="12" Foreground="{DynamicResource Ink}"/>
+                    </Border>
+
+                    <TextBlock IsVisible="{Binding IsLoadingFolders}"
+                               Text="Loading folders…"
+                               FontFamily="{StaticResource PlusJakartaSans}"
+                               FontSize="12" Foreground="{DynamicResource Ink3}"/>
+
+                    <ItemsControl ItemsSource="{Binding Folders}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate x:DataType="wizard:WizardFolderItem">
+                                <Border Padding="8,6" CornerRadius="4">
+                                    <StackPanel Orientation="Horizontal" Spacing="10">
+                                        <CheckBox IsChecked="{Binding IsSelected, Mode=TwoWay}" VerticalAlignment="Center"/>
+                                        <TextBlock Text="{Binding Name}"
+                                                   FontFamily="{StaticResource PlusJakartaSans}"
+                                                   FontSize="12"
+                                                   Foreground="{DynamicResource Ink}"
+                                                   VerticalAlignment="Center"/>
+                                    </StackPanel>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </StackPanel>
+
+            </StackPanel>
+        </ScrollViewer>
+
+        <!-- Footer buttons -->
+        <Border Grid.Row="1" BorderThickness="0,1,0,0" BorderBrush="{DynamicResource Border}" Padding="24,12">
+            <Grid ColumnDefinitions="Auto,*,Auto,Auto">
+                <controls:AppButton Grid.Column="0" Command="{Binding Cancel}" Label="Cancel" Kind="Ghost" ButtonSize="Sm"/>
+                <controls:AppButton Grid.Column="2" Command="{Binding Back}" Label="Back"
+                                    IsVisible="{Binding CanGoBack}" Kind="Ghost" ButtonSize="Sm" Margin="0,0,8,0"/>
+                <controls:AppButton Grid.Column="3"
+                                    Command="{Binding AddAccount}"
+                                    IsVisible="{Binding IsSelectFoldersStep}"
+                                    Label="Add account" Kind="Primary" ButtonSize="Sm"/>
+            </Grid>
+        </Border>
+    </Grid>
+</UserControl>
