@@ -40,17 +40,71 @@ Always call `UseSqliteFriendlyConversions()` before `ApplyConfigurationsFromAsse
 - Never edit generated migration files after creation.
 - Never create a migration that drops existing data without an explicit user decision.
 
-## Strongly-typed ID mapping
+## Strongly-typed domain value types
 
-Every strongly-typed ID (e.g. `AccountId`, `OneDriveItemId`, `DriveId`) must be mapped via a value converter in its entity configuration:
+No primitive type (`string`, `Guid`, `int`) is used directly for domain concepts in entities or domain models. Every distinct domain concept has its own `readonly record struct` with a single `Value` property holding the backing primitive.
+
+### Canonical pattern
+
+```csharp
+/// <summary>Strongly-typed wrapper for an OneDrive account identifier.</summary>
+public readonly record struct AccountId(string Value);
+```
+
+- **Always** `readonly record struct` — value semantics, no null, stack-allocated.
+- **Single property** named `Value` — consistent across all wrapper types.
+- **No validation in the constructor** — validation belongs in the paired factory method (see `@.claude/rules/c-sharp-code-style.md` § Record Design).
+- **One file per type** — co-locate with the domain type it belongs to.
+
+### Required domain value types
+
+Every domain concept below must use the wrapper type shown. Never fall back to the raw primitive.
+
+| Concept | Type | Backing |
+|---|---|---|
+| MSAL account identifier | `AccountId` | `string` |
+| OneDrive drive identifier | `DriveId` | `string` |
+| OneDrive item identifier | `OneDriveItemId` | `string` |
+| OneDrive folder identifier | `OneDriveFolderId` | `string` |
+| Sync rule identifier | `SyncRuleId` | `string` |
+| Synced item identifier | `SyncedItemId` | `string` |
+| Sync job identifier | `SyncJobId` | `string` |
+| Sync conflict identifier | `SyncConflictId` | `string` |
+| Email address | `EmailAddress` | `string` |
+| Display name | `DisplayName` | `string` |
+| Local file system path | `LocalPath` | `string` |
+| Local sync root path | `LocalSyncPath` | `string` |
+| Remote OneDrive item path | `RemotePath` | `string` |
+
+Add a new row to this table whenever a new domain concept is introduced.
+
+### EF Core value converter registration
+
+Every wrapper type must have a corresponding static `ValueConverter` registered in `SqliteTypeConverters`. **Never** use an inline lambda directly inside an `IEntityTypeConfiguration<T>` — centralise so converters are reused across entity configs.
+
+```csharp
+// SqliteTypeConverters.cs — add one entry per wrapper type
+public static ValueConverter<AccountId, string>    AccountIdConverter    { get; } = new(id => id.Value, str => new AccountId(str));
+public static ValueConverter<DriveId, string>      DriveIdConverter      { get; } = new(id => id.Value, str => new DriveId(str));
+public static ValueConverter<EmailAddress, string> EmailAddressConverter { get; } = new(e  => e.Value,  str => new EmailAddress(str));
+public static ValueConverter<DisplayName, string>  DisplayNameConverter  { get; } = new(d  => d.Value,  str => new DisplayName(str));
+public static ValueConverter<LocalPath, string>    LocalPathConverter    { get; } = new(p  => p.Value,  str => new LocalPath(str));
+public static ValueConverter<LocalSyncPath, string> LocalSyncPathConverter { get; } = new(p => p.Value, str => new LocalSyncPath(str));
+public static ValueConverter<RemotePath, string>   RemotePathConverter   { get; } = new(p  => p.Value,  str => new RemotePath(str));
+```
+
+Reference the static converter in each entity configuration:
 
 ```csharp
 builder.Property(e => e.Id)
-       .HasConversion(id => id.Id, str => new AccountId(str));
+       .HasConversion(SqliteTypeConverters.AccountIdConverter);
+
+builder.Property(e => e.DriveId)
+       .HasConversion(SqliteTypeConverters.DriveIdConverter);
 ```
 
-- The backing type (typically `string` or `Guid`) is what SQLite stores.
-- Never store a raw `string` for a domain ID in an entity — always use the strongly-typed wrapper.
+- The backing type stored in SQLite is always the primitive (`string`, `long`) — never the wrapper type itself.
+- Never store a raw primitive for a domain concept in an entity — always use the strongly-typed wrapper.
 
 ## `Option<T>` mapping
 
@@ -93,8 +147,12 @@ public sealed class AccountSyncConfig
 ```csharp
 builder.ComplexProperty(e => e.Profile, p =>
 {
-    _ = p.Property(prof => prof.DisplayName).HasColumnName("DisplayName");
-    _ = p.Property(prof => prof.Email).HasColumnName("Email");
+    _ = p.Property(prof => prof.DisplayName)
+         .HasConversion(SqliteTypeConverters.DisplayNameConverter)
+         .HasColumnName("DisplayName");
+    _ = p.Property(prof => prof.Email)
+         .HasConversion(SqliteTypeConverters.EmailAddressConverter)
+         .HasColumnName("Email");
 });
 ```
 
