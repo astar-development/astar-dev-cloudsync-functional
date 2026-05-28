@@ -35,6 +35,14 @@ Coding standards and style guidelines / preferences for C# files in this reposit
 
 - Use file-scoped namespaces.
 - Namespace names should follow the pattern: Company.Project.Module (e.g., Contoso.Sales.Reporting).
+- Use `using` aliases to eliminate noise from verbose third-party type names:
+  ```csharp
+  // ✅ alias at the top of the file — use the alias throughout
+  using GraphClient = Microsoft.Graph.GraphServiceClient;
+
+  // ❌ repeated fully-qualified name in every method signature
+  private static Task<...> FooAsync(Microsoft.Graph.GraphServiceClient client, ...) { }
+  ```
 
 ## Folder Structure
 
@@ -89,6 +97,32 @@ This applies to all new code.
 - Every `return` statement after a code block must be preceded by a blank line. `return` after an `if` must NOT be followed by a blank line or `{ return; }`.
 - Name for **meaning**: `customerId` not `id`, `isExpired` not `flag`.
 - Use builders for test setup / test data creation.
+- Prefer a nullable accumulator parameter with `?? []` over an overload pair where one simply calls the other with an empty collection:
+  ```csharp
+  // ❌ overload pair — the first adds nothing
+  private static Task<Result<List<T>, E>> GetPagesAsync(Client c, Page page, CancellationToken ct)
+      => GetPagesAsync(c, page, [], ct);
+  private static Task<Result<List<T>, E>> GetPagesAsync(Client c, Page page, IReadOnlyCollection<T> acc, CancellationToken ct) { ... }
+
+  // ✅ single method with nullable accumulator
+  private static Task<Result<List<T>, E>> GetPagesAsync(Client c, Page page, IReadOnlyCollection<T>? acc, CancellationToken ct)
+  {
+      var items = (acc ?? []).Concat(GetItemsFromPage(page)).ToList();
+      // ...
+  }
+  ```
+- A private method whose entire body is a 1–2 combinator chain that forwards to another private method earns nothing — inline it at the call site:
+  ```csharp
+  // ❌ wrapper adds a layer for no reason
+  private static Task<Result<List<DriveFolder>, GraphError>> GetDriveFoldersAsync(Client c, DriveFound d, RootFound r, CancellationToken ct)
+      => GetFirstPageAsync(c, d, r, ct).BindAsync(page => GetAllPagesAsync(c, d, r, page, ct));
+
+  // ✅ inline at the call site
+  private static Task<Result<List<DriveFolder>, GraphError>> GetRootFoldersForDriveAsync(Client c, DriveFound d, CancellationToken ct)
+      => GetRootAsync(c, d, ct)
+          .BindAsync(root => GetFirstPageAsync(c, d, root, ct)
+              .BindAsync(page => GetAllPagesAsync(c, d, root, page, null, ct)));
+  ```
 
 ## Primitive Obsession
 

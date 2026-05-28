@@ -9,12 +9,10 @@ namespace AStar.Dev.CloudSyncFunctional.Controls;
 public partial class SubTabBar : UserControl
 {
     /// <summary>Identifies the <see cref="SelectedTab"/> styled property.</summary>
-    public static readonly StyledProperty<SubTab> SelectedTabProperty =
-        AvaloniaProperty.Register<SubTabBar, SubTab>(nameof(SelectedTab), SubTab.SyncFolders);
+    public static readonly StyledProperty<SubTab> SelectedTabProperty = AvaloniaProperty.Register<SubTabBar, SubTab>(nameof(SelectedTab), SubTab.SyncFolders);
 
     /// <summary>Identifies the <see cref="ConflictCount"/> styled property.</summary>
-    public static readonly StyledProperty<int> ConflictCountProperty =
-        AvaloniaProperty.Register<SubTabBar, int>(nameof(ConflictCount), 0);
+    public static readonly StyledProperty<int> ConflictCountProperty = AvaloniaProperty.Register<SubTabBar, int>(nameof(ConflictCount), 0);
 
     /// <summary>Gets or sets the currently active tab.</summary>
     public SubTab SelectedTab
@@ -57,21 +55,21 @@ public partial class SubTabBar : UserControl
     protected override void OnInitialized()
     {
         base.OnInitialized();
-        updateBorder();
-        updateTabLabels();
-        updateTabAppearances();
-        updateConflictsPill();
+        UpdateBorder();
+        UpdateTabLabels();
+        UpdateTabAppearances();
+        UpdateConflictsPill();
     }
 
     /// <inheritdoc/>
     protected override void OnPropertyChanged(AvaloniaPropertyChangedEventArgs change)
     {
         base.OnPropertyChanged(change);
-        if (change.Property == SelectedTabProperty) updateTabAppearances();
-        if (change.Property == ConflictCountProperty) updateConflictsPill();
+        if (change.Property == SelectedTabProperty) UpdateTabAppearances();
+        if (change.Property == ConflictCountProperty) UpdateConflictsPill();
     }
 
-    private void updateBorder()
+    private void UpdateBorder()
     {
         if (ContainerBorder is null) return;
 
@@ -79,7 +77,7 @@ public partial class SubTabBar : UserControl
             ContainerBorder.BorderBrush = borderBrush;
     }
 
-    private void updateTabLabels()
+    private void UpdateTabLabels()
     {
         if (SyncFoldersLabel is null || ActivityLabel is null || ConflictsLabel is null || SettingsLabel is null) return;
 
@@ -89,18 +87,18 @@ public partial class SubTabBar : UserControl
         SettingsLabel.Text    = GetTabLabel(SubTab.Settings);
     }
 
-    private void updateTabAppearances()
+    private void UpdateTabAppearances()
     {
         if (SyncFoldersLabel is null || ActivityLabel is null || ConflictsLabel is null || SettingsLabel is null) return;
         if (SyncFoldersUnderline is null || ActivityUnderline is null || ConflictsUnderline is null || SettingsUnderline is null) return;
 
-        applyTabStyle(SyncFoldersLabel, SyncFoldersUnderline, SelectedTab == SubTab.SyncFolders);
-        applyTabStyle(ActivityLabel,    ActivityUnderline,    SelectedTab == SubTab.Activity);
-        applyTabStyle(ConflictsLabel,   ConflictsUnderline,   SelectedTab == SubTab.Conflicts);
-        applyTabStyle(SettingsLabel,    SettingsUnderline,    SelectedTab == SubTab.Settings);
+        ApplyTabStyle(SyncFoldersLabel, SyncFoldersUnderline, SelectedTab == SubTab.SyncFolders);
+        ApplyTabStyle(ActivityLabel,    ActivityUnderline,    SelectedTab == SubTab.Activity);
+        ApplyTabStyle(ConflictsLabel,   ConflictsUnderline,   SelectedTab == SubTab.Conflicts);
+        ApplyTabStyle(SettingsLabel,    SettingsUnderline,    SelectedTab == SubTab.Settings);
     }
 
-    private void applyTabStyle(TextBlock label, Border underline, bool isActive)
+    private void ApplyTabStyle(TextBlock label, Border underline, bool isActive)
     {
         if (isActive)
         {
@@ -123,7 +121,7 @@ public partial class SubTabBar : UserControl
         }
     }
 
-    private void updateConflictsPill()
+    private void UpdateConflictsPill()
     {
         if (ConflictsPill is null) return;
 

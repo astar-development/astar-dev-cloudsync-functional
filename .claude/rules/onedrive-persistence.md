@@ -190,11 +190,11 @@ IFileClassificationRuleRepository / FileClassificationRuleRepository
 All write methods return `Result<Unit, PersistenceError>`. Catch EF exceptions at the repository:
 
 ```csharp
-public async Task<Result<Unit, PersistenceError>> UpsertAsync(AccountEntity entity, CancellationToken ct)
+public async Task<Result<Unit, PersistenceError>> UpsertAsync(AccountEntity entity, CancellationToken cancellationToken)
 {
     try
     {
-        var existing = await context.Accounts.FindAsync([entity.Id], ct);
+        var existing = await context.Accounts.FindAsync([entity.Id], cancellationToken);
         if (existing is null)
             context.Accounts.Add(entity);
         else

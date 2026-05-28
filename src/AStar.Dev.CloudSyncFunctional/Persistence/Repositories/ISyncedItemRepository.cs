@@ -12,23 +12,23 @@ public interface ISyncedItemRepository
     /// <param name="id">The synced item identifier.</param>
     /// <param name="ct">Cancellation token.</param>
     /// <returns>The item if found, otherwise None.</returns>
-    Task<Option<SyncedItemEntity, PersistenceError>> GetByIdAsync(SyncedItemId id, CancellationToken ct = default);
+    Task<Option<SyncedItemEntity>> GetByIdAsync(SyncedItemId id, CancellationToken cancellationToken = default);
 
     /// <summary>Retrieves all synced items for a given account.</summary>
     /// <param name="accountId">The account identifier.</param>
     /// <param name="ct">Cancellation token.</param>
     /// <returns>All synced items for the account.</returns>
-    Task<IReadOnlyList<SyncedItemEntity>> GetByAccountAsync(AccountId accountId, CancellationToken ct = default);
+    Task<IReadOnlyList<SyncedItemEntity>> GetByAccountAsync(AccountId accountId, CancellationToken cancellationToken = default);
 
     /// <summary>Upserts a synced item.</summary>
     /// <param name="entity">The item to upsert.</param>
     /// <param name="ct">Cancellation token.</param>
     /// <returns>Ok on success, Fail on error.</returns>
-    Task<Result<Unit, PersistenceError>> UpsertAsync(SyncedItemEntity entity, CancellationToken ct = default);
+    Task<Result<Unit, PersistenceError>> UpsertAsync(SyncedItemEntity entity, CancellationToken cancellationToken = default);
 
     /// <summary>Deletes a synced item by identifier.</summary>
     /// <param name="id">The item identifier.</param>
     /// <param name="ct">Cancellation token.</param>
     /// <returns>Ok on success, Fail on error.</returns>
-    Task<Result<Unit, PersistenceError>> DeleteAsync(SyncedItemId id, CancellationToken ct = default);
+    Task<Result<Unit, PersistenceError>> DeleteAsync(SyncedItemId id, CancellationToken cancellationToken = default);
 }

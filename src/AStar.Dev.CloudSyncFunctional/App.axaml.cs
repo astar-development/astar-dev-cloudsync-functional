@@ -13,6 +13,8 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Identity.Client;
+using System.IO.Abstractions;
+using Testably.Abstractions;
 using MELogLevel = Microsoft.Extensions.Logging.LogLevel;
 
 namespace AStar.Dev.CloudSyncFunctional;
@@ -37,13 +39,11 @@ public partial class App : Application
         ConfigureServices(services, configuration);
         _serviceProvider = services.BuildServiceProvider();
 
-        ApplyDatabaseMigrations(_serviceProvider);
-
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
             var viewModel = _serviceProvider.GetRequiredService<WorkspaceViewModel>();
             desktop.MainWindow = new MainWindow(viewModel);
-            _ = viewModel.LoadPersistedAccountsAsync(CancellationToken.None);
+            _ = InitialiseAsync(_serviceProvider, viewModel);
         }
 
         base.OnFrameworkInitializationCompleted();
@@ -56,7 +56,7 @@ public partial class App : Application
         var clientId = configuration["MicrosoftIdentity:ClientId"]
             ?? throw new InvalidOperationException("MicrosoftIdentity:ClientId is not configured. Set it in appsettings.json or user secrets.");
 
-        services.AddSingleton<IPublicClientApplication>(_ =>
+        services.AddSingleton(_ =>
             PublicClientApplicationBuilder
                 .Create(clientId)
                 .WithAuthority("https://login.microsoftonline.com/consumers")
@@ -68,7 +68,10 @@ public partial class App : Application
         services.AddSingleton<IGraphClientFactory, GraphClientFactory>();
         services.AddSingleton<IGraphService, GraphService>();
 
-        var connectionString = $"DataSource={GetDatabasePath()}";
+        var fileSystem = new RealFileSystem();
+        services.AddSingleton<IFileSystem>(fileSystem);
+
+        var connectionString = $"DataSource={GetDatabasePath(fileSystem)}";
         services.AddDbContextFactory<AppDbContext>(options =>
             options.UseSqlite(connectionString), ServiceLifetime.Singleton);
 
@@ -84,19 +87,25 @@ public partial class App : Application
         services.AddTransient<WorkspaceViewModel>();
     }
 
-    private static void ApplyDatabaseMigrations(IServiceProvider serviceProvider)
+    private static async Task InitialiseAsync(IServiceProvider serviceProvider, WorkspaceViewModel viewModel)
     {
-        var dbContextFactory = serviceProvider.GetRequiredService<IDbContextFactory<AppDbContext>>();
-        using var startupContext = dbContextFactory.CreateDbContext();
-        startupContext.Database.Migrate();
+        await ApplyDatabaseMigrationsAsync(serviceProvider);
+        await viewModel.LoadPersistedAccountsAsync(CancellationToken.None);
     }
 
-    private static string GetDatabasePath()
+    private static async Task ApplyDatabaseMigrationsAsync(IServiceProvider serviceProvider)
+    {
+        var dbContextFactory = serviceProvider.GetRequiredService<IDbContextFactory<AppDbContext>>();
+        await using var context = await dbContextFactory.CreateDbContextAsync();
+        await context.Database.MigrateAsync();
+    }
+
+    private static string GetDatabasePath(IFileSystem fileSystem)
     {
         var configDir = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
-        var appDir = Path.Combine(configDir, "astar-dev-cloudsync");
-        Directory.CreateDirectory(appDir);
+        var appDir = fileSystem.Path.Combine(configDir, "astar-dev-cloudsync");
+        fileSystem.Directory.CreateDirectory(appDir);
 
-        return Path.Combine(appDir, "sync.db");
+        return fileSystem.Path.Combine(appDir, "sync.db");
     }
 }

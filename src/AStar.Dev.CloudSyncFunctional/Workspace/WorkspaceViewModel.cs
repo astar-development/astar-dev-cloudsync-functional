@@ -88,12 +88,12 @@ public class WorkspaceViewModel : ReactiveObject
     /// <summary>Loads persisted accounts from the database and populates <see cref="Accounts"/>.</summary>
     /// <param name="ct">Cancellation token.</param>
     /// <returns>A task that completes when accounts are loaded and added to the collection.</returns>
-    public async Task LoadPersistedAccountsAsync(CancellationToken ct = default)
+    public async Task LoadPersistedAccountsAsync(CancellationToken cancellationToken = default)
     {
         if (_accountRepository is null)
             return;
 
-        var entities = await _accountRepository.GetAllAsync(ct);
+        var entities = await _accountRepository.GetAllAsync(cancellationToken);
         foreach (var vm in entities.Select(MapToViewModel))
             Accounts.Add(vm);
         if (Accounts.Count > 0 && SelectedAccount is null)

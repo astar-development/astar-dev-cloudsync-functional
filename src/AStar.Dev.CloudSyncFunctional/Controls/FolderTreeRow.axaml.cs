@@ -14,40 +14,31 @@ public partial class FolderTreeRow : UserControl
     private const long MegaByte = 1_048_576L;
 
     /// <summary>Identifies the <see cref="NodeName"/> styled property.</summary>
-    public static readonly StyledProperty<string> NodeNameProperty =
-        AvaloniaProperty.Register<FolderTreeRow, string>(nameof(NodeName), string.Empty);
+    public static readonly StyledProperty<string> NodeNameProperty = AvaloniaProperty.Register<FolderTreeRow, string>(nameof(NodeName), string.Empty);
 
     /// <summary>Identifies the <see cref="Depth"/> styled property.</summary>
-    public static readonly StyledProperty<int> DepthProperty =
-        AvaloniaProperty.Register<FolderTreeRow, int>(nameof(Depth));
+    public static readonly StyledProperty<int> DepthProperty = AvaloniaProperty.Register<FolderTreeRow, int>(nameof(Depth));
 
     /// <summary>Identifies the <see cref="ChildCount"/> styled property.</summary>
-    public static readonly StyledProperty<int> ChildCountProperty =
-        AvaloniaProperty.Register<FolderTreeRow, int>(nameof(ChildCount));
+    public static readonly StyledProperty<int> ChildCountProperty = AvaloniaProperty.Register<FolderTreeRow, int>(nameof(ChildCount));
 
     /// <summary>Identifies the <see cref="SizeBytes"/> styled property.</summary>
-    public static readonly StyledProperty<long> SizeBytesProperty =
-        AvaloniaProperty.Register<FolderTreeRow, long>(nameof(SizeBytes));
+    public static readonly StyledProperty<long> SizeBytesProperty = AvaloniaProperty.Register<FolderTreeRow, long>(nameof(SizeBytes));
 
     /// <summary>Identifies the <see cref="LastSync"/> styled property.</summary>
-    public static readonly StyledProperty<DateTimeOffset> LastSyncProperty =
-        AvaloniaProperty.Register<FolderTreeRow, DateTimeOffset>(nameof(LastSync));
+    public static readonly StyledProperty<DateTimeOffset> LastSyncProperty = AvaloniaProperty.Register<FolderTreeRow, DateTimeOffset>(nameof(LastSync));
 
     /// <summary>Identifies the <see cref="SelectionState"/> styled property.</summary>
-    public static readonly StyledProperty<CheckState> SelectionStateProperty =
-        AvaloniaProperty.Register<FolderTreeRow, CheckState>(nameof(SelectionState));
+    public static readonly StyledProperty<CheckState> SelectionStateProperty = AvaloniaProperty.Register<FolderTreeRow, CheckState>(nameof(SelectionState));
 
     /// <summary>Identifies the <see cref="IsExpanded"/> styled property.</summary>
-    public static readonly StyledProperty<bool> IsExpandedProperty =
-        AvaloniaProperty.Register<FolderTreeRow, bool>(nameof(IsExpanded));
+    public static readonly StyledProperty<bool> IsExpandedProperty = AvaloniaProperty.Register<FolderTreeRow, bool>(nameof(IsExpanded));
 
     /// <summary>Identifies the <see cref="IsSyncing"/> styled property.</summary>
-    public static readonly StyledProperty<bool> IsSyncingProperty =
-        AvaloniaProperty.Register<FolderTreeRow, bool>(nameof(IsSyncing));
+    public static readonly StyledProperty<bool> IsSyncingProperty = AvaloniaProperty.Register<FolderTreeRow, bool>(nameof(IsSyncing));
 
     /// <summary>Identifies the <see cref="HasChildren"/> styled property.</summary>
-    public static readonly StyledProperty<bool> HasChildrenProperty =
-        AvaloniaProperty.Register<FolderTreeRow, bool>(nameof(HasChildren));
+    public static readonly StyledProperty<bool> HasChildrenProperty = AvaloniaProperty.Register<FolderTreeRow, bool>(nameof(HasChildren));
 
     /// <summary>Gets or sets the display name of the folder.</summary>
     public string NodeName
@@ -263,9 +254,9 @@ public partial class FolderTreeRow : UserControl
 
         if (ink3Brush is null) return;
 
-        if (ItemCountText is not null) ItemCountText.Foreground = ink3Brush;
-        if (SizeText is not null) SizeText.Foreground = ink3Brush;
-        if (UpdatedText is not null) UpdatedText.Foreground = ink3Brush;
+        ItemCountText?.Foreground = ink3Brush;
+        SizeText?.Foreground = ink3Brush;
+        UpdatedText?.Foreground = ink3Brush;
     }
 
     private void UpdateIndent()

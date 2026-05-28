@@ -9,12 +9,10 @@ namespace AStar.Dev.CloudSyncFunctional.Controls;
 public partial class ProviderMark : UserControl
 {
     /// <summary>Identifies the <see cref="Kind"/> styled property.</summary>
-    public static readonly StyledProperty<ProviderKind> KindProperty =
-        AvaloniaProperty.Register<ProviderMark, ProviderKind>(nameof(Kind));
+    public static readonly StyledProperty<ProviderKind> KindProperty = AvaloniaProperty.Register<ProviderMark, ProviderKind>(nameof(Kind));
 
     /// <summary>Identifies the <see cref="Size"/> styled property.</summary>
-    public static readonly StyledProperty<double> SizeProperty =
-        AvaloniaProperty.Register<ProviderMark, double>(nameof(Size), 26.0);
+    public static readonly StyledProperty<double> SizeProperty = AvaloniaProperty.Register<ProviderMark, double>(nameof(Size), 26.0);
 
     /// <summary>Gets or sets the cloud provider this mark represents.</summary>
     public ProviderKind Kind

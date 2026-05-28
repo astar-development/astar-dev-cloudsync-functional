@@ -67,10 +67,10 @@ services.AddDbContextFactory<AppDbContext>(options =>
 // Repository usage — one context per async operation
 public class AccountRepository(IDbContextFactory<AppDbContext> dbFactory) : IAccountRepository
 {
-    public async Task<Option<AccountEntity>> GetByIdAsync(AccountId id, CancellationToken ct)
+    public async Task<Option<AccountEntity>> GetByIdAsync(AccountId id, CancellationToken cancellationToken)
     {
         await using var context = await dbFactory.CreateDbContextAsync(ct);
-        var entity = await context.Accounts.FindAsync([id], ct);
+        var entity = await context.Accounts.FindAsync([id], cancellationToken);
         return entity is null ? new None<AccountEntity>() : new Some<AccountEntity>(entity);
     }
 }

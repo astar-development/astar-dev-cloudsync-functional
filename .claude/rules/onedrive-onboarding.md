@@ -9,7 +9,7 @@
 /// Persists a new account and its initial sync configuration after the wizard completes.
 /// Returns the finalised <see cref="OneDriveAccount"/> with all defaults applied.
 /// </summary>
-Task<Result<OneDriveAccount, PersistenceError>> CompleteOnboardingAsync(OneDriveAccount account, CancellationToken ct = default);
+Task<Result<OneDriveAccount, PersistenceError>> CompleteOnboardingAsync(OneDriveAccount account, CancellationToken cancellationToken = default);
 ```
 
 ## Responsibilities (in order)
@@ -56,7 +56,7 @@ The wizard ViewModel raises `Completed` with the draft `OneDriveAccount`. The ho
 ```csharp
 wizard.Completed += async (_, account) =>
 {
-    await _onboardingService.CompleteOnboardingAsync(account, ct)
+    await _onboardingService.CompleteOnboardingAsync(account, cancellationToken)
         .MatchAsync(
             finalAccount => { /* add to accounts list, navigate away */ },
             error        => { HasError = true; ErrorMessage = error.Message; });

@@ -12,11 +12,11 @@ public interface IDriveStateRepository
     /// <param name="accountId">The account identifier.</param>
     /// <param name="ct">Cancellation token.</param>
     /// <returns>The drive state if present, otherwise None.</returns>
-    Task<Option<DriveStateEntity, PersistenceError>> GetByAccountAsync(AccountId accountId, CancellationToken ct = default);
+    Task<Option<DriveStateEntity>> GetByAccountAsync(AccountId accountId, CancellationToken cancellationToken = default);
 
     /// <summary>Upserts the drive state for an account.</summary>
     /// <param name="entity">The drive state to upsert.</param>
     /// <param name="ct">Cancellation token.</param>
     /// <returns>Ok on success, Fail on error.</returns>
-    Task<Result<Unit, PersistenceError>> UpsertAsync(DriveStateEntity entity, CancellationToken ct = default);
+    Task<Result<Unit, PersistenceError>> UpsertAsync(DriveStateEntity entity, CancellationToken cancellationToken = default);
 }

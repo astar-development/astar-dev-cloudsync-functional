@@ -34,15 +34,12 @@ public static class ResultExtensions
     /// <param name="result">The result to map.</param>
     /// <param name="selector">The transformation function.</param>
     /// <returns>A new result with the transformed value, or the original failure.</returns>
-    public static Result<TMapped, TError> Map<TResult, TMapped, TError>(this Result<TResult, TError> result, Func<TResult, TMapped> selector)
+    public static Result<TMapped, TError> Map<TResult, TMapped, TError>(this Result<TResult, TError> result, Func<TResult, TMapped> selector) => result switch
     {
-        return result switch
-        {
-            Ok<TResult, TError> ok => new Ok<TMapped, TError>(selector(ok.Value)),
-            Fail<TResult, TError> fail => new Fail<TMapped, TError>(fail.Error),
-            _ => throw new InvalidOperationException("Unexpected result type.")
-        };
-    }
+        Ok<TResult, TError> ok => new Ok<TMapped, TError>(selector(ok.Value)),
+        Fail<TResult, TError> fail => new Fail<TMapped, TError>(fail.Error),
+        _ => throw new InvalidOperationException("Unexpected result type.")
+    };
 
     /// <summary>Chains an operation that also returns a result, propagating failure.</summary>
     /// <typeparam name="TResult">The input success type.</typeparam>
@@ -51,15 +48,12 @@ public static class ResultExtensions
     /// <param name="result">The result to bind.</param>
     /// <param name="binder">The chained operation.</param>
     /// <returns>The result of the chained operation, or the original failure.</returns>
-    public static Result<TMapped, TError> Bind<TResult, TMapped, TError>(this Result<TResult, TError> result, Func<TResult, Result<TMapped, TError>> binder)
+    public static Result<TMapped, TError> Bind<TResult, TMapped, TError>(this Result<TResult, TError> result, Func<TResult, Result<TMapped, TError>> binder) => result switch
     {
-        return result switch
-        {
-            Ok<TResult, TError> ok => binder(ok.Value),
-            Fail<TResult, TError> fail => new Fail<TMapped, TError>(fail.Error),
-            _ => throw new InvalidOperationException("Unexpected result type.")
-        };
-    }
+        Ok<TResult, TError> ok => binder(ok.Value),
+        Fail<TResult, TError> fail => new Fail<TMapped, TError>(fail.Error),
+        _ => throw new InvalidOperationException("Unexpected result type.")
+    };
 
     /// <summary>Collapses the result to a single output value by handling both cases.</summary>
     /// <typeparam name="TResult">The success value type.</typeparam>
@@ -69,50 +63,66 @@ public static class ResultExtensions
     /// <param name="onSuccess">Function invoked on success.</param>
     /// <param name="onFailure">Function invoked on failure.</param>
     /// <returns>The value produced by whichever branch was taken.</returns>
-    public static TOut Match<TResult, TError, TOut>(this Result<TResult, TError> result, Func<TResult, TOut> onSuccess, Func<TError, TOut> onFailure)
+    public static TOut Match<TResult, TError, TOut>(this Result<TResult, TError> result, Func<TResult, TOut> onSuccess, Func<TError, TOut> onFailure) => result switch
     {
-        return result switch
-        {
-            Ok<TResult, TError> ok => onSuccess(ok.Value),
-            Fail<TResult, TError> fail => onFailure(fail.Error),
-            _ => throw new InvalidOperationException("Unexpected result type.")
-        };
-    }
+        Ok<TResult, TError> ok => onSuccess(ok.Value),
+        Fail<TResult, TError> fail => onFailure(fail.Error),
+        _ => throw new InvalidOperationException("Unexpected result type.")
+    };
 
-    /// <summary>Asynchronously handles both result cases as side-effects.</summary>
+    /// <param name="taskResult">The task producing the result.</param>
     /// <typeparam name="TResult">The success value type.</typeparam>
     /// <typeparam name="TError">The error type.</typeparam>
-    /// <param name="taskResult">The task producing the result.</param>
-    /// <param name="onSuccess">Action invoked on success.</param>
-    /// <param name="onFailure">Action invoked on failure.</param>
-    /// <returns>A task that completes after the appropriate action runs.</returns>
-    public static async Task MatchAsync<TResult, TError>(this Task<Result<TResult, TError>> taskResult, Action<TResult> onSuccess, Action<TError> onFailure)
+    extension<TResult, TError>(Task<Result<TResult, TError>> taskResult)
     {
-        var result = await taskResult.ConfigureAwait(false);
-        switch (result)
+        /// <summary>Asynchronously handles both result cases as side-effects.</summary>
+        /// <param name="onSuccess">Action invoked on success.</param>
+        /// <param name="onFailure">Action invoked on failure.</param>
+        /// <returns>A task that completes after the appropriate action runs.</returns>
+        public async Task MatchAsync(Action<TResult> onSuccess, Action<TError> onFailure)
         {
-            case Ok<TResult, TError> ok:
-                onSuccess(ok.Value);
-                break;
-            case Fail<TResult, TError> fail:
-                onFailure(fail.Error);
-                break;
+            var result = await taskResult.ConfigureAwait(false);
+            switch (result)
+            {
+                case Ok<TResult, TError> ok:
+                    onSuccess(ok.Value);
+                    break;
+                case Fail<TResult, TError> fail:
+                    onFailure(fail.Error);
+                    break;
+            }
         }
-    }
 
-    /// <summary>Asynchronously collapses the result to a single output value by handling both cases.</summary>
-    /// <typeparam name="TResult">The success value type.</typeparam>
-    /// <typeparam name="TError">The error type.</typeparam>
-    /// <typeparam name="TOut">The output type.</typeparam>
-    /// <param name="taskResult">The task producing the result.</param>
-    /// <param name="onSuccess">Function invoked on success.</param>
-    /// <param name="onFailure">Function invoked on failure.</param>
-    /// <returns>A task that produces the value from whichever branch was taken.</returns>
-    public static async Task<TOut> MatchAsync<TResult, TError, TOut>(this Task<Result<TResult, TError>> taskResult, Func<TResult, TOut> onSuccess, Func<TError, TOut> onFailure)
-    {
-        var result = await taskResult.ConfigureAwait(false);
+        /// <summary>Asynchronously collapses the result to a single output value by handling both cases.</summary>
+        /// <typeparam name="TOut">The output type.</typeparam>
+        /// <param name="onSuccess">Function invoked on success.</param>
+        /// <param name="onFailure">Function invoked on failure.</param>
+        /// <returns>A task that produces the value from whichever branch was taken.</returns>
+        public async Task<TOut> MatchAsync<TOut>(Func<TResult, TOut> onSuccess, Func<TError, TOut> onFailure)
+        {
+            var result = await taskResult.ConfigureAwait(false);
 
-        return result.Match(onSuccess, onFailure);
+            return result.Match(onSuccess, onFailure);
+        }
+
+        /// <summary>Asynchronously collapses the result to a single output value by handling both cases.</summary>
+        /// <typeparam name="TOut">The output type.</typeparam>
+        /// <param name="onSuccess">Function invoked on success.</param>
+        /// <param name="onFailure">Function invoked on failure.</param>
+        /// <returns>A task that produces the value from whichever branch was taken.</returns>
+        /// <exception cref="InvalidOperationException"></exception>
+        public async Task<TOut> MatchAsync<TOut>(Func<TResult, Task<TOut>> onSuccess,
+            Func<TError, Task<TOut>> onFailure)
+        {
+            var result = await taskResult.ConfigureAwait(false);
+
+            return result switch
+            {
+                Ok<TResult, TError> ok => await onSuccess(ok.Value).ConfigureAwait(false),
+                Fail<TResult, TError> fail => await onFailure(fail.Error).ConfigureAwait(false),
+                _ => throw new InvalidOperationException("Unexpected result type.")
+            };
+        }
     }
 
     /// <summary>Asynchronously chains an operation that also returns a result, propagating failure.</summary>
@@ -133,4 +143,70 @@ public static class ResultExtensions
             _ => throw new InvalidOperationException("Unexpected result type.")
         };
     }
+    /// <summary>Chains an asynchronous operation that also returns a result, propagating failure.</summary>
+    /// <typeparam name="TResult">The input success type.</typeparam>
+    /// <typeparam name="TMapped">The output success type.</typeparam>
+    /// <typeparam name="TError">The error type.</typeparam>
+    /// <param name="result">The result to bind.</param>
+    /// <param name="binder">The async chained operation to invoke on success.</param>
+    /// <returns>The result of the chained operation, or the original failure.</returns>
+    public static async Task<Result<TMapped, TError>> BindAsync<TResult, TMapped, TError>(this Result<TResult, TError> result, Func<TResult, Task<Result<TMapped, TError>>> binder) => result switch
+    {
+        Ok<TResult, TError> ok => await binder(ok.Value).ConfigureAwait(false),
+        Fail<TResult, TError> fail => new Fail<TMapped, TError>(fail.Error),
+        _ => throw new InvalidOperationException("Unexpected result type.")
+    };
+
+    /// <summary>Asynchronously transforms the success value using the provided selector.</summary>
+    /// <typeparam name="TResult">The input success type.</typeparam>
+    /// <typeparam name="TMapped">The output success type.</typeparam>
+    /// <typeparam name="TError">The error type.</typeparam>
+    /// <param name="result">The result to map.</param>
+    /// <param name="selector">The transformation function.</param>
+    /// <returns>A task containing a new result with the transformed value, or the original failure.</returns>
+    public static Task<Result<TMapped, TError>> MapAsync<TResult, TMapped, TError>(this Result<TResult, TError> result, Func<TResult, TMapped> selector)
+            => Task.FromResult(result.Map(selector));
+
+    /// <summary>Asynchronously transforms the success value using the provided asynchronous selector.</summary>
+    /// <typeparam name="TResult">The input success type.</typeparam>
+    /// <typeparam name="TMapped">The output success type.</typeparam>
+    /// <typeparam name="TError">The error type.</typeparam>
+    /// <param name="result">The result to map.</param>
+    /// <param name="selector">The async transformation function.</param>
+    /// <returns>A task containing a new result with the transformed value, or the original failure.</returns>
+    public static async Task<Result<TMapped, TError>> MapAsync<TResult, TMapped, TError>(this Result<TResult, TError> result, Func<TResult, Task<TMapped>> selector) => result switch
+    {
+        Ok<TResult, TError> ok => new Ok<TMapped, TError>(await selector(ok.Value).ConfigureAwait(false)),
+        Fail<TResult, TError> fail => new Fail<TMapped, TError>(fail.Error),
+        _ => throw new InvalidOperationException("Unexpected result type.")
+    };
+
+    /// <summary>Asynchronously transforms the success value of a task result using the provided selector.</summary>
+    /// <typeparam name="TResult">The input success type.</typeparam>
+    /// <typeparam name="TMapped">The output success type.</typeparam>
+    /// <typeparam name="TError">The error type.</typeparam>
+    /// <param name="taskResult">The task producing the result to map.</param>
+    /// <param name="selector">The transformation function.</param>
+    /// <returns>A task containing a new result with the transformed value, or the original failure.</returns>
+    public static async Task<Result<TMapped, TError>> MapAsync<TResult, TMapped, TError>(this Task<Result<TResult, TError>> taskResult, Func<TResult, TMapped> selector)
+        {
+            var result = await taskResult.ConfigureAwait(false);
+
+            return result.Map(selector);
+        }
+
+        /// <summary>Asynchronously transforms the success value of a task result using the provided asynchronous selector.</summary>
+        /// <typeparam name="TResult">The input success type.</typeparam>
+        /// <typeparam name="TMapped">The output success type.</typeparam>
+        /// <typeparam name="TError">The error type.</typeparam>
+        /// <param name="taskResult">The task producing the result to map.</param>
+        /// <param name="selector">The async transformation function.</param>
+        /// <returns>A task containing a new result with the transformed value, or the original failure.</returns>
+        public static async Task<Result<TMapped, TError>> MapAsync<TResult, TMapped, TError>(this Task<Result<TResult, TError>> taskResult, Func<TResult, Task<TMapped>> selector)
+        {
+            var result = await taskResult.ConfigureAwait(false);
+
+            return await result.MapAsync(selector).ConfigureAwait(false);
+        }
+        
 }

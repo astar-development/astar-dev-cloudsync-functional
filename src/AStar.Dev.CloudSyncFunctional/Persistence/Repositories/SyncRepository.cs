@@ -14,29 +14,29 @@ public sealed class SyncRepository(IDbContextFactory<AppDbContext> dbFactory) : 
     private const string CompletedStatus = "Completed";
 
     /// <inheritdoc/>
-    public async Task<IReadOnlyList<SyncConflictEntity>> GetPendingConflictsAsync(AccountId accountId, CancellationToken ct = default)
+    public async Task<IReadOnlyList<SyncConflictEntity>> GetPendingConflictsAsync(AccountId accountId, CancellationToken cancellationToken = default)
     {
-        await using var context = await dbFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
+        await using var context = await dbFactory.CreateDbContextAsync(cancellationToken).ConfigureAwait(false);
 
         return await context.SyncConflicts
             .AsNoTracking()
             .Where(c => c.AccountId == accountId && c.State == PendingState)
-            .ToListAsync(ct)
+            .ToListAsync(cancellationToken)
             .ConfigureAwait(false);
     }
 
     /// <inheritdoc/>
-    public async Task<Result<Unit, PersistenceError>> UpsertConflictAsync(SyncConflictEntity entity, CancellationToken ct = default)
+    public async Task<Result<Unit, PersistenceError>> UpsertConflictAsync(SyncConflictEntity entity, CancellationToken cancellationToken = default)
     {
         try
         {
-            await using var context = await dbFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
-            var existing = await context.SyncConflicts.FindAsync([entity.Id], ct).ConfigureAwait(false);
+            await using var context = await dbFactory.CreateDbContextAsync(cancellationToken).ConfigureAwait(false);
+            var existing = await context.SyncConflicts.FindAsync([entity.Id], cancellationToken).ConfigureAwait(false);
             if (existing is null)
                 context.SyncConflicts.Add(entity);
             else
                 context.Entry(existing).CurrentValues.SetValues(entity);
-            await context.SaveChangesAsync(ct).ConfigureAwait(false);
+            await context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
 
             return new Ok<Unit, PersistenceError>(Unit.Default);
         }
@@ -51,16 +51,16 @@ public sealed class SyncRepository(IDbContextFactory<AppDbContext> dbFactory) : 
     }
 
     /// <inheritdoc/>
-    public async Task<Result<Unit, PersistenceError>> ResolveConflictAsync(SyncConflictId id, CancellationToken ct = default)
+    public async Task<Result<Unit, PersistenceError>> ResolveConflictAsync(SyncConflictId id, CancellationToken cancellationToken = default)
     {
         try
         {
-            await using var context = await dbFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
-            var existing = await context.SyncConflicts.FindAsync([id], ct).ConfigureAwait(false);
+            await using var context = await dbFactory.CreateDbContextAsync(cancellationToken).ConfigureAwait(false);
+            var existing = await context.SyncConflicts.FindAsync([id], cancellationToken).ConfigureAwait(false);
             if (existing is not null)
             {
                 existing.State = ResolvedState;
-                await context.SaveChangesAsync(ct).ConfigureAwait(false);
+                await context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
             }
 
             return new Ok<Unit, PersistenceError>(Unit.Default);
@@ -76,17 +76,17 @@ public sealed class SyncRepository(IDbContextFactory<AppDbContext> dbFactory) : 
     }
 
     /// <inheritdoc/>
-    public async Task<Result<Unit, PersistenceError>> UpsertJobAsync(SyncJobEntity entity, CancellationToken ct = default)
+    public async Task<Result<Unit, PersistenceError>> UpsertJobAsync(SyncJobEntity entity, CancellationToken cancellationToken = default)
     {
         try
         {
-            await using var context = await dbFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
-            var existing = await context.SyncJobs.FindAsync([entity.Id], ct).ConfigureAwait(false);
+            await using var context = await dbFactory.CreateDbContextAsync(cancellationToken).ConfigureAwait(false);
+            var existing = await context.SyncJobs.FindAsync([entity.Id], cancellationToken).ConfigureAwait(false);
             if (existing is null)
                 context.SyncJobs.Add(entity);
             else
                 context.Entry(existing).CurrentValues.SetValues(entity);
-            await context.SaveChangesAsync(ct).ConfigureAwait(false);
+            await context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
 
             return new Ok<Unit, PersistenceError>(Unit.Default);
         }
@@ -101,17 +101,17 @@ public sealed class SyncRepository(IDbContextFactory<AppDbContext> dbFactory) : 
     }
 
     /// <inheritdoc/>
-    public async Task<Result<Unit, PersistenceError>> ClearCompletedJobsAsync(AccountId accountId, CancellationToken ct = default)
+    public async Task<Result<Unit, PersistenceError>> ClearCompletedJobsAsync(AccountId accountId, CancellationToken cancellationToken = default)
     {
         try
         {
-            await using var context = await dbFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
+            await using var context = await dbFactory.CreateDbContextAsync(cancellationToken).ConfigureAwait(false);
             var completed = await context.SyncJobs
                 .Where(j => j.AccountId == accountId && j.Status == CompletedStatus)
-                .ToListAsync(ct)
+                .ToListAsync(cancellationToken)
                 .ConfigureAwait(false);
             context.SyncJobs.RemoveRange(completed);
-            await context.SaveChangesAsync(ct).ConfigureAwait(false);
+            await context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
 
             return new Ok<Unit, PersistenceError>(Unit.Default);
         }

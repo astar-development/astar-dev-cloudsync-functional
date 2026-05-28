@@ -10,29 +10,29 @@ namespace AStar.Dev.CloudSyncFunctional.Persistence.Repositories;
 public sealed class SyncRuleRepository(IDbContextFactory<AppDbContext> dbFactory) : ISyncRuleRepository
 {
     /// <inheritdoc/>
-    public async Task<IReadOnlyList<SyncRuleEntity>> GetByAccountAsync(AccountId accountId, CancellationToken ct = default)
+    public async Task<IReadOnlyList<SyncRuleEntity>> GetByAccountAsync(AccountId accountId, CancellationToken cancellationToken = default)
     {
-        await using var context = await dbFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
+        await using var context = await dbFactory.CreateDbContextAsync(cancellationToken).ConfigureAwait(false);
 
         return await context.SyncRules
             .AsNoTracking()
             .Where(r => r.AccountId == accountId)
-            .ToListAsync(ct)
+            .ToListAsync(cancellationToken)
             .ConfigureAwait(false);
     }
 
     /// <inheritdoc/>
-    public async Task<Result<Unit, PersistenceError>> UpsertAsync(SyncRuleEntity entity, CancellationToken ct = default)
+    public async Task<Result<Unit, PersistenceError>> UpsertAsync(SyncRuleEntity entity, CancellationToken cancellationToken = default)
     {
         try
         {
-            await using var context = await dbFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
-            var existing = await context.SyncRules.FindAsync([entity.Id], ct).ConfigureAwait(false);
+            await using var context = await dbFactory.CreateDbContextAsync(cancellationToken).ConfigureAwait(false);
+            var existing = await context.SyncRules.FindAsync([entity.Id], cancellationToken).ConfigureAwait(false);
             if (existing is null)
                 context.SyncRules.Add(entity);
             else
                 context.Entry(existing).CurrentValues.SetValues(entity);
-            await context.SaveChangesAsync(ct).ConfigureAwait(false);
+            await context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
 
             return new Ok<Unit, PersistenceError>(Unit.Default);
         }
@@ -47,16 +47,16 @@ public sealed class SyncRuleRepository(IDbContextFactory<AppDbContext> dbFactory
     }
 
     /// <inheritdoc/>
-    public async Task<Result<Unit, PersistenceError>> DeleteAsync(SyncRuleId id, CancellationToken ct = default)
+    public async Task<Result<Unit, PersistenceError>> DeleteAsync(SyncRuleId id, CancellationToken cancellationToken = default)
     {
         try
         {
-            await using var context = await dbFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
-            var existing = await context.SyncRules.FindAsync([id], ct).ConfigureAwait(false);
+            await using var context = await dbFactory.CreateDbContextAsync(cancellationToken).ConfigureAwait(false);
+            var existing = await context.SyncRules.FindAsync([id], cancellationToken).ConfigureAwait(false);
             if (existing is not null)
             {
                 context.SyncRules.Remove(existing);
-                await context.SaveChangesAsync(ct).ConfigureAwait(false);
+                await context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
             }
 
             return new Ok<Unit, PersistenceError>(Unit.Default);

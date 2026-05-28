@@ -7,9 +7,9 @@ public class GivenAnOptionBind
     [Fact]
     public void when_binding_a_some_option_then_the_bound_result_is_returned()
     {
-        Option<int, string> result = new Some<int, string>(7);
+        Option<int> result = new Some<int>(7);
 
-        var bound = result.Bind(value => new Some<int, string>(value + 5));
+        var bound = result.Bind(value => new Some<int>(value + 5));
 
         bound.Match(value => value, _ => -1).ShouldBe(12);
     }
@@ -17,10 +17,10 @@ public class GivenAnOptionBind
     [Fact]
     public void when_binding_a_none_option_then_the_failure_is_preserved()
     {
-        Option<int, string> result = new None<int, string>("nope");
+        Option<int> result = new None<int>();
 
-        var bound = result.Bind(value => new None<int, string>("nope"));
+        var bound = result.Bind(value => new None<int>());
 
-        bound.Match(_ => string.Empty, error => error).ShouldBe("nope");
+        bound.Match(_ => string.Empty, error => error).ShouldBe("missing");
     }
 }

@@ -6,9 +6,19 @@
     },
     "dotnet.defaultSolution": "AStar.Dev.OneDrive.Functional.slnx",
     "cSpell.words": [
+        "appsettings",
+        "astar",
         "Avalonia",
+        "buildtransitive",
+        "centralise",
+        "cloudsync",
+        "contentfiles",
         "googledrive",
+        "Lucide",
+        "MSAL",
         "MVVM",
-        "onedrive"
+        "onedrive",
+        "Serilog",
+        "Testably"
     ]
 }

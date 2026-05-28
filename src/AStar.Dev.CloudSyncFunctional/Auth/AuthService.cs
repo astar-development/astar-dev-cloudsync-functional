@@ -11,7 +11,7 @@ public sealed partial class AuthService(IPublicClientApplication app, ILogger<Au
     private static readonly string[] Scopes = ["Files.ReadWrite", "offline_access", "User.Read"];
 
     /// <inheritdoc />
-    public async Task<Result<AuthResult, AuthError>> SignInInteractiveAsync(CancellationToken ct = default)
+    public async Task<Result<AuthResult, AuthError>> SignInInteractiveAsync(CancellationToken cancellationToken = default)
     {
         try
         {
@@ -19,7 +19,7 @@ public sealed partial class AuthService(IPublicClientApplication app, ILogger<Au
                 .AcquireTokenInteractive(Scopes)
                 .WithPrompt(Prompt.SelectAccount)
                 .WithUseEmbeddedWebView(false)
-                .ExecuteAsync(ct)
+                .ExecuteAsync(cancellationToken)
                 .ConfigureAwait(false);
 
             return new Ok<AuthResult, AuthError>(BuildAuthResult(msalResult));
@@ -45,7 +45,7 @@ public sealed partial class AuthService(IPublicClientApplication app, ILogger<Au
     }
 
     /// <inheritdoc />
-    public async Task<Result<AuthResult, AuthError>> AcquireTokenSilentAsync(string accountId, CancellationToken ct = default)
+    public async Task<Result<AuthResult, AuthError>> AcquireTokenSilentAsync(string accountId, CancellationToken cancellationToken = default)
     {
         try
         {
@@ -54,7 +54,7 @@ public sealed partial class AuthService(IPublicClientApplication app, ILogger<Au
             if (account is null)
                 return new Fail<AuthResult, AuthError>(AuthErrorFactory.Failed("Account not found in token cache."));
 
-            var msalResult = await app.AcquireTokenSilent(Scopes, account).ExecuteAsync(ct).ConfigureAwait(false);
+            var msalResult = await app.AcquireTokenSilent(Scopes, account).ExecuteAsync(cancellationToken).ConfigureAwait(false);
 
             return new Ok<AuthResult, AuthError>(BuildAuthResult(msalResult));
         }
@@ -70,7 +70,7 @@ public sealed partial class AuthService(IPublicClientApplication app, ILogger<Au
     }
 
     /// <inheritdoc />
-    public async Task SignOutAsync(string accountId, CancellationToken ct = default)
+    public async Task SignOutAsync(string accountId, CancellationToken cancellationToken = default)
     {
         var accounts = await app.GetAccountsAsync().ConfigureAwait(false);
         var account = accounts.FirstOrDefault(a => a.HomeAccountId?.Identifier == accountId);
@@ -83,7 +83,7 @@ public sealed partial class AuthService(IPublicClientApplication app, ILogger<Au
     {
         var accounts = await app.GetAccountsAsync().ConfigureAwait(false);
 
-        return accounts.Select(a => a.HomeAccountId.Identifier).ToList();
+        return [.. accounts.Where(a => a.HomeAccountId is not null).Select(a => a.HomeAccountId!.Identifier)];
     }
 
     private static AuthResult BuildAuthResult(AuthenticationResult result)
@@ -96,7 +96,7 @@ public sealed partial class AuthService(IPublicClientApplication app, ILogger<Au
         return AuthResultFactory.Create(
             result.AccessToken,
             result.Account.HomeAccountId.Identifier,
-            new AccountProfile(displayName, email),
+            AccountProfileFactory.Create(displayName, email),
             result.ExpiresOn);
     }
 

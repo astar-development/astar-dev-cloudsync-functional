@@ -8,12 +8,10 @@ namespace AStar.Dev.CloudSyncFunctional.Controls;
 public partial class StatusDot : UserControl
 {
     /// <summary>Identifies the <see cref="Fill"/> styled property.</summary>
-    public static readonly StyledProperty<IBrush?> FillProperty =
-        AvaloniaProperty.Register<StatusDot, IBrush?>(nameof(Fill));
+    public static readonly StyledProperty<IBrush?> FillProperty = AvaloniaProperty.Register<StatusDot, IBrush?>(nameof(Fill));
 
     /// <summary>Identifies the <see cref="IsPulsing"/> styled property.</summary>
-    public static readonly StyledProperty<bool> IsPulsingProperty =
-        AvaloniaProperty.Register<StatusDot, bool>(nameof(IsPulsing));
+    public static readonly StyledProperty<bool> IsPulsingProperty = AvaloniaProperty.Register<StatusDot, bool>(nameof(IsPulsing));
 
     /// <summary>Gets or sets the fill brush for the dot.</summary>
     public IBrush? Fill

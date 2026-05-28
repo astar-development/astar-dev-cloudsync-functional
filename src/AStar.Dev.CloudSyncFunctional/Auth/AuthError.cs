@@ -35,6 +35,5 @@ public static class AuthErrorFactory
     /// <summary>Creates an <see cref="AuthFailedError"/> with the given message.</summary>
     /// <param name="message">The error message; falls back to a default if null or whitespace.</param>
     /// <returns>An error representing a failed authentication.</returns>
-    public static AuthError Failed(string? message) => new AuthFailedError(
-        string.IsNullOrWhiteSpace(message) ? "Authentication failed: unknown error." : message);
+    public static AuthError Failed(string? message) => new AuthFailedError(string.IsNullOrWhiteSpace(message) ? "Authentication failed: unknown error." : message);
 }

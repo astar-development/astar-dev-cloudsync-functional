@@ -10,32 +10,25 @@ namespace AStar.Dev.CloudSyncFunctional.Controls;
 public partial class AccountHeader : UserControl
 {
     /// <summary>Identifies the <see cref="AccountName"/> styled property.</summary>
-    public static readonly StyledProperty<string> AccountNameProperty =
-        AvaloniaProperty.Register<AccountHeader, string>(nameof(AccountName), string.Empty);
+    public static readonly StyledProperty<string> AccountNameProperty = AvaloniaProperty.Register<AccountHeader, string>(nameof(AccountName), string.Empty);
 
     /// <summary>Identifies the <see cref="Email"/> styled property.</summary>
-    public static readonly StyledProperty<string> EmailProperty =
-        AvaloniaProperty.Register<AccountHeader, string>(nameof(Email), string.Empty);
+    public static readonly StyledProperty<string> EmailProperty = AvaloniaProperty.Register<AccountHeader, string>(nameof(Email), string.Empty);
 
     /// <summary>Identifies the <see cref="Kind"/> styled property.</summary>
-    public static readonly StyledProperty<ProviderKind> KindProperty =
-        AvaloniaProperty.Register<AccountHeader, ProviderKind>(nameof(Kind));
+    public static readonly StyledProperty<ProviderKind> KindProperty = AvaloniaProperty.Register<AccountHeader, ProviderKind>(nameof(Kind));
 
     /// <summary>Identifies the <see cref="Status"/> styled property.</summary>
-    public static readonly StyledProperty<SyncStatus> StatusProperty =
-        AvaloniaProperty.Register<AccountHeader, SyncStatus>(nameof(Status));
+    public static readonly StyledProperty<SyncStatus> StatusProperty = AvaloniaProperty.Register<AccountHeader, SyncStatus>(nameof(Status));
 
     /// <summary>Identifies the <see cref="PauseCommand"/> styled property.</summary>
-    public static readonly StyledProperty<ICommand?> PauseCommandProperty =
-        AvaloniaProperty.Register<AccountHeader, ICommand?>(nameof(PauseCommand));
+    public static readonly StyledProperty<ICommand?> PauseCommandProperty = AvaloniaProperty.Register<AccountHeader, ICommand?>(nameof(PauseCommand));
 
     /// <summary>Identifies the <see cref="SettingsCommand"/> styled property.</summary>
-    public static readonly StyledProperty<ICommand?> SettingsCommandProperty =
-        AvaloniaProperty.Register<AccountHeader, ICommand?>(nameof(SettingsCommand));
+    public static readonly StyledProperty<ICommand?> SettingsCommandProperty = AvaloniaProperty.Register<AccountHeader, ICommand?>(nameof(SettingsCommand));
 
     /// <summary>Identifies the <see cref="MoreCommand"/> styled property.</summary>
-    public static readonly StyledProperty<ICommand?> MoreCommandProperty =
-        AvaloniaProperty.Register<AccountHeader, ICommand?>(nameof(MoreCommand));
+    public static readonly StyledProperty<ICommand?> MoreCommandProperty = AvaloniaProperty.Register<AccountHeader, ICommand?>(nameof(MoreCommand));
 
     /// <summary>Gets or sets the display name of the account.</summary>
     public string AccountName
@@ -118,7 +111,7 @@ public partial class AccountHeader : UserControl
     protected override void OnInitialized()
     {
         base.OnInitialized();
-        updateBorder();
+        UpdateBorder();
         updateProviderMark();
         updateNameText();
         updateProviderNameText();
@@ -138,7 +131,7 @@ public partial class AccountHeader : UserControl
         if (change.Property == PauseCommandProperty || change.Property == SettingsCommandProperty || change.Property == MoreCommandProperty) updateButtons();
     }
 
-    private void updateBorder()
+    private void UpdateBorder()
     {
         if (ContainerBorder is null) return;
 

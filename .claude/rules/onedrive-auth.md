@@ -158,8 +158,8 @@ string email = result.ClaimsPrincipal?.FindFirst("preferred_username")?.Value
 ## IAuthService contract
 
 ```csharp
-Task<Result<AuthResult, AuthError>> SignInInteractiveAsync(CancellationToken ct = default);
-Task<Result<AuthResult, AuthError>> AcquireTokenSilentAsync(string accountId, CancellationToken ct = default);
-Task SignOutAsync(string accountId, CancellationToken ct = default);
+Task<Result<AuthResult, AuthError>> SignInInteractiveAsync(CancellationToken cancellationToken = default);
+Task<Result<AuthResult, AuthError>> AcquireTokenSilentAsync(string accountId, CancellationToken cancellationToken = default);
+Task SignOutAsync(string accountId, CancellationToken cancellationToken = default);
 Task<IReadOnlyList<string>> GetCachedAccountIdsAsync();
 ```

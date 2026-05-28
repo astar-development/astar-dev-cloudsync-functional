@@ -58,7 +58,7 @@ public class GivenADriveStateRepository(DatabaseFixture db) : IClassFixture<Data
         await sut.UpsertAsync(entity, CancellationToken.None);
         var result = await sut.GetByAccountAsync(accountId, CancellationToken.None);
 
-        var some = (Some<DriveStateEntity, PersistenceError>)result;
+        var some = (Some<DriveStateEntity>)result;
         some.Value.DeltaLink.ShouldBe(entity.DeltaLink);
     }
 
@@ -70,6 +70,6 @@ public class GivenADriveStateRepository(DatabaseFixture db) : IClassFixture<Data
 
         var result = await sut.GetByAccountAsync(missingId, CancellationToken.None);
 
-        result.ShouldBeOfType<None<DriveStateEntity, PersistenceError>>();
+        result.ShouldBeOfType<None<DriveStateEntity>>();
     }
 }
