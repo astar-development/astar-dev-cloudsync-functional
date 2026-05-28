@@ -34,15 +34,15 @@ public sealed class SyncRuleRepository(IDbContextFactory<AppDbContext> dbFactory
                 context.Entry(existing).CurrentValues.SetValues(entity);
             await context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
 
-            return new Ok<Unit, PersistenceError>(Unit.Default);
+            return Unit.Default;
         }
         catch (DbUpdateConcurrencyException)
         {
-            return new Fail<Unit, PersistenceError>(PersistenceErrorFactory.ConcurrencyConflict());
+            return PersistenceErrorFactory.ConcurrencyConflict();
         }
         catch (DbUpdateException ex)
         {
-            return new Fail<Unit, PersistenceError>(PersistenceErrorFactory.Unexpected(ex.Message));
+            return PersistenceErrorFactory.Unexpected(ex.Message);
         }
     }
 
@@ -59,11 +59,11 @@ public sealed class SyncRuleRepository(IDbContextFactory<AppDbContext> dbFactory
                 await context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
             }
 
-            return new Ok<Unit, PersistenceError>(Unit.Default);
+            return Unit.Default;
         }
         catch (DbUpdateException ex)
         {
-            return new Fail<Unit, PersistenceError>(PersistenceErrorFactory.Unexpected(ex.Message));
+            return PersistenceErrorFactory.Unexpected(ex.Message);
         }
     }
 }

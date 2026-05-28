@@ -22,25 +22,25 @@ public sealed partial class AuthService(IPublicClientApplication app, ILogger<Au
                 .ExecuteAsync(cancellationToken)
                 .ConfigureAwait(false);
 
-            return new Ok<AuthResult, AuthError>(BuildAuthResult(msalResult));
+            return BuildAuthResult(msalResult);
         }
         catch (MsalClientException ex) when (ex.ErrorCode is "authentication_canceled" or "user_canceled")
         {
-            return new Fail<AuthResult, AuthError>(AuthErrorFactory.Cancelled());
+            return AuthErrorFactory.Cancelled();
         }
         catch (OperationCanceledException)
         {
-            return new Fail<AuthResult, AuthError>(AuthErrorFactory.Cancelled());
+            return AuthErrorFactory.Cancelled();
         }
         catch (MsalException ex)
         {
             LogAuthFailed(logger, ex.Message);
-            return new Fail<AuthResult, AuthError>(AuthErrorFactory.Failed(ex.Message));
+            return AuthErrorFactory.Failed(ex.Message);
         }
         catch (Exception ex)
         {
             LogAuthFailed(logger, ex.Message);
-            return new Fail<AuthResult, AuthError>(AuthErrorFactory.Failed(ex.Message));
+            return AuthErrorFactory.Failed(ex.Message);
         }
     }
 
@@ -52,20 +52,20 @@ public sealed partial class AuthService(IPublicClientApplication app, ILogger<Au
             var accounts = await app.GetAccountsAsync().ConfigureAwait(false);
             var account = accounts.FirstOrDefault(a => a.HomeAccountId?.Identifier == accountId);
             if (account is null)
-                return new Fail<AuthResult, AuthError>(AuthErrorFactory.Failed("Account not found in token cache."));
+                return AuthErrorFactory.Failed("Account not found in token cache.");
 
             var msalResult = await app.AcquireTokenSilent(Scopes, account).ExecuteAsync(cancellationToken).ConfigureAwait(false);
 
-            return new Ok<AuthResult, AuthError>(BuildAuthResult(msalResult));
+            return BuildAuthResult(msalResult);
         }
         catch (MsalUiRequiredException)
         {
-            return new Fail<AuthResult, AuthError>(AuthErrorFactory.Failed("Re-authentication required."));
+            return AuthErrorFactory.Failed("Re-authentication required.");
         }
         catch (Exception ex)
         {
             LogAuthFailed(logger, ex.Message);
-            return new Fail<AuthResult, AuthError>(AuthErrorFactory.Failed(ex.Message));
+            return AuthErrorFactory.Failed(ex.Message);
         }
     }
 

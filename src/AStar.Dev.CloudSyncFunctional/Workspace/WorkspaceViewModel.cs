@@ -4,6 +4,7 @@ using AStar.Dev.CloudSyncFunctional.Domain;
 using AStar.Dev.CloudSyncFunctional.FolderTree;
 using AStar.Dev.CloudSyncFunctional.Persistence.Entities;
 using AStar.Dev.CloudSyncFunctional.Persistence.Repositories;
+using AStar.Dev.CloudSyncFunctional.Recovery;
 using AStar.Dev.CloudSyncFunctional.Wizard;
 using Microsoft.Extensions.DependencyInjection;
 using ReactiveUI;
@@ -16,6 +17,7 @@ public class WorkspaceViewModel : ReactiveObject
 {
     private readonly IServiceProvider _serviceProvider;
     private readonly IAccountRepository? _accountRepository;
+    private readonly ISyncRecoveryService? _recoveryService;
 
     /// <summary>Gets all cloud storage accounts registered in the workspace.</summary>
     public ObservableCollection<AccountViewModel> Accounts { get; }
@@ -34,6 +36,13 @@ public class WorkspaceViewModel : ReactiveObject
 
     /// <summary>Gets or sets the current overlay content (e.g. the add-account wizard). Null means no overlay.</summary>
     public ReactiveObject? CurrentOverlay
+    {
+        get;
+        set => this.RaiseAndSetIfChanged(ref field, value);
+    }
+
+    /// <summary>Gets or sets a value indicating whether any syncs were interrupted (e.g. due to a crash) and need recovery.</summary>
+    public bool HasInterruptedSyncs
     {
         get;
         set => this.RaiseAndSetIfChanged(ref field, value);
@@ -77,16 +86,18 @@ public class WorkspaceViewModel : ReactiveObject
     /// <summary>Initialises a new <see cref="WorkspaceViewModel"/> using the provided service provider and account repository (runtime path).</summary>
     /// <param name="serviceProvider">The DI container used to resolve the wizard ViewModel on demand.</param>
     /// <param name="accountRepository">Repository used to load persisted accounts on startup.</param>
-    public WorkspaceViewModel(IServiceProvider serviceProvider, IAccountRepository accountRepository)
+    /// <param name="recoveryService">Optional recovery service used to detect interrupted syncs on startup.</param>
+    public WorkspaceViewModel(IServiceProvider serviceProvider, IAccountRepository accountRepository, ISyncRecoveryService? recoveryService = null)
     {
         _serviceProvider = serviceProvider;
         _accountRepository = accountRepository;
+        _recoveryService = recoveryService;
         Accounts = [];
         OpenAddAccountWizard = ReactiveCommand.Create(ExecuteOpenAddAccountWizard);
     }
 
     /// <summary>Loads persisted accounts from the database and populates <see cref="Accounts"/>.</summary>
-    /// <param name="ct">Cancellation token.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>A task that completes when accounts are loaded and added to the collection.</returns>
     public async Task LoadPersistedAccountsAsync(CancellationToken cancellationToken = default)
     {
@@ -98,6 +109,12 @@ public class WorkspaceViewModel : ReactiveObject
             Accounts.Add(vm);
         if (Accounts.Count > 0 && SelectedAccount is null)
             SelectedAccount = Accounts[0];
+
+        if (_recoveryService is not null)
+        {
+            var interrupted = await _recoveryService.DetectAsync(cancellationToken);
+            HasInterruptedSyncs = interrupted.Count > 0;
+        }
     }
 
     /// <summary>Initialises a new <see cref="WorkspaceViewModel"/> using the provided service provider (design-time and test use).</summary>

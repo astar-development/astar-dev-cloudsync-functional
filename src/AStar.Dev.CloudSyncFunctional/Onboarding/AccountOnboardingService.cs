@@ -26,18 +26,18 @@ public sealed partial class AccountOnboardingService(IAccountRepository accountR
                 _ =>
                 {
                     LogOnboardingComplete(logger, account.AccountId.Value);
-                    return new Ok<OneDriveAccount, PersistenceError>(account);
+                    return account;
                 },
                 error =>
                 {
                     LogOnboardingFailed(logger, account.AccountId.Value, error.Message);
-                    return new Fail<OneDriveAccount, PersistenceError>(error);
+                    return error;
                 });
     }
 
     private Task<Result<Unit, PersistenceError>> UpsertSyncRulesAsync(OneDriveAccount account, CancellationToken cancellationToken) =>
         account.SelectedFolders.Aggregate(
-            Task.FromResult<Result<Unit, PersistenceError>>(new Ok<Unit, PersistenceError>(Unit.Default)),
+            Task.FromResult<Result<Unit, PersistenceError>>(Unit.Default),
             (current, folder) => current.BindAsync(_ => syncRuleRepository.UpsertAsync(CreateSyncRule(account, folder), cancellationToken)));
 
     private static SyncRuleEntity CreateSyncRule(OneDriveAccount account, SelectedFolder folder) =>
