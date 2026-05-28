@@ -2,8 +2,8 @@ using PersistenceDriveId = AStar.Dev.CloudSyncFunctional.Persistence.ValueObject
 
 namespace AStar.Dev.CloudSyncFunctional.Sync.Pipeline;
 
-/// <summary>Delegates job execution to <see cref="ISyncPipeline"/>.</summary>
-public sealed class JobExecutor(ISyncPipeline syncPipeline) : IJobExecutor
+/// <summary>Executes sync jobs using the bounded channel pipeline.</summary>
+public interface IJobExecutor
 {
     /// <summary>Executes all given sync jobs using the bounded channel pipeline.</summary>
     /// <param name="jobs">The jobs to execute.</param>
@@ -15,6 +15,5 @@ public sealed class JobExecutor(ISyncPipeline syncPipeline) : IJobExecutor
     /// <param name="onJobCompleted">Callback invoked with the result of each individual job.</param>
     /// <param name="cancellationToken">Token to cancel the operation.</param>
     /// <returns>A task that completes when all jobs have been processed.</returns>
-    public Task ExecuteAsync(IEnumerable<SyncJob> jobs, string accessToken, string accountId, PersistenceDriveId driveId, int workerCount, Action<SyncProgressEventArgs> onProgress, Action<JobCompletedEventArgs> onJobCompleted, CancellationToken cancellationToken = default)
-        => syncPipeline.RunAsync(jobs, accessToken, onProgress, onJobCompleted, accountId, driveId, workerCount, cancellationToken);
+    Task ExecuteAsync(IEnumerable<SyncJob> jobs, string accessToken, string accountId, PersistenceDriveId driveId, int workerCount, Action<SyncProgressEventArgs> onProgress, Action<JobCompletedEventArgs> onJobCompleted, CancellationToken cancellationToken = default);
 }

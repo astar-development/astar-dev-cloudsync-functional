@@ -1,4 +1,5 @@
 using AStar.Dev.CloudSyncFunctional.Persistence.ValueObjects;
+using PersistenceAccountId = AStar.Dev.CloudSyncFunctional.Persistence.ValueObjects.AccountId;
 
 namespace AStar.Dev.CloudSyncFunctional.Sync;
 
@@ -32,4 +33,18 @@ public enum ConflictPolicy
 /// <param name="LocalModifiedAt">The local file's last-modified timestamp at the time the conflict was detected.</param>
 /// <param name="RemoteModifiedAt">The remote file's last-modified timestamp at the time the conflict was detected.</param>
 /// <param name="State">The current resolution state of the conflict.</param>
-public sealed record SyncConflict(SyncConflictId Id, string AccountId, string RemoteItemId, DateTimeOffset LocalModifiedAt, DateTimeOffset RemoteModifiedAt, ConflictState State);
+public sealed record SyncConflict(SyncConflictId Id, PersistenceAccountId AccountId, OneDriveItemId RemoteItemId, DateTimeOffset LocalModifiedAt, DateTimeOffset RemoteModifiedAt, ConflictState State);
+
+/// <summary>Creates <see cref="SyncConflict"/> instances.</summary>
+public static class SyncConflictFactory
+{
+    /// <summary>Creates a new <see cref="SyncConflict"/> in the <see cref="ConflictState.Pending"/> state.</summary>
+    /// <param name="id">The conflict identifier.</param>
+    /// <param name="accountId">The account identifier this conflict belongs to.</param>
+    /// <param name="remoteItemId">The Graph item identifier of the conflicting remote file.</param>
+    /// <param name="localModifiedAt">The local file's last-modified timestamp.</param>
+    /// <param name="remoteModifiedAt">The remote file's last-modified timestamp.</param>
+    /// <returns>A new pending <see cref="SyncConflict"/>.</returns>
+    public static SyncConflict CreatePending(SyncConflictId id, PersistenceAccountId accountId, OneDriveItemId remoteItemId, DateTimeOffset localModifiedAt, DateTimeOffset remoteModifiedAt)
+        => new(id, accountId, remoteItemId, localModifiedAt, remoteModifiedAt, ConflictState.Pending);
+}

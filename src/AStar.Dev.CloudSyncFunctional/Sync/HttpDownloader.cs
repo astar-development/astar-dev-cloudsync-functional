@@ -17,15 +17,34 @@ public sealed partial class HttpDownloader(IHttpClientFactory httpClientFactory,
         {
             try
             {
-                var result = await TryDownloadAsync(url, localPath, remoteModified, progress, cancellationToken).ConfigureAwait(false);
-                var succeeded = result.Match(_ => true, _ => false);
-                if (succeeded)
-                    return result;
+                using var client = httpClientFactory.CreateClient();
+                client.DefaultRequestHeaders.UserAgent.ParseAdd(UserAgent);
 
-                if (attempt == MaxRetries)
-                    return result;
+                using var request = new HttpRequestMessage(HttpMethod.Get, url);
+                using var response = await client.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cancellationToken).ConfigureAwait(false);
 
-                await Task.Delay(GetBackoffDelay(attempt), cancellationToken).ConfigureAwait(false);
+                if (response.StatusCode == System.Net.HttpStatusCode.TooManyRequests)
+                {
+                    await Task.Delay(ParseRetryAfter(response), cancellationToken).ConfigureAwait(false);
+                    continue;
+                }
+
+                if (!response.IsSuccessStatusCode)
+                {
+                    LogDownloadFailed(logger, localPath, attempt, $"HTTP {(int)response.StatusCode}");
+                    if (attempt == MaxRetries)
+                        return new Fail<Unit, SyncError>(SyncErrorFactory.GraphFailed(Graph.GraphErrorFactory.Unexpected($"HTTP {(int)response.StatusCode}")));
+
+                    await Task.Delay(GetBackoffDelay(attempt), cancellationToken).ConfigureAwait(false);
+                    continue;
+                }
+
+                await using var contentStream = await response.Content.ReadAsStreamAsync(cancellationToken).ConfigureAwait(false);
+                await WriteFileAsync(contentStream, localPath, remoteModified, progress, cancellationToken).ConfigureAwait(false);
+
+                LogDownloadSucceeded(logger, localPath);
+
+                return new Ok<Unit, SyncError>(Unit.Default);
             }
             catch (OperationCanceledException)
             {
@@ -44,31 +63,13 @@ public sealed partial class HttpDownloader(IHttpClientFactory httpClientFactory,
         return new Fail<Unit, SyncError>(SyncErrorFactory.GraphFailed(Graph.GraphErrorFactory.Unexpected("Max retries exceeded.")));
     }
 
-    private async Task<Result<Unit, SyncError>> TryDownloadAsync(string url, string localPath, DateTimeOffset remoteModified, IProgress<long>? progress, CancellationToken cancellationToken)
+    private async Task WriteFileAsync(Stream contentStream, string localPath, DateTimeOffset remoteModified, IProgress<long>? progress, CancellationToken cancellationToken)
     {
-        using var client = httpClientFactory.CreateClient();
-        client.DefaultRequestHeaders.UserAgent.ParseAdd(UserAgent);
-
-        using var request = new HttpRequestMessage(HttpMethod.Get, url);
-        using var response = await client.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cancellationToken).ConfigureAwait(false);
-
-        if (response.StatusCode == System.Net.HttpStatusCode.TooManyRequests)
-        {
-            var retryAfter = ParseRetryAfter(response);
-            await Task.Delay(retryAfter, cancellationToken).ConfigureAwait(false);
-
-            return new Fail<Unit, SyncError>(SyncErrorFactory.GraphFailed(Graph.GraphErrorFactory.Throttled((int)retryAfter.TotalSeconds)));
-        }
-
-        if (!response.IsSuccessStatusCode)
-            return new Fail<Unit, SyncError>(SyncErrorFactory.GraphFailed(Graph.GraphErrorFactory.Unexpected($"HTTP {(int)response.StatusCode}")));
-
         var directory = fileSystem.Path.GetDirectoryName(localPath);
         if (!string.IsNullOrEmpty(directory) && !fileSystem.Directory.Exists(directory))
             fileSystem.Directory.CreateDirectory(directory);
 
-        await using var contentStream = await response.Content.ReadAsStreamAsync(cancellationToken).ConfigureAwait(false);
-        await using var fileStream = fileSystem.File.OpenWrite(localPath);
+        await using var fileStream = fileSystem.File.Open(localPath, FileMode.Create, FileAccess.Write);
 
         var buffer = new byte[81920];
         long totalBytesWritten = 0;
@@ -85,10 +86,6 @@ public sealed partial class HttpDownloader(IHttpClientFactory httpClientFactory,
 
         fileSystem.File.SetCreationTime(localPath, remoteModified.LocalDateTime);
         fileSystem.File.SetLastWriteTime(localPath, remoteModified.LocalDateTime);
-
-        LogDownloadSucceeded(logger, localPath);
-
-        return new Ok<Unit, SyncError>(Unit.Default);
     }
 
     private static TimeSpan ParseRetryAfter(HttpResponseMessage response)

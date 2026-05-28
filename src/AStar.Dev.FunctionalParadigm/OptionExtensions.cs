@@ -50,4 +50,23 @@ public static class OptionExtensions
                 None<TResult> none => new None<TOut>(),
                 _ => throw new InvalidOperationException("Unexpected option type.")
             };
+
+    public static async Task<TOut> MatchAsync<TResult, TOut>(this Task<Option<TResult>> task, Func<TResult, TOut> onSome, Func<string, TOut> onNone)
+    {
+        var option = await task.ConfigureAwait(false);
+
+        return option.Match(onSome, onNone);
+    }
+
+    public static async Task<TOut> MatchAsync<TResult, TOut>(this Task<Option<TResult>> task, Func<TResult, Task<TOut>> onSome, Func<string, Task<TOut>> onNone)
+    {
+        var option = await task.ConfigureAwait(false);
+
+        return option switch
+        {
+            Some<TResult> some => await onSome(some.Value).ConfigureAwait(false),
+            None<TResult> none => await onNone(none).ConfigureAwait(false),
+            _ => throw new InvalidOperationException("Unexpected option type.")
+        };
+    }
 }

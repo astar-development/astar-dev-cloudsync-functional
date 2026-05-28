@@ -1,17 +1,21 @@
 using System.Threading.Channels;
 using AStar.Dev.FunctionalParadigm;
 using Microsoft.Extensions.Logging;
+using PersistenceDriveId = AStar.Dev.CloudSyncFunctional.Persistence.ValueObjects.DriveId;
 
 namespace AStar.Dev.CloudSyncFunctional.Sync;
 
 /// <inheritdoc />
 public sealed partial class SyncPipeline(ISyncWorkerFactory workerFactory, ILogger<SyncPipeline> logger) : ISyncPipeline
 {
+    private int _completed;
+
     /// <inheritdoc />
-    public async Task RunAsync(IEnumerable<SyncJob> jobs, string accessToken, Action<SyncProgressEventArgs> onProgress, Action<JobCompletedEventArgs> onJobCompleted, string accountId, int workerCount, CancellationToken cancellationToken = default)
+    public async Task RunAsync(IEnumerable<SyncJob> jobs, string accessToken, Action<SyncProgressEventArgs> onProgress, Action<JobCompletedEventArgs> onJobCompleted, string accountId, PersistenceDriveId driveId, int workerCount, CancellationToken cancellationToken = default)
     {
         var jobList = jobs.ToList();
         var total = jobList.Count;
+        _completed = 0;
 
         var channel = Channel.CreateBounded<SyncJob>(new BoundedChannelOptions(workerCount * 4)
         {
@@ -20,7 +24,7 @@ public sealed partial class SyncPipeline(ISyncWorkerFactory workerFactory, ILogg
         });
 
         var workerTasks = Enumerable.Range(0, workerCount)
-            .Select(_ => RunWorkerAsync(channel.Reader, accessToken, accountId, total, onProgress, onJobCompleted, cancellationToken))
+            .Select(_ => RunWorkerAsync(channel.Reader, accessToken, accountId, driveId, total, onProgress, onJobCompleted, cancellationToken))
             .ToArray();
 
         await ProduceJobsAsync(channel.Writer, jobList, cancellationToken).ConfigureAwait(false);
@@ -40,17 +44,16 @@ public sealed partial class SyncPipeline(ISyncWorkerFactory workerFactory, ILogg
         }
     }
 
-    private async Task RunWorkerAsync(ChannelReader<SyncJob> reader, string accessToken, string accountId, int total, Action<SyncProgressEventArgs> onProgress, Action<JobCompletedEventArgs> onJobCompleted, CancellationToken cancellationToken)
+    private async Task RunWorkerAsync(ChannelReader<SyncJob> reader, string accessToken, string accountId, PersistenceDriveId driveId, int total, Action<SyncProgressEventArgs> onProgress, Action<JobCompletedEventArgs> onJobCompleted, CancellationToken cancellationToken)
     {
         var worker = workerFactory.Create();
-        var localCompleted = 0;
 
         await foreach (var job in reader.ReadAllAsync(cancellationToken).ConfigureAwait(false))
         {
             var remotePath = GetRemotePath(job);
-            var result = await worker.ExecuteAsync(job, accessToken, cancellationToken).ConfigureAwait(false);
+            var result = await worker.ExecuteAsync(job, accountId, accessToken, driveId, cancellationToken).ConfigureAwait(false);
 
-            localCompleted++;
+            var completed = Interlocked.Increment(ref _completed);
             result.Tap(
                 _ => onJobCompleted(new JobCompletedEventArgs(accountId, remotePath, true, null)),
                 error =>
@@ -58,7 +61,7 @@ public sealed partial class SyncPipeline(ISyncWorkerFactory workerFactory, ILogg
                     LogJobFailed(logger, accountId, remotePath, error.Message);
                     onJobCompleted(new JobCompletedEventArgs(accountId, remotePath, false, error.Message));
                 });
-            onProgress(new SyncProgressEventArgs(accountId, remotePath, localCompleted, total, $"Processed {localCompleted}/{total}", SyncState.Syncing));
+            onProgress(new SyncProgressEventArgs(accountId, remotePath, completed, total, $"Processed {completed}/{total}", SyncState.Syncing));
         }
     }
 

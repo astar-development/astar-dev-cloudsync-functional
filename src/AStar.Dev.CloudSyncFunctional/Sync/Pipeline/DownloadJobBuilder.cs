@@ -5,7 +5,7 @@ using AStar.Dev.CloudSyncFunctional.Persistence.ValueObjects;
 namespace AStar.Dev.CloudSyncFunctional.Sync.Pipeline;
 
 /// <summary>Builds download jobs for remote files that are new or have changed since the last sync.</summary>
-public sealed class DownloadJobBuilder(IFileSystem fileSystem)
+public sealed class DownloadJobBuilder(IFileSystem fileSystem) : IDownloadJobBuilder
 {
     private static readonly TimeSpan TimestampTolerance = TimeSpan.FromSeconds(5);
 
@@ -16,7 +16,7 @@ public sealed class DownloadJobBuilder(IFileSystem fileSystem)
     /// <param name="accountId">The account identifier, used when constructing conflict records.</param>
     /// <param name="onConflict">Callback invoked for each detected conflict.</param>
     /// <returns>The download jobs to execute, excluding skipped and conflicting items.</returns>
-    public List<SyncJob> Build(IReadOnlyList<DeltaItem> remoteItems, Dictionary<string, SyncedItemEntity> syncedItems, string localSyncPath, string accountId, Action<SyncConflict> onConflict)
+    public IReadOnlyList<SyncJob> Build(IReadOnlyList<DeltaItem> remoteItems, Dictionary<string, SyncedItemEntity> syncedItems, string localSyncPath, string accountId, Action<SyncConflict> onConflict)
     {
         var jobs = new List<SyncJob>();
 
@@ -36,7 +36,7 @@ public sealed class DownloadJobBuilder(IFileSystem fileSystem)
             {
                 var localModified = localExists ? fileSystem.File.GetLastWriteTimeUtc(localPath) : DateTime.MinValue;
                 var remoteModified = item.LastModified?.UtcDateTime ?? DateTime.MinValue;
-                onConflict(new SyncConflict(new SyncConflictId(Guid.NewGuid().ToString()), accountId, item.Id, new DateTimeOffset(localModified), new DateTimeOffset(remoteModified), ConflictState.Pending));
+                onConflict(SyncConflictFactory.CreatePending(new SyncConflictId(Guid.NewGuid().ToString()), new AccountId(accountId), new OneDriveItemId(item.Id), new DateTimeOffset(localModified), new DateTimeOffset(remoteModified)));
             }
         }
 

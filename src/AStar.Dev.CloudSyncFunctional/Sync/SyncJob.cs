@@ -14,8 +14,8 @@ public sealed record DownloadJob(string ItemId, string RemotePath, string LocalP
 /// <summary>A job to upload a local file to OneDrive.</summary>
 /// <param name="LocalPath">The local source path of the file to upload.</param>
 /// <param name="RemotePath">The destination remote OneDrive path.</param>
-/// <param name="ParentFolderId">The Graph item identifier of the destination parent folder.</param>
-public sealed record UploadJob(string LocalPath, string RemotePath, string ParentFolderId) : SyncJob;
+/// <param name="ParentFolderPath">The remote OneDrive path of the destination parent folder (e.g. <c>/Documents/Work</c>). Resolved to a Graph item ID at execution time.</param>
+public sealed record UploadJob(string LocalPath, string RemotePath, string ParentFolderPath) : SyncJob;
 
 /// <summary>Creates <see cref="SyncJob"/> instances.</summary>
 public static class SyncJobFactory
@@ -33,8 +33,8 @@ public static class SyncJobFactory
     /// <summary>Creates an <see cref="UploadJob"/>.</summary>
     /// <param name="localPath">The local source path.</param>
     /// <param name="remotePath">The destination remote OneDrive path.</param>
-    /// <param name="parentFolderId">The Graph item identifier of the destination parent folder.</param>
+    /// <param name="parentFolderPath">The remote OneDrive path of the destination parent folder. Resolved to a Graph item ID at execution time.</param>
     /// <returns>A new <see cref="UploadJob"/>.</returns>
-    public static SyncJob CreateUpload(string localPath, string remotePath, string parentFolderId) =>
-        new UploadJob(localPath, remotePath, parentFolderId);
+    public static SyncJob CreateUpload(string localPath, string remotePath, string parentFolderPath) =>
+        new UploadJob(localPath, remotePath, parentFolderPath);
 }

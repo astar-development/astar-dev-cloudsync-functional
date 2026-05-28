@@ -59,7 +59,7 @@ public sealed partial class AccountOnboardingService(IAccountRepository accountR
                 Email = new EmailAddress(account.Profile.Email)
             },
             IsActive = account.IsActive,
-            DriveId = new DriveId(account.DriveId ?? string.Empty),
+            DriveId = new DriveId(account.DriveIdValue.Value ?? string.Empty),
             SyncConfig = new AccountSyncConfig
             {
                 LocalSyncPath = new LocalSyncPath(ComputeDefaultSyncPath(account.Profile.Email)),

@@ -7,7 +7,7 @@ using Microsoft.Extensions.Logging;
 namespace AStar.Dev.CloudSyncFunctional.Sync.Pipeline;
 
 /// <summary>Detects and removes local files whose remote counterparts have been deleted.</summary>
-public sealed partial class RemoteDeletionDetector(ISyncedItemRepository syncedItemRepository, IFileSystem fileSystem, ILogger<RemoteDeletionDetector> logger)
+public sealed partial class RemoteDeletionDetector(ISyncedItemRepository syncedItemRepository, IFileSystem fileSystem, ILogger<RemoteDeletionDetector> logger) : IRemoteDeletionDetector
 {
     /// <summary>Detects items present in the local tracking store but absent from the remote enumeration result, and deletes those local files.</summary>
     /// <param name="remoteItems">The items currently present in the remote drive.</param>

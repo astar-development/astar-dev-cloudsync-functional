@@ -1,5 +1,6 @@
 using AStar.Dev.CloudSyncFunctional.Auth;
 using AStar.Dev.CloudSyncFunctional.Domain;
+using AStar.Dev.CloudSyncFunctional.Persistence.Entities;
 using AStar.Dev.CloudSyncFunctional.Persistence.Repositories;
 using AStar.Dev.CloudSyncFunctional.Sync.Pipeline;
 using AStar.Dev.FunctionalParadigm;
@@ -9,7 +10,7 @@ using PersistenceAccountId = AStar.Dev.CloudSyncFunctional.Persistence.ValueObje
 namespace AStar.Dev.CloudSyncFunctional.Sync;
 
 /// <inheritdoc />
-public sealed partial class SyncService(IAuthService authService, ISyncRuleRepository syncRuleRepository, ISyncedItemRepository syncedItemRepository, ISyncRepository syncRepository, RemoteFolderEnumerator remoteFolderEnumerator, RemoteDeletionDetector remoteDeletionDetector, LocalDeletionDetector localDeletionDetector, DownloadJobBuilder downloadJobBuilder, LocalChangeDetector localChangeDetector, JobExecutor jobExecutor, ILogger<SyncService> logger) : ISyncService
+public sealed partial class SyncService(IAuthService authService, ISyncRuleRepository syncRuleRepository, ISyncedItemRepository syncedItemRepository, ISyncRepository syncRepository, IRemoteFolderEnumerator remoteFolderEnumerator, IRemoteDeletionDetector remoteDeletionDetector, ILocalDeletionDetector localDeletionDetector, IDownloadJobBuilder downloadJobBuilder, ILocalChangeDetector localChangeDetector, IJobExecutor jobExecutor, ILogger<SyncService> logger) : ISyncService
 {
     /// <inheritdoc />
     public event EventHandler<SyncProgressEventArgs>? SyncProgressChanged;
@@ -40,15 +41,24 @@ public sealed partial class SyncService(IAuthService authService, ISyncRuleRepos
             return new Fail<Unit, SyncError>(tokenError);
 
         var accountId = new PersistenceAccountId(account.AccountId.Value);
-        var rules = await syncRuleRepository.GetByAccountAsync(accountId, cancellationToken).ConfigureAwait(false);
+        var entityRules = await syncRuleRepository.GetByAccountAsync(accountId, cancellationToken).ConfigureAwait(false);
+        var syncRules = entityRules.Select(r => r.RuleType == RuleType.Include
+            ? SyncRuleFactory.CreateInclude(r.RemotePath)
+            : SyncRuleFactory.CreateExclude(r.RemotePath)).ToList();
         var allSyncedItems = await syncedItemRepository.GetByAccountAsync(accountId, cancellationToken).ConfigureAwait(false);
         var syncedItemsMap = allSyncedItems.ToDictionary(item => item.RemotePath, StringComparer.OrdinalIgnoreCase);
 
         RaiseSyncProgress(account.AccountId.Value, "Enumerating remote folders...", 0, 0, SyncState.Syncing);
         SyncError? enumerateError = null;
         List<DeltaItem> remoteItems = [];
-        await remoteFolderEnumerator.EnumerateAsync(account, accessToken!, rules, cancellationToken)
-            .MatchAsync(items => remoteItems = items, error => enumerateError = error);
+        await remoteFolderEnumerator.EnumerateAsync(account, accessToken!, syncRules, cancellationToken)
+            .MatchAsync(
+                items => remoteItems = items,
+                error =>
+                {
+                    LogSyncFailed(logger, account.AccountId.Value, error.Message);
+                    enumerateError = error;
+                });
         if (enumerateError is not null)
             return new Fail<Unit, SyncError>(enumerateError);
 
@@ -75,7 +85,7 @@ public sealed partial class SyncService(IAuthService authService, ISyncRuleRepos
         if (allJobs.Count > 0)
         {
             RaiseSyncProgress(account.AccountId.Value, "Executing jobs...", 0, allJobs.Count, SyncState.Syncing);
-            await jobExecutor.ExecuteAsync(allJobs, accessToken!, account.AccountId.Value, account.SyncConfig.WorkerCount, RaiseSyncProgress, RaiseJobCompleted, cancellationToken).ConfigureAwait(false);
+            await jobExecutor.ExecuteAsync(allJobs, accessToken!, account.AccountId.Value, account.DriveIdValue, account.SyncConfig.WorkerCount, RaiseSyncProgress, RaiseJobCompleted, cancellationToken).ConfigureAwait(false);
         }
 
         await syncRepository.ClearCompletedJobsAsync(accountId, cancellationToken).ConfigureAwait(false);
@@ -89,17 +99,15 @@ public sealed partial class SyncService(IAuthService authService, ISyncRuleRepos
     /// <inheritdoc />
     public async Task<Result<Unit, SyncError>> ResolveConflictAsync(SyncConflict conflict, ConflictPolicy policy, CancellationToken cancellationToken = default)
     {
-        if (policy == ConflictPolicy.Skip)
-        {
-            await syncRepository.ResolveConflictAsync(new Persistence.ValueObjects.SyncConflictId(conflict.Id.Value), cancellationToken).ConfigureAwait(false);
-
-            return new Ok<Unit, SyncError>(Unit.Default);
-        }
-
         var resolveError = await syncRepository.ResolveConflictAsync(new Persistence.ValueObjects.SyncConflictId(conflict.Id.Value), cancellationToken)
             .MatchAsync<Unit, Onboarding.PersistenceError, SyncError?>(
                 _ => (SyncError?)null,
-                error => (SyncError?)SyncErrorFactory.StorageFailed(error));
+                error =>
+                {
+                    LogResolveFailed(logger, conflict.Id.Value, error.Message);
+
+                    return (SyncError?)SyncErrorFactory.StorageFailed(error);
+                });
 
         if (resolveError is not null)
             return new Fail<Unit, SyncError>(resolveError);
@@ -122,4 +130,7 @@ public sealed partial class SyncService(IAuthService authService, ISyncRuleRepos
 
     [LoggerMessage(Level = LogLevel.Error, Message = "Sync failed for account {AccountId}: {ErrorMessage}")]
     private static partial void LogSyncFailed(ILogger logger, string accountId, string errorMessage);
+
+    [LoggerMessage(Level = LogLevel.Error, Message = "Failed to resolve conflict {ConflictId}: {ErrorMessage}")]
+    private static partial void LogResolveFailed(ILogger logger, string conflictId, string errorMessage);
 }

@@ -7,7 +7,7 @@ using Microsoft.Extensions.Logging;
 namespace AStar.Dev.CloudSyncFunctional.Sync.Pipeline;
 
 /// <summary>Enumerates remote folders for all root-level include sync rules, deduplicating ancestor paths.</summary>
-public sealed partial class RemoteFolderEnumerator(IGraphService graphService, ILogger<RemoteFolderEnumerator> logger)
+public sealed partial class RemoteFolderEnumerator(IGraphService graphService, ILogger<RemoteFolderEnumerator> logger) : IRemoteFolderEnumerator
 {
     /// <summary>Enumerates all remote items across the account's configured include rules.</summary>
     /// <remarks>
@@ -19,7 +19,7 @@ public sealed partial class RemoteFolderEnumerator(IGraphService graphService, I
     /// <param name="rules">The sync rules for the account.</param>
     /// <param name="cancellationToken">Token to cancel the operation.</param>
     /// <returns>All delta items found in the configured remote folders, or a <see cref="SyncError"/> on failure.</returns>
-    public async Task<Result<List<DeltaItem>, SyncError>> EnumerateAsync(OneDriveAccount account, string accessToken, IReadOnlyList<SyncRuleEntity> rules, CancellationToken cancellationToken)
+    public async Task<Result<List<DeltaItem>, SyncError>> EnumerateAsync(OneDriveAccount account, string accessToken, IReadOnlyList<SyncRule> rules, CancellationToken cancellationToken)
     {
         var includeRules = rules.Where(rule => rule.RuleType == RuleType.Include).ToList();
         var rootRules = includeRules.Where(rule => !includeRules.Any(other => other.RemotePath != rule.RemotePath && IsAncestor(other.RemotePath, rule.RemotePath))).ToList();
@@ -30,36 +30,32 @@ public sealed partial class RemoteFolderEnumerator(IGraphService graphService, I
         var allItems = new List<DeltaItem>();
         foreach (var rule in rootRules)
         {
-            var folderIdOption = await graphService.GetFolderIdByPathAsync(accessToken, account.DriveIdValue, rule.RemotePath.TrimStart('/'), cancellationToken).ConfigureAwait(false);
-            var folderId = folderIdOption.Match<string, string?>(id => id, _ => null);
-
-            if (folderId is null)
-            {
-                LogFolderNotFound(logger, rule.RemotePath);
-                continue;
-            }
-
-            var enumerateResult = await graphService.EnumerateFolderAsync(accessToken, account.DriveIdValue, folderId, rule.RemotePath, cancellationToken).ConfigureAwait(false);
-            var enumerateError = enumerateResult.Match<List<DeltaItem>, GraphError, SyncError?>(
-                items =>
-                {
-                    allItems.AddRange(items);
-
-                    return null;
-                },
-                error =>
-                {
-                    LogEnumerationFailed(logger, rule.RemotePath, error.Message);
-
-                    return SyncErrorFactory.GraphFailed(error);
-                });
-
-            if (enumerateError is not null)
-                return new Fail<List<DeltaItem>, SyncError>(enumerateError);
+            var error = await ProcessRuleAsync(rule, allItems, account, accessToken, cancellationToken).ConfigureAwait(false);
+            if (error is not null)
+                return new Fail<List<DeltaItem>, SyncError>(error);
         }
 
         return new Ok<List<DeltaItem>, SyncError>(allItems);
     }
+
+    private Task<SyncError?> ProcessRuleAsync(SyncRule rule, List<DeltaItem> allItems, OneDriveAccount account, string accessToken, CancellationToken cancellationToken)
+        => graphService.GetFolderIdByPathAsync(accessToken, account.DriveIdValue, rule.RemotePath.TrimStart('/'), cancellationToken)
+            .MatchAsync(
+                async folderId => await graphService.EnumerateFolderAsync(accessToken, account.DriveIdValue, folderId, rule.RemotePath, cancellationToken)
+                    .MatchAsync<List<DeltaItem>, GraphError, SyncError?>(
+                        items => { allItems.AddRange(items); return (SyncError?)null; },
+                        error =>
+                        {
+                            LogEnumerationFailed(logger, rule.RemotePath, error.Message);
+
+                            return (SyncError?)SyncErrorFactory.GraphFailed(error);
+                        }),
+                _ =>
+                {
+                    LogFolderNotFound(logger, rule.RemotePath);
+
+                    return Task.FromResult<SyncError?>(null);
+                });
 
     private static bool IsAncestor(string potentialAncestor, string path)
     {

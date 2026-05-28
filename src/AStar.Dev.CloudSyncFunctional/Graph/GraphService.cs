@@ -1,4 +1,5 @@
 using System.Collections.Concurrent;
+using System.IO.Abstractions;
 using AStar.Dev.CloudSyncFunctional.Sync;
 using AStar.Dev.FunctionalParadigm;
 using Microsoft.Extensions.Logging;
@@ -11,7 +12,7 @@ using PersistenceDriveId = AStar.Dev.CloudSyncFunctional.Persistence.ValueObject
 namespace AStar.Dev.CloudSyncFunctional.Graph;
 
 /// <inheritdoc />
-public sealed partial class GraphService(IGraphClientFactory clientFactory, ILogger<GraphService> logger) : IGraphService
+public sealed partial class GraphService(IGraphClientFactory clientFactory, IHttpClientFactory httpClientFactory, IFileSystem fileSystem, ILogger<GraphService> logger) : IGraphService
 {
     private static readonly string[] RootChildrenSelect = ["id", "name", "folder", "parentReference"];
     private static readonly string[] EnumerateChildrenSelect = ["id", "name", "folder", "parentReference", "lastModifiedDateTime", "file", "eTag"];
@@ -30,27 +31,33 @@ public sealed partial class GraphService(IGraphClientFactory clientFactory, ILog
     public Task<Result<List<DeltaItem>, GraphError>> EnumerateFolderAsync(string accessToken, PersistenceDriveId driveId, string folderId, string remotePath, CancellationToken cancellationToken = default)
         => ExecuteGraphOperationAsync(
             folderId,
-            async () =>
-            {
-                var client = GetClientForToken(clientFactory, accessToken);
-                var items = new List<DeltaItem>();
-                var visited = new HashSet<string>();
-                await EnumerateSubFolderAsync(client, driveId, folderId, remotePath, items, visited, cancellationToken).ConfigureAwait(false);
+            () => TryGetClientForToken(clientFactory, accessToken)
+                .BindAsync(async client =>
+                {
+                    var items = new List<DeltaItem>();
+                    var visited = new HashSet<string>();
+                    await EnumerateSubFolderAsync(client, driveId, folderId, remotePath, items, visited, cancellationToken).ConfigureAwait(false);
 
-                return (Result<List<DeltaItem>, GraphError>)new Ok<List<DeltaItem>, GraphError>(items);
-            });
+                    return (Result<List<DeltaItem>, GraphError>)new Ok<List<DeltaItem>, GraphError>(items);
+                }));
 
     /// <inheritdoc />
     public async Task<Option<string>> GetFolderIdByPathAsync(string accessToken, PersistenceDriveId driveId, string remotePath, CancellationToken cancellationToken = default)
     {
         try
         {
-            var client = GetClientForToken(clientFactory, accessToken);
-            var item = await client.Drives[driveId.Value].Items[$"root:/{remotePath}"]
-                .GetAsync(req => req.QueryParameters.Select = ["id"], cancellationToken: cancellationToken)
-                .ConfigureAwait(false);
+            return await TryGetClientForToken(clientFactory, accessToken)
+                .BindAsync(async client =>
+                {
+                    var item = await client.Drives[driveId.Value].Items[$"root:/{remotePath}"]
+                        .GetAsync(req => req.QueryParameters.Select = ["id"], cancellationToken: cancellationToken)
+                        .ConfigureAwait(false);
 
-            return item?.Id is string id ? new Some<string>(id) : new None<string>();
+                    return item?.Id is string id
+                        ? (Result<Option<string>, GraphError>)new Ok<Option<string>, GraphError>(new Some<string>(id))
+                        : new Ok<Option<string>, GraphError>(new None<string>());
+                })
+                .MatchAsync<Option<string>, GraphError, Option<string>>(opt => opt, _ => new None<string>());
         }
         catch (ODataError)
         {
@@ -68,82 +75,80 @@ public sealed partial class GraphService(IGraphClientFactory clientFactory, ILog
     public Task<Result<string, GraphError>> GetDownloadUrlAsync(string accountId, string accessToken, string itemId, CancellationToken cancellationToken = default)
         => ExecuteGraphOperationAsync(
             accountId,
-            async () =>
-            {
-                var client = GetClientForToken(clientFactory, accessToken);
-                var driveId = await GetOrResolveDriveIdAsync(accountId, client, cancellationToken).ConfigureAwait(false);
-                if (driveId is null)
-                    return (Result<string, GraphError>)new Fail<string, GraphError>(GraphErrorFactory.Unexpected("Could not resolve drive ID."));
+            () => TryGetClientForToken(clientFactory, accessToken)
+                .BindAsync(async client =>
+                {
+                    var driveId = await GetOrResolveDriveIdAsync(accountId, client, cancellationToken).ConfigureAwait(false);
+                    if (driveId is null)
+                        return (Result<string, GraphError>)new Fail<string, GraphError>(GraphErrorFactory.Unexpected("Could not resolve drive ID."));
 
-                var item = await client.Drives[driveId].Items[itemId]
-                    .GetAsync(req => req.QueryParameters.Select = ["@microsoft.graph.downloadUrl"], cancellationToken: cancellationToken)
-                    .ConfigureAwait(false);
+                    var item = await client.Drives[driveId].Items[itemId]
+                        .GetAsync(req => req.QueryParameters.Select = ["@microsoft.graph.downloadUrl"], cancellationToken: cancellationToken)
+                        .ConfigureAwait(false);
 
-                if (item?.AdditionalData is null || !item.AdditionalData.TryGetValue("@microsoft.graph.downloadUrl", out var url) || url is null)
-                    return (Result<string, GraphError>)new Fail<string, GraphError>(GraphErrorFactory.NotFound(itemId));
+                    if (item?.AdditionalData is null || !item.AdditionalData.TryGetValue("@microsoft.graph.downloadUrl", out var url) || url is null)
+                        return (Result<string, GraphError>)new Fail<string, GraphError>(GraphErrorFactory.NotFound(itemId));
 
-                return (Result<string, GraphError>)new Ok<string, GraphError>(url.ToString()!);
-            });
+                    return (Result<string, GraphError>)new Ok<string, GraphError>(url.ToString()!);
+                }));
 
     /// <inheritdoc />
     public Task<Result<string, GraphError>> UploadFileAsync(string accountId, string accessToken, string localPath, string remotePath, string parentFolderId, CancellationToken cancellationToken = default)
         => ExecuteGraphOperationAsync(
             accountId,
-            async () =>
-            {
-                var client = GetClientForToken(clientFactory, accessToken);
-                var driveId = await GetOrResolveDriveIdAsync(accountId, client, cancellationToken).ConfigureAwait(false);
-                if (driveId is null)
-                    return (Result<string, GraphError>)new Fail<string, GraphError>(GraphErrorFactory.Unexpected("Could not resolve drive ID for upload."));
-
-                var fileName = System.IO.Path.GetFileName(localPath);
-                var lastModified = System.IO.File.GetLastWriteTimeUtc(localPath).ToString("yyyy-MM-ddTHH:mm:ss.fffZ", System.Globalization.CultureInfo.InvariantCulture);
-
-                var sessionBody = new Microsoft.Graph.Drives.Item.Items.Item.CreateUploadSession.CreateUploadSessionPostRequestBody
+            () => TryGetClientForToken(clientFactory, accessToken)
+                .BindAsync(async client =>
                 {
-                    Item = new DriveItemUploadableProperties
+                    var driveId = await GetOrResolveDriveIdAsync(accountId, client, cancellationToken).ConfigureAwait(false);
+                    if (driveId is null)
+                        return (Result<string, GraphError>)new Fail<string, GraphError>(GraphErrorFactory.Unexpected("Could not resolve drive ID for upload."));
+
+                    var fileName = fileSystem.Path.GetFileName(localPath);
+                    var lastModified = fileSystem.File.GetLastWriteTimeUtc(localPath)
+                        .ToString("yyyy-MM-ddTHH:mm:ss.fffZ", System.Globalization.CultureInfo.InvariantCulture);
+
+                    var sessionBody = new Microsoft.Graph.Drives.Item.Items.Item.CreateUploadSession.CreateUploadSessionPostRequestBody
                     {
-                        AdditionalData = new Dictionary<string, object>
+                        Item = new DriveItemUploadableProperties
                         {
-                            { "@microsoft.graph.conflictBehavior", "replace" },
-                            { "name", fileName },
-                            { "fileSystemInfo", new Dictionary<string, object> { { "lastModifiedDateTime", lastModified } } }
+                            AdditionalData = new Dictionary<string, object>
+                            {
+                                { "@microsoft.graph.conflictBehavior", "replace" },
+                                { "name", fileName },
+                                { "fileSystemInfo", new Dictionary<string, object> { { "lastModifiedDateTime", lastModified } } }
+                            }
                         }
-                    }
-                };
+                    };
 
-                var session = await client.Drives[driveId].Items[parentFolderId]
-                    .ItemWithPath(fileName)
-                    .CreateUploadSession
-                    .PostAsync(sessionBody, cancellationToken: cancellationToken)
-                    .ConfigureAwait(false);
+                    var session = await client.Drives[driveId].Items[parentFolderId]
+                        .ItemWithPath(fileName)
+                        .CreateUploadSession
+                        .PostAsync(sessionBody, cancellationToken: cancellationToken)
+                        .ConfigureAwait(false);
 
-                if (session?.UploadUrl is null)
-                    return (Result<string, GraphError>)new Fail<string, GraphError>(GraphErrorFactory.Unexpected("Upload session URL was null."));
+                    if (session?.UploadUrl is null)
+                        return (Result<string, GraphError>)new Fail<string, GraphError>(GraphErrorFactory.Unexpected("Upload session URL was null."));
 
-                using var fileStream = System.IO.File.OpenRead(localPath);
-                var uploadedItemId = await UploadChunksAsync(session.UploadUrl, fileStream, fileStream.Length, cancellationToken).ConfigureAwait(false);
+                    await using var fileStream = fileSystem.File.OpenRead(localPath);
 
-                return uploadedItemId is null
-                    ? (Result<string, GraphError>)new Fail<string, GraphError>(GraphErrorFactory.Unexpected("Upload completed but no item ID was returned."))
-                    : (Result<string, GraphError>)new Ok<string, GraphError>(uploadedItemId);
-            });
+                    return await UploadChunksAsync(session.UploadUrl, fileStream, fileStream.Length, cancellationToken).ConfigureAwait(false);
+                }));
 
     /// <inheritdoc />
     public Task<Result<Unit, GraphError>> DeleteItemAsync(string accountId, string accessToken, string itemId, CancellationToken cancellationToken = default)
         => ExecuteGraphOperationAsync(
             accountId,
-            async () =>
-            {
-                var client = GetClientForToken(clientFactory, accessToken);
-                var driveId = await GetOrResolveDriveIdAsync(accountId, client, cancellationToken).ConfigureAwait(false);
-                if (driveId is null)
-                    return (Result<Unit, GraphError>)new Fail<Unit, GraphError>(GraphErrorFactory.Unexpected("Could not resolve drive ID for delete."));
+            () => TryGetClientForToken(clientFactory, accessToken)
+                .BindAsync(async client =>
+                {
+                    var driveId = await GetOrResolveDriveIdAsync(accountId, client, cancellationToken).ConfigureAwait(false);
+                    if (driveId is null)
+                        return (Result<Unit, GraphError>)new Fail<Unit, GraphError>(GraphErrorFactory.Unexpected("Could not resolve drive ID for delete."));
 
-                await client.Drives[driveId].Items[itemId].DeleteAsync(cancellationToken: cancellationToken).ConfigureAwait(false);
+                    await client.Drives[driveId].Items[itemId].DeleteAsync(cancellationToken: cancellationToken).ConfigureAwait(false);
 
-                return (Result<Unit, GraphError>)new Ok<Unit, GraphError>(Unit.Default);
-            });
+                    return (Result<Unit, GraphError>)new Ok<Unit, GraphError>(Unit.Default);
+                }));
 
     /// <inheritdoc />
     public void EvictCachedDriveContext(string accountId) => _driveIdCache.TryRemove(accountId, out _);
@@ -225,8 +230,8 @@ public sealed partial class GraphService(IGraphClientFactory clientFactory, ILog
             ? new Ok<DriveFound, GraphError>(new DriveFound(drive))
             : new Fail<DriveFound, GraphError>(GraphErrorFactory.Unexpected("Drive was null."));
 
-    private static GraphClient GetClientForToken(IGraphClientFactory factory, string accessToken)
-        => factory.CreateClient(accessToken).Match(client => client, _ => throw new InvalidOperationException("Failed to create Graph client."));
+    private static Result<GraphClient, GraphError> TryGetClientForToken(IGraphClientFactory factory, string accessToken)
+        => factory.CreateClient(accessToken);
 
     private static async Task EnumerateSubFolderAsync(GraphClient client, PersistenceDriveId driveId, string parentId, string relativePath, List<DeltaItem> items, HashSet<string> visited, CancellationToken cancellationToken)
     {
@@ -269,12 +274,13 @@ public sealed partial class GraphService(IGraphClientFactory clientFactory, ILog
     private static string BuildRelativePath(string parentPath, string itemName)
         => string.IsNullOrEmpty(parentPath) ? itemName : $"{parentPath}/{itemName}";
 
-    private static async Task<string?> UploadChunksAsync(string uploadUrl, System.IO.Stream fileStream, long totalSize, CancellationToken cancellationToken)
+    private async Task<Result<string, GraphError>> UploadChunksAsync(string uploadUrl, Stream fileStream, long totalSize, CancellationToken cancellationToken)
     {
+        const int maxRetries = 5;
         var buffer = new byte[ChunkSize];
         long offset = 0;
+        using var httpClient = httpClientFactory.CreateClient("Graph");
 
-        using var httpClient = new System.Net.Http.HttpClient();
         while (offset < totalSize)
         {
             var bytesRead = await fileStream.ReadAsync(buffer, cancellationToken).ConfigureAwait(false);
@@ -282,27 +288,74 @@ public sealed partial class GraphService(IGraphClientFactory clientFactory, ILog
                 break;
 
             var end = offset + bytesRead - 1;
-            using var content = new System.Net.Http.ByteArrayContent(buffer, 0, bytesRead);
-            content.Headers.TryAddWithoutValidation("Content-Range", $"bytes {offset}-{end}/{totalSize}");
-            content.Headers.ContentLength = bytesRead;
+            Result<string, GraphError>? chunkCompleted = null;
 
-            var response = await httpClient.PutAsync(uploadUrl, content, cancellationToken).ConfigureAwait(false);
-
-            if (response.StatusCode == System.Net.HttpStatusCode.OK || response.StatusCode == System.Net.HttpStatusCode.Created)
+            for (var attempt = 1; attempt <= maxRetries; attempt++)
             {
-                var json = await response.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
-                var doc = System.Text.Json.JsonDocument.Parse(json);
+                using var content = new System.Net.Http.ByteArrayContent(buffer, 0, bytesRead);
+                content.Headers.TryAddWithoutValidation("Content-Range", $"bytes {offset}-{end}/{totalSize}");
+                content.Headers.ContentLength = bytesRead;
 
-                return doc.RootElement.TryGetProperty("id", out var idProp) ? idProp.GetString() : null;
+                var response = await httpClient.PutAsync(uploadUrl, content, cancellationToken).ConfigureAwait(false);
+
+                if (response.StatusCode is System.Net.HttpStatusCode.OK or System.Net.HttpStatusCode.Created)
+                {
+                    var json = await response.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
+                    var doc = System.Text.Json.JsonDocument.Parse(json);
+                    var itemId = doc.RootElement.TryGetProperty("id", out var idProp) ? idProp.GetString() : null;
+                    chunkCompleted = itemId is not null
+                        ? (Result<string, GraphError>)new Ok<string, GraphError>(itemId)
+                        : new Fail<string, GraphError>(GraphErrorFactory.Unexpected("Upload completed but item ID was missing."));
+                    break;
+                }
+
+                if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
+                    return new Fail<string, GraphError>(GraphErrorFactory.Unexpected("Upload session expired (404). Restart required."));
+
+                if (response.StatusCode == System.Net.HttpStatusCode.TooManyRequests)
+                {
+                    await Task.Delay(ParseChunkRetryAfter(response), cancellationToken).ConfigureAwait(false);
+                    continue;
+                }
+
+                if (!response.IsSuccessStatusCode)
+                {
+                    if (attempt == maxRetries)
+                        return new Fail<string, GraphError>(GraphErrorFactory.Unexpected($"Upload chunk failed after {maxRetries} attempts: HTTP {(int)response.StatusCode}"));
+
+                    await Task.Delay(GetChunkBackoffDelay(attempt), cancellationToken).ConfigureAwait(false);
+                    continue;
+                }
+
+                break;
             }
 
-            if (!response.IsSuccessStatusCode)
-                return null;
+            if (chunkCompleted is not null)
+                return chunkCompleted;
 
             offset += bytesRead;
         }
 
-        return null;
+        return new Fail<string, GraphError>(GraphErrorFactory.Unexpected("Upload completed without receiving item ID."));
+    }
+
+    private static TimeSpan ParseChunkRetryAfter(System.Net.Http.HttpResponseMessage response)
+    {
+        if (response.Headers.RetryAfter?.Delta is TimeSpan delta)
+            return delta;
+
+        if (response.Headers.RetryAfter?.Date is DateTimeOffset date)
+            return date - DateTimeOffset.UtcNow;
+
+        return TimeSpan.FromSeconds(10);
+    }
+
+    private static TimeSpan GetChunkBackoffDelay(int attempt)
+    {
+        var seconds = Math.Min(2.0 * Math.Pow(2, attempt - 1), 120.0);
+        var jitter = seconds * 0.2 * Random.Shared.NextDouble();
+
+        return TimeSpan.FromSeconds(seconds + jitter);
     }
 
     [LoggerMessage(Level = LogLevel.Error, Message = "Graph API call failed for account {AccountId}: {ErrorMessage}")]

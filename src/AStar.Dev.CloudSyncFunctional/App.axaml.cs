@@ -4,6 +4,8 @@ using AStar.Dev.CloudSyncFunctional.Onboarding;
 using AStar.Dev.CloudSyncFunctional.Persistence;
 using AStar.Dev.CloudSyncFunctional.Persistence.Repositories;
 using AStar.Dev.CloudSyncFunctional.Recovery;
+using AStar.Dev.CloudSyncFunctional.Sync;
+using AStar.Dev.CloudSyncFunctional.Sync.Pipeline;
 using AStar.Dev.CloudSyncFunctional.Wizard;
 using AStar.Dev.CloudSyncFunctional.Workspace;
 using Avalonia;
@@ -53,6 +55,7 @@ public partial class App : Application
     private static void ConfigureServices(IServiceCollection services, IConfiguration configuration)
     {
         services.AddLogging(builder => builder.AddConsole().SetMinimumLevel(MELogLevel.Debug));
+        services.AddHttpClient();
 
         var clientId = configuration["MicrosoftIdentity:ClientId"]
             ?? throw new InvalidOperationException("MicrosoftIdentity:ClientId is not configured. Set it in appsettings.json or user secrets.");
@@ -85,6 +88,20 @@ public partial class App : Application
 
         services.AddTransient<IAccountOnboardingService, AccountOnboardingService>();
         services.AddTransient<ISyncRecoveryService, SyncRecoveryService>();
+
+        services.AddSingleton<IHttpDownloader, HttpDownloader>();
+        services.AddSingleton<IUploadService, UploadService>();
+        services.AddSingleton<ISyncWorkerFactory, SyncWorkerFactory>();
+        services.AddSingleton<ISyncPipeline, SyncPipeline>();
+        services.AddSingleton<IRemoteFolderEnumerator, RemoteFolderEnumerator>();
+        services.AddSingleton<IRemoteDeletionDetector, RemoteDeletionDetector>();
+        services.AddSingleton<ILocalDeletionDetector, LocalDeletionDetector>();
+        services.AddSingleton<IDownloadJobBuilder, DownloadJobBuilder>();
+        services.AddSingleton<ILocalChangeDetector, LocalChangeDetector>();
+        services.AddSingleton<IJobExecutor, JobExecutor>();
+        services.AddSingleton<ISyncService, SyncService>();
+        services.AddSingleton<ISyncScheduler, SyncScheduler>();
+
         services.AddTransient<AddAccountWizardViewModel>();
         services.AddTransient<WorkspaceViewModel>();
     }

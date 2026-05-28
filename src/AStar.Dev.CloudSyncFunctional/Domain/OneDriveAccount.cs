@@ -16,9 +16,6 @@ public sealed class OneDriveAccount
     /// <summary>Gets or sets whether this account is active for sync.</summary>
     public bool IsActive { get; set; }
 
-    /// <summary>Gets the Graph drive ID for this account's OneDrive as a plain string.</summary>
-    public string? DriveId { get; init; }
-
     /// <summary>Gets the strongly-typed Graph drive identifier for sync operations.</summary>
     public PersistenceDriveId DriveIdValue { get; init; }
 

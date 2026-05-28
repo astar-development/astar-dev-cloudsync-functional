@@ -2,6 +2,7 @@ using System.IO.Abstractions;
 using AStar.Dev.CloudSyncFunctional.Persistence.Entities;
 using AStar.Dev.CloudSyncFunctional.Persistence.Repositories;
 using AStar.Dev.CloudSyncFunctional.Persistence.ValueObjects;
+using AStar.Dev.FunctionalParadigm;
 using Microsoft.Extensions.Logging;
 
 namespace AStar.Dev.CloudSyncFunctional.Sync;
@@ -28,10 +29,15 @@ public sealed partial class SyncedItemRegistrar(ISyncedItemRepository syncedItem
             IsFolder = true
         };
 
-        await syncedItemRepository.UpsertAsync(entity, cancellationToken).ConfigureAwait(false);
-        syncedItems[remotePath] = entity;
+        var upsertResult = await syncedItemRepository.UpsertAsync(entity, cancellationToken).ConfigureAwait(false);
+        upsertResult.Match(
+            _ => { syncedItems[remotePath] = entity; return Unit.Default; },
+            error => { LogUpsertFailed(logger, remotePath, error.Message); return Unit.Default; });
     }
 
     [LoggerMessage(Level = LogLevel.Debug, Message = "Created local directory {LocalPath}")]
     private static partial void LogDirectoryCreated(ILogger logger, string localPath);
+
+    [LoggerMessage(Level = LogLevel.Error, Message = "Failed to upsert synced item for {RemotePath}: {ErrorMessage}")]
+    private static partial void LogUpsertFailed(ILogger logger, string remotePath, string errorMessage);
 }

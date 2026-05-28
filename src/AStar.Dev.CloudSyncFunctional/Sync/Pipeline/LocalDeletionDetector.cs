@@ -9,7 +9,7 @@ using Microsoft.Extensions.Logging;
 namespace AStar.Dev.CloudSyncFunctional.Sync.Pipeline;
 
 /// <summary>Detects local file deletions and removes the corresponding remote items from OneDrive.</summary>
-public sealed partial class LocalDeletionDetector(IGraphService graphService, ISyncedItemRepository syncedItemRepository, IFileSystem fileSystem, ILogger<LocalDeletionDetector> logger)
+public sealed partial class LocalDeletionDetector(IGraphService graphService, ISyncedItemRepository syncedItemRepository, IFileSystem fileSystem, ILogger<LocalDeletionDetector> logger) : ILocalDeletionDetector
 {
     /// <summary>Scans tracked items for local files that no longer exist, then deletes those items from OneDrive and removes their tracking records.</summary>
     /// <param name="accessToken">The OAuth2 bearer token for Graph API calls.</param>
@@ -49,26 +49,23 @@ public sealed partial class LocalDeletionDetector(IGraphService graphService, IS
         return new Ok<Unit, SyncError>(Unit.Default);
     }
 
-    private async Task<GraphError?> DeleteRemoteItemIfFoundAsync(string accessToken, OneDriveAccount account, string remotePath, CancellationToken cancellationToken)
-    {
-        var folderId = await graphService.GetFolderIdByPathAsync(accessToken, account.DriveIdValue, remotePath, cancellationToken).ConfigureAwait(false);
+    private Task<GraphError?> DeleteRemoteItemIfFoundAsync(string accessToken, OneDriveAccount account, string remotePath, CancellationToken cancellationToken)
+        => graphService.GetFolderIdByPathAsync(accessToken, account.DriveIdValue, remotePath.TrimStart('/'), cancellationToken)
+            .MatchAsync(
+                async itemId =>
+                {
+                    var deleteResult = await graphService.DeleteItemAsync(account.AccountId.Value, accessToken, itemId, cancellationToken).ConfigureAwait(false);
 
-        return await folderId.Match<string, Task<GraphError?>>(
-            async itemId =>
-            {
-                var deleteResult = await graphService.DeleteItemAsync(account.AccountId.Value, accessToken, itemId, cancellationToken).ConfigureAwait(false);
+                    return deleteResult.Match<Unit, GraphError, GraphError?>(
+                        _ => null,
+                        error =>
+                        {
+                            LogRemoteDeleteFailed(logger, remotePath, error.Message);
 
-                return deleteResult.Match<Unit, GraphError, GraphError?>(
-                    _ => null,
-                    error =>
-                    {
-                        LogRemoteDeleteFailed(logger, remotePath, error.Message);
-
-                        return error;
-                    });
-            },
-            _ => Task.FromResult<GraphError?>(null)).ConfigureAwait(false);
-    }
+                            return error;
+                        });
+                },
+                _ => Task.FromResult<GraphError?>(null));
 
     [LoggerMessage(Level = LogLevel.Debug, Message = "Processed local deletion for {RemotePath}")]
     private static partial void LogLocalDeletionProcessed(ILogger logger, string remotePath);

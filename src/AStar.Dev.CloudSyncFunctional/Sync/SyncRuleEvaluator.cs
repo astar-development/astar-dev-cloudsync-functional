@@ -13,7 +13,7 @@ public static class SyncRuleEvaluator
     /// <param name="remotePath">The remote OneDrive path to evaluate.</param>
     /// <param name="rules">The complete set of sync rules to evaluate against.</param>
     /// <returns><c>true</c> if the path is included; <c>false</c> if excluded or no rule matches.</returns>
-    public static bool IsIncluded(string remotePath, IReadOnlyList<SyncRuleEntity> rules)
+    public static bool IsIncluded(string remotePath, IReadOnlyList<SyncRule> rules)
     {
         var matchingRules = rules
             .Where(rule => IsPrefix(rule.RemotePath, remotePath))

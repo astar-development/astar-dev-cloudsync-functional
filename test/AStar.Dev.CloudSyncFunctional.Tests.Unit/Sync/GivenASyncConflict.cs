@@ -8,7 +8,7 @@ public class GivenASyncConflict
     [Fact]
     public void when_sync_conflict_created_then_state_is_pending()
     {
-        var conflict = new SyncConflict(new SyncConflictId("c1"), "acc1", "item1", DateTimeOffset.UtcNow, DateTimeOffset.UtcNow, ConflictState.Pending);
+        var conflict = SyncConflictFactory.CreatePending(new SyncConflictId("c1"), new AccountId("acc1"), new OneDriveItemId("item1"), DateTimeOffset.UtcNow, DateTimeOffset.UtcNow);
 
         conflict.State.ShouldBe(ConflictState.Pending);
     }
@@ -16,7 +16,7 @@ public class GivenASyncConflict
     [Fact]
     public void when_sync_conflict_state_is_pending_then_is_not_resolved()
     {
-        var conflict = new SyncConflict(new SyncConflictId("c1"), "acc1", "item1", DateTimeOffset.UtcNow, DateTimeOffset.UtcNow, ConflictState.Pending);
+        var conflict = SyncConflictFactory.CreatePending(new SyncConflictId("c1"), new AccountId("acc1"), new OneDriveItemId("item1"), DateTimeOffset.UtcNow, DateTimeOffset.UtcNow);
 
         conflict.State.ShouldNotBe(ConflictState.Resolved);
     }

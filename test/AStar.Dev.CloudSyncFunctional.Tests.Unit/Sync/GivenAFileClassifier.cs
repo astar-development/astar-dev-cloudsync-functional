@@ -5,15 +5,28 @@ namespace AStar.Dev.CloudSyncFunctional.Tests.Unit.Sync;
 public class GivenAFileClassifier
 {
     [Fact]
-    public void when_path_contains_keyword_then_classified()
+    public void when_token_exactly_matches_keyword_then_classified()
     {
-        var classification = new FileClassification("Photos", ["photo", "image"]);
-        var rule = new FileClassificationRule(classification, ["photo"]);
+        var classification = new FileClassification("Photos", ["Photos", "image"]);
+        var rule = new FileClassificationRule(classification, ["Photos"]);
         var rules = new[] { rule };
 
         var result = FileClassifier.Classify("/Photos/holiday.jpg", rules);
 
         result.ShouldContain(c => c.Name == "Photos");
+    }
+
+    [Fact]
+    public void when_keyword_is_substring_of_token_then_not_classified()
+    {
+        var classification = new FileClassification("Photos", ["photo"]);
+        var rule = new FileClassificationRule(classification, ["photo"]);
+        var rules = new[] { rule };
+
+        var result = FileClassifier.Classify("/photographs/img.jpg", rules);
+
+        result.ShouldHaveSingleItem();
+        result[0].Name.ShouldBe("Unclassified");
     }
 
     [Fact]
@@ -44,8 +57,8 @@ public class GivenAFileClassifier
     [Fact]
     public void when_keyword_match_is_case_insensitive_then_classified()
     {
-        var classification = new FileClassification("Photos", ["PHOTO"]);
-        var rule = new FileClassificationRule(classification, ["PHOTO"]);
+        var classification = new FileClassification("Photos", ["PHOTOS"]);
+        var rule = new FileClassificationRule(classification, ["PHOTOS"]);
         var rules = new[] { rule };
 
         var result = FileClassifier.Classify("/photos/img.jpg", rules);

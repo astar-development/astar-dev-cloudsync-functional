@@ -4,7 +4,7 @@ using AStar.Dev.CloudSyncFunctional.Persistence.Entities;
 namespace AStar.Dev.CloudSyncFunctional.Sync.Pipeline;
 
 /// <summary>Detects locally changed or new files and builds upload jobs for them.</summary>
-public sealed class LocalChangeDetector(IFileSystem fileSystem)
+public sealed class LocalChangeDetector(IFileSystem fileSystem) : ILocalChangeDetector
 {
     private static readonly TimeSpan TimestampTolerance = TimeSpan.FromSeconds(5);
     private static readonly HashSet<string> SkippedExtensions = [".tmp", ".temp", ".partial"];
@@ -14,7 +14,7 @@ public sealed class LocalChangeDetector(IFileSystem fileSystem)
     /// <param name="syncedItems">The in-memory tracking dictionary keyed on remote path.</param>
     /// <param name="remoteSyncPath">The remote base path used when computing remote paths for upload jobs.</param>
     /// <returns>Upload jobs for all new and modified local files.</returns>
-    public List<SyncJob> Detect(string localSyncPath, Dictionary<string, SyncedItemEntity> syncedItems, string remoteSyncPath)
+    public IReadOnlyList<SyncJob> Detect(string localSyncPath, Dictionary<string, SyncedItemEntity> syncedItems, string remoteSyncPath)
     {
         if (!fileSystem.Directory.Exists(localSyncPath))
             return [];

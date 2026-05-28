@@ -1,20 +1,9 @@
-using AStar.Dev.CloudSyncFunctional.Persistence.Entities;
-using AStar.Dev.CloudSyncFunctional.Persistence.ValueObjects;
 using AStar.Dev.CloudSyncFunctional.Sync;
 
 namespace AStar.Dev.CloudSyncFunctional.Tests.Unit.Sync;
 
 public class GivenASyncRuleEvaluator
 {
-    private static SyncRuleEntity BuildRule(string path, RuleType ruleType) =>
-        new()
-        {
-            Id = new SyncRuleId(Guid.NewGuid().ToString()),
-            AccountId = new AccountId("acc"),
-            RemotePath = path,
-            RuleType = ruleType
-        };
-
     [Fact]
     public void when_no_rules_match_then_excluded()
     {
@@ -26,7 +15,7 @@ public class GivenASyncRuleEvaluator
     [Fact]
     public void when_include_rule_matches_path_then_included()
     {
-        var rules = new[] { BuildRule("/Documents", RuleType.Include) };
+        var rules = new[] { SyncRuleFactory.CreateInclude("/Documents") };
 
         var result = SyncRuleEvaluator.IsIncluded("/Documents/Report.docx", rules);
 
@@ -36,7 +25,7 @@ public class GivenASyncRuleEvaluator
     [Fact]
     public void when_exclude_rule_matches_path_then_excluded()
     {
-        var rules = new[] { BuildRule("/Documents", RuleType.Exclude) };
+        var rules = new[] { SyncRuleFactory.CreateExclude("/Documents") };
 
         var result = SyncRuleEvaluator.IsIncluded("/Documents/file.txt", rules);
 
@@ -48,8 +37,8 @@ public class GivenASyncRuleEvaluator
     {
         var rules = new[]
         {
-            BuildRule("/Documents", RuleType.Include),
-            BuildRule("/Documents/Private", RuleType.Exclude)
+            SyncRuleFactory.CreateInclude("/Documents"),
+            SyncRuleFactory.CreateExclude("/Documents/Private")
         };
 
         var result = SyncRuleEvaluator.IsIncluded("/Documents/Private/secret.txt", rules);
@@ -62,8 +51,8 @@ public class GivenASyncRuleEvaluator
     {
         var rules = new[]
         {
-            BuildRule("/Documents", RuleType.Exclude),
-            BuildRule("/Documents/Work", RuleType.Include)
+            SyncRuleFactory.CreateExclude("/Documents"),
+            SyncRuleFactory.CreateInclude("/Documents/Work")
         };
 
         var result = SyncRuleEvaluator.IsIncluded("/Documents/Work/report.txt", rules);
@@ -74,7 +63,7 @@ public class GivenASyncRuleEvaluator
     [Fact]
     public void when_path_prefix_matches_but_not_boundary_then_excluded()
     {
-        var rules = new[] { BuildRule("/Documents", RuleType.Include) };
+        var rules = new[] { SyncRuleFactory.CreateInclude("/Documents") };
 
         var result = SyncRuleEvaluator.IsIncluded("/DocumentsBackup/file.txt", rules);
 
@@ -84,7 +73,7 @@ public class GivenASyncRuleEvaluator
     [Fact]
     public void when_exact_path_matches_include_rule_then_included()
     {
-        var rules = new[] { BuildRule("/Documents", RuleType.Include) };
+        var rules = new[] { SyncRuleFactory.CreateInclude("/Documents") };
 
         var result = SyncRuleEvaluator.IsIncluded("/Documents", rules);
 
@@ -96,8 +85,8 @@ public class GivenASyncRuleEvaluator
     {
         var rules = new[]
         {
-            BuildRule("/Documents/Work", RuleType.Include),
-            BuildRule("/Documents/Work", RuleType.Exclude)
+            SyncRuleFactory.CreateInclude("/Documents/Work"),
+            SyncRuleFactory.CreateExclude("/Documents/Work")
         };
 
         var result = SyncRuleEvaluator.IsIncluded("/Documents/Work", rules);

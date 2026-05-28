@@ -1,6 +1,7 @@
 using System.Collections.Concurrent;
 using AStar.Dev.CloudSyncFunctional.Domain;
 using AStar.Dev.CloudSyncFunctional.Persistence.Repositories;
+using AStar.Dev.FunctionalParadigm;
 using Microsoft.Extensions.Logging;
 
 namespace AStar.Dev.CloudSyncFunctional.Sync;
@@ -61,16 +62,7 @@ public sealed partial class SyncScheduler(ISyncService syncService, IAccountRepo
         if (entity is null)
             return;
 
-        var domainAccount = new OneDriveAccount
-        {
-            AccountId = Auth.AccountId.Create(entity.Id.Value),
-            IsActive = entity.IsActive,
-            DriveId = entity.DriveId.Value,
-            DriveIdValue = new Persistence.ValueObjects.DriveId(entity.DriveId.Value),
-            SyncConfig = entity.SyncConfig
-        };
-
-        await TriggerAccountAsync(domainAccount, cancellationToken).ConfigureAwait(false);
+        await TriggerAccountAsync(MapToDomain(entity), cancellationToken).ConfigureAwait(false);
     }
 
     /// <inheritdoc />
@@ -82,8 +74,10 @@ public sealed partial class SyncScheduler(ISyncService syncService, IAccountRepo
         try
         {
             SyncStarted?.Invoke(this, account.AccountId.Value);
-            await syncService.SyncAccountAsync(account, cts.Token).ConfigureAwait(false);
-            SyncCompleted?.Invoke(this, account.AccountId.Value);
+            await syncService.SyncAccountAsync(account, cts.Token)
+                .MatchAsync(
+                    _ => { SyncCompleted?.Invoke(this, account.AccountId.Value); },
+                    error => { LogSyncFailed(logger, account.AccountId.Value, error.Message); });
         }
         catch (OperationCanceledException)
         {
@@ -121,6 +115,15 @@ public sealed partial class SyncScheduler(ISyncService syncService, IAccountRepo
             await _timer.DisposeAsync().ConfigureAwait(false);
     }
 
+    private static OneDriveAccount MapToDomain(Persistence.Entities.AccountEntity entity) =>
+        new()
+        {
+            AccountId = Auth.AccountId.Create(entity.Id.Value),
+            IsActive = entity.IsActive,
+            DriveIdValue = new Persistence.ValueObjects.DriveId(entity.DriveId.Value),
+            SyncConfig = entity.SyncConfig
+        };
+
     // ReSharper disable once AsyncVoidMethod - Timer requires this signature
     private async void OnTimerTickAsync(object? state)
     {
@@ -143,18 +146,7 @@ public sealed partial class SyncScheduler(ISyncService syncService, IAccountRepo
         {
             var accounts = await accountRepository.GetAllAsync(cancellationToken).ConfigureAwait(false);
             foreach (var entity in accounts.Where(account => account.IsActive))
-            {
-                var domainAccount = new OneDriveAccount
-                {
-                    AccountId = Auth.AccountId.Create(entity.Id.Value),
-                    IsActive = entity.IsActive,
-                    DriveId = entity.DriveId.Value,
-                    DriveIdValue = new Persistence.ValueObjects.DriveId(entity.DriveId.Value),
-                    SyncConfig = entity.SyncConfig
-                };
-
-                await TriggerAccountAsync(domainAccount, cancellationToken).ConfigureAwait(false);
-            }
+                await TriggerAccountAsync(MapToDomain(entity), cancellationToken).ConfigureAwait(false);
         }
         finally
         {
@@ -170,6 +162,9 @@ public sealed partial class SyncScheduler(ISyncService syncService, IAccountRepo
 
     [LoggerMessage(Level = LogLevel.Information, Message = "Sync cancelled for account {AccountId}")]
     private static partial void LogSyncCancelled(ILogger logger, string accountId);
+
+    [LoggerMessage(Level = LogLevel.Error, Message = "Sync failed for account {AccountId}: {ErrorMessage}")]
+    private static partial void LogSyncFailed(ILogger logger, string accountId, string errorMessage);
 
     [LoggerMessage(Level = LogLevel.Error, Message = "Sync exception for account {AccountId}: {ErrorMessage}")]
     private static partial void LogSyncException(ILogger logger, string accountId, string errorMessage);
