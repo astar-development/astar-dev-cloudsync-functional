@@ -6,6 +6,7 @@ using AStar.Dev.CloudSyncFunctional.Onboarding;
 using AStar.Dev.CloudSyncFunctional.Persistence.Entities;
 using AStar.Dev.CloudSyncFunctional.Persistence.Repositories;
 using AStar.Dev.CloudSyncFunctional.Persistence.ValueObjects;
+using AStar.Dev.CloudSyncFunctional.Recovery;
 using AStar.Dev.CloudSyncFunctional.Tests.Unit.Infrastructure;
 using AStar.Dev.CloudSyncFunctional.Wizard;
 using AStar.Dev.CloudSyncFunctional.Workspace;
@@ -310,5 +311,44 @@ public class GivenAWorkspaceViewModel : IClassFixture<ReactiveUiFixture>
 
         sut.SelectedAccount.ShouldNotBeNull();
         sut.SelectedAccount!.Email.ShouldBe("bob@x.com");
+    }
+
+    [Fact]
+    public async Task when_interrupted_syncs_are_detected_then_has_interrupted_syncs_is_true()
+    {
+        var accountRepo = Substitute.For<IAccountRepository>();
+        accountRepo.GetAllAsync(Arg.Any<CancellationToken>())
+            .Returns(Task.FromResult<IReadOnlyList<AccountEntity>>([]));
+        var recoveryService = Substitute.For<ISyncRecoveryService>();
+        recoveryService.DetectAsync(Arg.Any<CancellationToken>())
+            .Returns(Task.FromResult<IReadOnlyList<InterruptedSyncInfo>>(
+            [
+                new InterruptedSyncInfo(
+                    new Persistence.ValueObjects.AccountId("acc-1"),
+                    "Test User",
+                    CanResume: true,
+                    "Sync resumed from last checkpoint.")
+            ]));
+        var sut = new WorkspaceViewModel(new ServiceCollection().BuildServiceProvider(), accountRepo, recoveryService);
+
+        await sut.LoadPersistedAccountsAsync(CancellationToken.None);
+
+        sut.HasInterruptedSyncs.ShouldBeTrue();
+    }
+
+    [Fact]
+    public async Task when_no_interrupted_syncs_then_has_interrupted_syncs_is_false()
+    {
+        var accountRepo = Substitute.For<IAccountRepository>();
+        accountRepo.GetAllAsync(Arg.Any<CancellationToken>())
+            .Returns(Task.FromResult<IReadOnlyList<AccountEntity>>([]));
+        var recoveryService = Substitute.For<ISyncRecoveryService>();
+        recoveryService.DetectAsync(Arg.Any<CancellationToken>())
+            .Returns(Task.FromResult<IReadOnlyList<InterruptedSyncInfo>>([]));
+        var sut = new WorkspaceViewModel(new ServiceCollection().BuildServiceProvider(), accountRepo, recoveryService);
+
+        await sut.LoadPersistedAccountsAsync(CancellationToken.None);
+
+        sut.HasInterruptedSyncs.ShouldBeFalse();
     }
 }
