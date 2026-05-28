@@ -7,6 +7,7 @@ using AStar.Dev.CloudSyncFunctional.Persistence.Entities;
 using AStar.Dev.CloudSyncFunctional.Persistence.Repositories;
 using AStar.Dev.CloudSyncFunctional.Persistence.ValueObjects;
 using AStar.Dev.CloudSyncFunctional.Recovery;
+using AStar.Dev.CloudSyncFunctional.Sync;
 using AStar.Dev.CloudSyncFunctional.Tests.Unit.Infrastructure;
 using AStar.Dev.CloudSyncFunctional.Wizard;
 using AStar.Dev.CloudSyncFunctional.Workspace;
@@ -350,5 +351,125 @@ public class GivenAWorkspaceViewModel : IClassFixture<ReactiveUiFixture>
         await sut.LoadPersistedAccountsAsync(CancellationToken.None);
 
         sut.HasInterruptedSyncs.ShouldBeFalse();
+    }
+
+    [Fact]
+    public void when_wizard_completed_with_selected_folders_then_account_has_folder_node_per_selected_folder()
+    {
+        var auth = Substitute.For<IAuthService>();
+        var graph = Substitute.For<IGraphService>();
+        var onboarding = Substitute.For<IAccountOnboardingService>();
+        var account = new OneDriveAccount
+        {
+            AccountId = CloudSyncFunctional.Auth.AccountId.Create("acc-wiz"),
+            Profile = new AccountProfile("Name", "email@x.com"),
+            SelectedFolders = [new SelectedFolder("desktop-id", "Desktop")]
+        };
+        onboarding.CompleteOnboardingAsync(Arg.Any<OneDriveAccount>(), Arg.Any<CancellationToken>())
+            .Returns(Task.FromResult<Result<OneDriveAccount, PersistenceError>>(new Ok<OneDriveAccount, PersistenceError>(account)));
+        var services = new ServiceCollection();
+        services.AddTransient(_ => new AddAccountWizardViewModel(auth, graph, onboarding));
+        var provider = services.BuildServiceProvider();
+        var sut = new WorkspaceViewModel(provider);
+        sut.OpenAddAccountWizard.Execute().Subscribe();
+        var wizard = (AddAccountWizardViewModel)sut.CurrentOverlay!;
+
+        wizard.SimulateCompleted(account);
+
+        var added = sut.Accounts[^1];
+        added.Folders.Count.ShouldBe(1);
+        added.Folders[0].Name.ShouldBe("Desktop");
+    }
+
+    [Fact]
+    public void when_wizard_completed_then_added_account_has_account_id()
+    {
+        var auth = Substitute.For<IAuthService>();
+        var graph = Substitute.For<IGraphService>();
+        var onboarding = Substitute.For<IAccountOnboardingService>();
+        var account = new OneDriveAccount
+        {
+            AccountId = CloudSyncFunctional.Auth.AccountId.Create("acc-wiz"),
+            Profile = new AccountProfile("Name", "email@x.com"),
+            SelectedFolders = []
+        };
+        onboarding.CompleteOnboardingAsync(Arg.Any<OneDriveAccount>(), Arg.Any<CancellationToken>())
+            .Returns(Task.FromResult<Result<OneDriveAccount, PersistenceError>>(new Ok<OneDriveAccount, PersistenceError>(account)));
+        var services = new ServiceCollection();
+        services.AddTransient(_ => new AddAccountWizardViewModel(auth, graph, onboarding));
+        var provider = services.BuildServiceProvider();
+        var sut = new WorkspaceViewModel(provider);
+        sut.OpenAddAccountWizard.Execute().Subscribe();
+        var wizard = (AddAccountWizardViewModel)sut.CurrentOverlay!;
+
+        wizard.SimulateCompleted(account);
+
+        sut.Accounts[^1].AccountId.ShouldBe("acc-wiz");
+    }
+
+    [Fact]
+    public async Task when_load_persisted_accounts_is_called_then_include_sync_rules_are_loaded_as_folder_nodes()
+    {
+        var accountRepo = Substitute.For<IAccountRepository>();
+        accountRepo.GetAllAsync(Arg.Any<CancellationToken>())
+            .Returns(Task.FromResult<IReadOnlyList<AccountEntity>>(
+            [
+                new AccountEntity
+                {
+                    Id = new Persistence.ValueObjects.AccountId("acc-1"),
+                    Profile = new AccountProfileEntity { DisplayName = new DisplayName("Alice"), Email = new EmailAddress("alice@x.com") },
+                    IsActive = true,
+                    DriveId = new DriveId("drive-1"),
+                    SyncConfig = new AccountSyncConfig { LocalSyncPath = new LocalSyncPath("/home/alice/OneDrive"), WorkerCount = 8 }
+                }
+            ]));
+        var syncRuleRepo = Substitute.For<ISyncRuleRepository>();
+        syncRuleRepo.GetByAccountAsync(new Persistence.ValueObjects.AccountId("acc-1"), Arg.Any<CancellationToken>())
+            .Returns(Task.FromResult<IReadOnlyList<SyncRuleEntity>>(
+            [
+                new SyncRuleEntity
+                {
+                    Id = new SyncRuleId("rule-1"),
+                    AccountId = new Persistence.ValueObjects.AccountId("acc-1"),
+                    RemotePath = "/Desktop",
+                    RuleType = RuleType.Include
+                }
+            ]));
+        var sut = new WorkspaceViewModel(new ServiceCollection().BuildServiceProvider(), accountRepo, null, syncRuleRepo);
+
+        await sut.LoadPersistedAccountsAsync(CancellationToken.None);
+
+        sut.Accounts[0].Folders.Count.ShouldBe(1);
+        sut.Accounts[0].Folders[0].Name.ShouldBe("Desktop");
+    }
+
+    [Fact]
+    public async Task when_trigger_sync_is_executed_then_scheduler_is_called_for_selected_account()
+    {
+        var accountRepo = Substitute.For<IAccountRepository>();
+        accountRepo.GetAllAsync(Arg.Any<CancellationToken>())
+            .Returns(Task.FromResult<IReadOnlyList<AccountEntity>>(
+            [
+                new AccountEntity
+                {
+                    Id = new Persistence.ValueObjects.AccountId("acc-1"),
+                    Profile = new AccountProfileEntity { DisplayName = new DisplayName("Alice"), Email = new EmailAddress("alice@x.com") },
+                    IsActive = true,
+                    DriveId = new DriveId("drive-1"),
+                    SyncConfig = new AccountSyncConfig { LocalSyncPath = new LocalSyncPath("/home/alice/OneDrive"), WorkerCount = 8 }
+                }
+            ]));
+        var syncRuleRepo = Substitute.For<ISyncRuleRepository>();
+        syncRuleRepo.GetByAccountAsync(Arg.Any<Persistence.ValueObjects.AccountId>(), Arg.Any<CancellationToken>())
+            .Returns(Task.FromResult<IReadOnlyList<SyncRuleEntity>>([]));
+        var scheduler = Substitute.For<ISyncScheduler>();
+        scheduler.TriggerAccountAsync(Arg.Any<string>(), Arg.Any<CancellationToken>())
+            .Returns(Task.CompletedTask);
+        var sut = new WorkspaceViewModel(new ServiceCollection().BuildServiceProvider(), accountRepo, null, syncRuleRepo, scheduler);
+        await sut.LoadPersistedAccountsAsync(CancellationToken.None);
+
+        await sut.TriggerSync.Execute().FirstAsync();
+
+        await scheduler.Received(1).TriggerAccountAsync("acc-1", Arg.Any<CancellationToken>());
     }
 }
