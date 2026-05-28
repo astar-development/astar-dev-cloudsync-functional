@@ -46,7 +46,7 @@ public class GivenAnAccountRepository(DatabaseFixture db) : IClassFixture<Databa
         await sut.UpsertAsync(entity, CancellationToken.None);
         var result = await sut.GetByIdAsync(entity.Id, CancellationToken.None);
 
-        result.ShouldBeOfType<Some<AccountEntity, PersistenceError>>();
+        result.ShouldBeOfType<Some<AccountEntity>>();
     }
 
     [Fact]
@@ -57,7 +57,7 @@ public class GivenAnAccountRepository(DatabaseFixture db) : IClassFixture<Databa
 
         var result = await sut.GetByIdAsync(missingId, CancellationToken.None);
 
-        result.ShouldBeOfType<None<AccountEntity, PersistenceError>>();
+        result.ShouldBeOfType<None<AccountEntity>>();
     }
 
     [Fact]
@@ -70,7 +70,7 @@ public class GivenAnAccountRepository(DatabaseFixture db) : IClassFixture<Databa
         await sut.DeleteAsync(entity.Id, CancellationToken.None);
         var result = await sut.GetByIdAsync(entity.Id, CancellationToken.None);
 
-        result.ShouldBeOfType<None<AccountEntity, PersistenceError>>();
+        result.ShouldBeOfType<None<AccountEntity>>();
     }
 
     [Fact]
@@ -108,7 +108,7 @@ public class GivenAnAccountRepository(DatabaseFixture db) : IClassFixture<Databa
         await sut.UpsertAsync(entity, CancellationToken.None);
         var result = await sut.GetByIdAsync(entity.Id, CancellationToken.None);
 
-        var some = (Some<AccountEntity, PersistenceError>)result;
+        var some = (Some<AccountEntity>)result;
         some.Value.Profile.Email.Value.ShouldBe("test@example.com");
     }
 
@@ -121,7 +121,7 @@ public class GivenAnAccountRepository(DatabaseFixture db) : IClassFixture<Databa
         await sut.UpsertAsync(entity, CancellationToken.None);
         var result = await sut.GetByIdAsync(entity.Id, CancellationToken.None);
 
-        var some = (Some<AccountEntity, PersistenceError>)result;
+        var some = (Some<AccountEntity>)result;
         some.Value.SyncConfig.WorkerCount.ShouldBe(4);
     }
 

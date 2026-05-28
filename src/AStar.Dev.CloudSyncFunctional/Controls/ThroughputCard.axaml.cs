@@ -17,20 +17,16 @@ public partial class ThroughputCard : UserControl
     private const int HistoryBucketCount = 20;
 
     /// <summary>Identifies the <see cref="Buckets"/> styled property.</summary>
-    public static readonly StyledProperty<int[]> BucketsProperty =
-        AvaloniaProperty.Register<ThroughputCard, int[]>(nameof(Buckets), new int[BucketCount]);
+    public static readonly StyledProperty<int[]> BucketsProperty = AvaloniaProperty.Register<ThroughputCard, int[]>(nameof(Buckets), new int[BucketCount]);
 
     /// <summary>Identifies the <see cref="TodayGb"/> styled property.</summary>
-    public static readonly StyledProperty<double> TodayGbProperty =
-        AvaloniaProperty.Register<ThroughputCard, double>(nameof(TodayGb));
+    public static readonly StyledProperty<double> TodayGbProperty = AvaloniaProperty.Register<ThroughputCard, double>(nameof(TodayGb));
 
     /// <summary>Identifies the <see cref="FileCount"/> styled property.</summary>
-    public static readonly StyledProperty<int> FileCountProperty =
-        AvaloniaProperty.Register<ThroughputCard, int>(nameof(FileCount));
+    public static readonly StyledProperty<int> FileCountProperty = AvaloniaProperty.Register<ThroughputCard, int>(nameof(FileCount));
 
     /// <summary>Identifies the <see cref="CurrentRate"/> styled property.</summary>
-    public static readonly StyledProperty<string> CurrentRateProperty =
-        AvaloniaProperty.Register<ThroughputCard, string>(nameof(CurrentRate), string.Empty);
+    public static readonly StyledProperty<string> CurrentRateProperty = AvaloniaProperty.Register<ThroughputCard, string>(nameof(CurrentRate), string.Empty);
 
     private IBrush? _ink3Brush;
     private IBrush? _primaryBrush;
@@ -135,21 +131,21 @@ public partial class ThroughputCard : UserControl
             _ink3Brush = ink3Brush;
             _ink3BrushSemiTransparent = new SolidColorBrush(((SolidColorBrush)ink3Brush).Color, 0.15);
 
-            if (TodayLabel is not null) TodayLabel.Foreground = ink3Brush;
-            if (AxisStartLabel is not null) AxisStartLabel.Foreground = ink3Brush;
-            if (AxisMidLabel is not null) AxisMidLabel.Foreground = ink3Brush;
-            if (AxisEndLabel is not null) AxisEndLabel.Foreground = ink3Brush;
+            TodayLabel?.Foreground = ink3Brush;
+            AxisStartLabel?.Foreground = ink3Brush;
+            AxisMidLabel?.Foreground = ink3Brush;
+            AxisEndLabel?.Foreground = ink3Brush;
         }
 
         if (this.TryFindResource("Primary", out var primaryRes) && primaryRes is IBrush primaryBrush)
         {
             _primaryBrush = primaryBrush;
 
-            if (GbText is not null) GbText.Foreground = primaryBrush;
+            GbText?.Foreground = primaryBrush;
         }
 
         if (this.TryFindResource("Ink2", out var ink2Res) && ink2Res is IBrush ink2Brush)
-            if (FilesText is not null) FilesText.Foreground = ink2Brush;
+            FilesText?.Foreground = ink2Brush;
     }
 
     private void BuildHistogram()

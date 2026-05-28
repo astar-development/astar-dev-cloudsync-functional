@@ -10,14 +10,14 @@ namespace AStar.Dev.CloudSyncFunctional.Persistence.Repositories;
 public sealed class SyncedItemRepository(IDbContextFactory<AppDbContext> dbFactory) : ISyncedItemRepository
 {
     /// <inheritdoc/>
-    public async Task<Option<SyncedItemEntity, PersistenceError>> GetByIdAsync(SyncedItemId id, CancellationToken cancellationToken = default)
+    public async Task<Option<SyncedItemEntity>> GetByIdAsync(SyncedItemId id, CancellationToken cancellationToken = default)
     {
         await using var context = await dbFactory.CreateDbContextAsync(cancellationToken).ConfigureAwait(false);
         var entity = await context.SyncedItems.FindAsync([id], cancellationToken).ConfigureAwait(false);
 
         return entity is null
-            ? new None<SyncedItemEntity, PersistenceError>(PersistenceErrorFactory.Unexpected("Synced item not found."))
-            : new Some<SyncedItemEntity, PersistenceError>(entity);
+            ? new None<SyncedItemEntity>()
+            : new Some<SyncedItemEntity>(entity);
     }
 
     /// <inheritdoc/>

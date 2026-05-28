@@ -9,16 +9,13 @@ namespace AStar.Dev.CloudSyncFunctional.Controls;
 public partial class StorageBar : UserControl
 {
     /// <summary>Identifies the <see cref="Used"/> styled property.</summary>
-    public static readonly StyledProperty<double> UsedProperty =
-        AvaloniaProperty.Register<StorageBar, double>(nameof(Used));
+    public static readonly StyledProperty<double> UsedProperty = AvaloniaProperty.Register<StorageBar, double>(nameof(Used));
 
     /// <summary>Identifies the <see cref="Total"/> styled property.</summary>
-    public static readonly StyledProperty<double> TotalProperty =
-        AvaloniaProperty.Register<StorageBar, double>(nameof(Total));
+    public static readonly StyledProperty<double> TotalProperty = AvaloniaProperty.Register<StorageBar, double>(nameof(Total));
 
     /// <summary>Identifies the <see cref="BarColor"/> styled property.</summary>
-    public static readonly StyledProperty<IBrush?> BarColorProperty =
-        AvaloniaProperty.Register<StorageBar, IBrush?>(nameof(BarColor));
+    public static readonly StyledProperty<IBrush?> BarColorProperty = AvaloniaProperty.Register<StorageBar, IBrush?>(nameof(BarColor));
 
     /// <summary>Gets or sets the bytes currently used.</summary>
     public double Used

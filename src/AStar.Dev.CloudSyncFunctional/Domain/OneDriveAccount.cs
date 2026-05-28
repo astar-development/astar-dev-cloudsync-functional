@@ -6,7 +6,7 @@ namespace AStar.Dev.CloudSyncFunctional.Domain;
 public sealed class OneDriveAccount
 {
     /// <summary>Gets the MSAL HomeAccountId identifier.</summary>
-    public string AccountId { get; init; } = string.Empty;
+    public AccountId AccountId { get; init; } = AccountId.Create(string.Empty);
 
     /// <summary>Gets the account's display name and email.</summary>
     public AccountProfile Profile { get; init; } = new(string.Empty, string.Empty);

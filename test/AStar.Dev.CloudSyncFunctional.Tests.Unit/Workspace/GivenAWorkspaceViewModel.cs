@@ -12,6 +12,7 @@ using AStar.Dev.CloudSyncFunctional.Workspace;
 using AStar.Dev.FunctionalParadigm;
 using Microsoft.Extensions.DependencyInjection;
 using ReactiveUI;
+using DriveId = AStar.Dev.CloudSyncFunctional.Persistence.ValueObjects.DriveId;
 
 namespace AStar.Dev.CloudSyncFunctional.Tests.Unit.Workspace;
 
@@ -178,7 +179,7 @@ public class GivenAWorkspaceViewModel : IClassFixture<ReactiveUiFixture>
         var graph = Substitute.For<IGraphService>();
         var onboarding = Substitute.For<IAccountOnboardingService>();
         var services = new ServiceCollection();
-        services.AddTransient<AddAccountWizardViewModel>(_ => new AddAccountWizardViewModel(auth, graph, onboarding));
+        services.AddTransient(_ => new AddAccountWizardViewModel(auth, graph, onboarding));
         var provider = services.BuildServiceProvider();
 
         var sut = new WorkspaceViewModel(provider);
@@ -196,7 +197,7 @@ public class GivenAWorkspaceViewModel : IClassFixture<ReactiveUiFixture>
         var graph = Substitute.For<IGraphService>();
         var onboarding = Substitute.For<IAccountOnboardingService>();
         var services = new ServiceCollection();
-        services.AddTransient<AddAccountWizardViewModel>(_ => new AddAccountWizardViewModel(auth, graph, onboarding));
+        services.AddTransient(_ => new AddAccountWizardViewModel(auth, graph, onboarding));
         var provider = services.BuildServiceProvider();
         var sut = new WorkspaceViewModel(provider);
         sut.OpenAddAccountWizard.Execute().Subscribe();
@@ -213,12 +214,12 @@ public class GivenAWorkspaceViewModel : IClassFixture<ReactiveUiFixture>
         var auth = Substitute.For<IAuthService>();
         var graph = Substitute.For<IGraphService>();
         var onboarding = Substitute.For<IAccountOnboardingService>();
-        var account = new OneDriveAccount { AccountId = "id", Profile = new AccountProfile("Name", "email@x.com"), SelectedFolders = [] };
+        var account = new OneDriveAccount { AccountId = CloudSyncFunctional.Auth.AccountId.Create("id"), Profile = new AccountProfile("Name", "email@x.com"), SelectedFolders = [] };
         onboarding.CompleteOnboardingAsync(Arg.Any<OneDriveAccount>(), Arg.Any<CancellationToken>())
             .Returns(Task.FromResult<Result<OneDriveAccount, PersistenceError>>(new Ok<OneDriveAccount, PersistenceError>(account)));
 
         var services = new ServiceCollection();
-        services.AddTransient<AddAccountWizardViewModel>(_ => new AddAccountWizardViewModel(auth, graph, onboarding));
+        services.AddTransient(_ => new AddAccountWizardViewModel(auth, graph, onboarding));
         var provider = services.BuildServiceProvider();
         var sut = new WorkspaceViewModel(provider);
         sut.OpenAddAccountWizard.Execute().Subscribe();
@@ -235,12 +236,12 @@ public class GivenAWorkspaceViewModel : IClassFixture<ReactiveUiFixture>
         var auth = Substitute.For<IAuthService>();
         var graph = Substitute.For<IGraphService>();
         var onboarding = Substitute.For<IAccountOnboardingService>();
-        var account = new OneDriveAccount { AccountId = "id", Profile = new AccountProfile("New User", "new@x.com"), SelectedFolders = [new SelectedFolder("f1-id", "f1")] };
+        var account = new OneDriveAccount { AccountId = CloudSyncFunctional.Auth.AccountId.Create("id"), Profile = new AccountProfile("New User", "new@x.com"), SelectedFolders = [new SelectedFolder("f1-id", "f1")] };
         onboarding.CompleteOnboardingAsync(Arg.Any<OneDriveAccount>(), Arg.Any<CancellationToken>())
             .Returns(Task.FromResult<Result<OneDriveAccount, PersistenceError>>(new Ok<OneDriveAccount, PersistenceError>(account)));
 
         var services = new ServiceCollection();
-        services.AddTransient<AddAccountWizardViewModel>(_ => new AddAccountWizardViewModel(auth, graph, onboarding));
+        services.AddTransient(_ => new AddAccountWizardViewModel(auth, graph, onboarding));
         var provider = services.BuildServiceProvider();
         var sut = new WorkspaceViewModel(provider);
         sut.OpenAddAccountWizard.Execute().Subscribe();
@@ -260,7 +261,7 @@ public class GivenAWorkspaceViewModel : IClassFixture<ReactiveUiFixture>
             [
                 new AccountEntity
                 {
-                    Id = new AccountId("acc-1"),
+                    Id = new Persistence.ValueObjects.AccountId("acc-1"),
                     Profile = new AccountProfileEntity { DisplayName = new DisplayName("Alice"), Email = new EmailAddress("alice@x.com") },
                     IsActive = true,
                     DriveId = new DriveId("drive-1"),
@@ -296,7 +297,7 @@ public class GivenAWorkspaceViewModel : IClassFixture<ReactiveUiFixture>
             [
                 new AccountEntity
                 {
-                    Id = new AccountId("acc-1"),
+                    Id = new Persistence.ValueObjects.AccountId("acc-1"),
                     Profile = new AccountProfileEntity { DisplayName = new DisplayName("Bob"), Email = new EmailAddress("bob@x.com") },
                     IsActive = true,
                     DriveId = new DriveId("drive-1"),

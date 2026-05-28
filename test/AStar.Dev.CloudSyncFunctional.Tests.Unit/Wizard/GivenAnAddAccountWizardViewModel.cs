@@ -168,7 +168,7 @@ public class GivenAnAddAccountWizardViewModel : IClassFixture<ReactiveUiFixture>
     {
         var auth = Substitute.For<IAuthService>();
         var profile = new AccountProfile("Test User", "test@example.com");
-        var authResult = AuthResultFactory.Create("token", "account-id", profile, DateTimeOffset.UtcNow.AddHours(1));
+        var authResult = AuthResultFactory.Create("token", "test-account-id", profile, DateTimeOffset.UtcNow.AddHours(1));
         auth.SignInInteractiveAsync(Arg.Any<CancellationToken>())
             .Returns(Task.FromResult<Result<AuthResult, AuthError>>(new Ok<AuthResult, AuthError>(authResult)));
 
@@ -189,7 +189,7 @@ public class GivenAnAddAccountWizardViewModel : IClassFixture<ReactiveUiFixture>
     {
         var auth = Substitute.For<IAuthService>();
         var profile = new AccountProfile("Test User", "test@example.com");
-        var authResult = AuthResultFactory.Create("token", "account-id", profile, DateTimeOffset.UtcNow.AddHours(1));
+        var authResult = AuthResultFactory.Create("token", "test-account-id", profile, DateTimeOffset.UtcNow.AddHours(1));
         auth.SignInInteractiveAsync(Arg.Any<CancellationToken>())
             .Returns(Task.FromResult<Result<AuthResult, AuthError>>(new Ok<AuthResult, AuthError>(authResult)));
 
@@ -210,7 +210,7 @@ public class GivenAnAddAccountWizardViewModel : IClassFixture<ReactiveUiFixture>
     {
         var auth = Substitute.For<IAuthService>();
         var profile = new AccountProfile("Test", "test@example.com");
-        var authResult = AuthResultFactory.Create("token", "id", profile, DateTimeOffset.UtcNow.AddHours(1));
+        var authResult = AuthResultFactory.Create("token", "test-account-id", profile, DateTimeOffset.UtcNow.AddHours(1));
         auth.SignInInteractiveAsync(Arg.Any<CancellationToken>())
             .Returns(Task.FromResult<Result<AuthResult, AuthError>>(new Ok<AuthResult, AuthError>(authResult)));
 
@@ -231,7 +231,7 @@ public class GivenAnAddAccountWizardViewModel : IClassFixture<ReactiveUiFixture>
     {
         var auth = Substitute.For<IAuthService>();
         var profile = new AccountProfile("Test User", "test@example.com");
-        var authResult = AuthResultFactory.Create("token", "account-id", profile, DateTimeOffset.UtcNow.AddHours(1));
+        var authResult = AuthResultFactory.Create("token", "test-account-id", profile, DateTimeOffset.UtcNow.AddHours(1));
         auth.SignInInteractiveAsync(Arg.Any<CancellationToken>())
             .Returns(Task.FromResult<Result<AuthResult, AuthError>>(new Ok<AuthResult, AuthError>(authResult)));
 
@@ -351,7 +351,7 @@ public class GivenAnAddAccountWizardViewModel : IClassFixture<ReactiveUiFixture>
     {
         var auth = Substitute.For<IAuthService>();
         var profile = new AccountProfile("Test", "test@example.com");
-        var authResult = AuthResultFactory.Create("token", "id", profile, DateTimeOffset.UtcNow.AddHours(1));
+        var authResult = AuthResultFactory.Create("token", "test-account-id", profile, DateTimeOffset.UtcNow.AddHours(1));
         auth.SignInInteractiveAsync(Arg.Any<CancellationToken>())
             .Returns(Task.FromResult<Result<AuthResult, AuthError>>(new Ok<AuthResult, AuthError>(authResult)));
 
@@ -385,7 +385,7 @@ public class GivenAnAddAccountWizardViewModel : IClassFixture<ReactiveUiFixture>
     {
         var auth = Substitute.For<IAuthService>();
         var profile = new AccountProfile("Test User", "test@example.com");
-        var authResult = AuthResultFactory.Create("token", "account-id", profile, DateTimeOffset.UtcNow.AddHours(1));
+        var authResult = AuthResultFactory.Create("token", "test-account-id", profile, DateTimeOffset.UtcNow.AddHours(1));
         auth.SignInInteractiveAsync(Arg.Any<CancellationToken>())
             .Returns(Task.FromResult<Result<AuthResult, AuthError>>(new Ok<AuthResult, AuthError>(authResult)));
 
@@ -415,7 +415,7 @@ public class GivenAnAddAccountWizardViewModel : IClassFixture<ReactiveUiFixture>
     {
         var auth = Substitute.For<IAuthService>();
         var profile = new AccountProfile("Test User", "test@example.com");
-        var authResult = AuthResultFactory.Create("token", "account-id", profile, DateTimeOffset.UtcNow.AddHours(1));
+        var authResult = AuthResultFactory.Create("token", "test-account-id", profile, DateTimeOffset.UtcNow.AddHours(1));
         auth.SignInInteractiveAsync(Arg.Any<CancellationToken>())
             .Returns(Task.FromResult<Result<AuthResult, AuthError>>(new Ok<AuthResult, AuthError>(authResult)));
 

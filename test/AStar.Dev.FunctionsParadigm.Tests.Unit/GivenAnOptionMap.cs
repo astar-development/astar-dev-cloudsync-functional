@@ -7,7 +7,7 @@ public class GivenAnOptionMap
     [Fact]
     public void when_mapping_a_some_option_then_the_value_is_transformed()
     {
-        Option<int, string> result = new Some<int, string>(7);
+        Option<int> result = new Some<int>(7);
 
         var mapped = result.Map(value => value * 3);
 
@@ -17,10 +17,10 @@ public class GivenAnOptionMap
     [Fact]
     public void when_mapping_a_none_option_then_the_error_is_preserved()
     {
-        Option<int, string> result = new None<int, string>("nope");
+        Option<int> result = new None<int>();
 
         var mapped = result.Map(value => value * 3);
 
-        mapped.Match(_ => string.Empty, error => error).ShouldBe("nope");
+        mapped.Match(_ => string.Empty, error => error).ShouldBe("missing");
     }
 }

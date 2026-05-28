@@ -8,12 +8,10 @@ namespace AStar.Dev.CloudSyncFunctional.Controls;
 public partial class StatusPill : UserControl
 {
     /// <summary>Identifies the <see cref="Label"/> styled property.</summary>
-    public static readonly StyledProperty<string> LabelProperty =
-        AvaloniaProperty.Register<StatusPill, string>(nameof(Label), string.Empty);
+    public static readonly StyledProperty<string> LabelProperty = AvaloniaProperty.Register<StatusPill, string>(nameof(Label), string.Empty);
 
     /// <summary>Identifies the <see cref="Tone"/> styled property.</summary>
-    public static readonly StyledProperty<Tone> ToneProperty =
-        AvaloniaProperty.Register<StatusPill, Tone>(nameof(Tone), Tone.Neutral);
+    public static readonly StyledProperty<Tone> ToneProperty = AvaloniaProperty.Register<StatusPill, Tone>(nameof(Tone), Tone.Neutral);
 
     /// <summary>Gets or sets the display text for the pill.</summary>
     public string Label

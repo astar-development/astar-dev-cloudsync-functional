@@ -70,7 +70,7 @@ public class AccountRepository(IDbContextFactory<AppDbContext> dbFactory) : IAcc
     public async Task<Option<AccountEntity>> GetByIdAsync(AccountId id, CancellationToken cancellationToken)
     {
         await using var context = await dbFactory.CreateDbContextAsync(ct);
-        var entity = await context.Accounts.FindAsync([id], ct);
+        var entity = await context.Accounts.FindAsync([id], cancellationToken);
         return entity is null ? new None<AccountEntity>() : new Some<AccountEntity>(entity);
     }
 }

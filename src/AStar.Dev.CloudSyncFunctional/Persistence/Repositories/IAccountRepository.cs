@@ -12,7 +12,7 @@ public interface IAccountRepository
     /// <param name="id">The account identifier.</param>
     /// <param name="ct">Cancellation token.</param>
     /// <returns>The account if found, otherwise None.</returns>
-    Task<Option<AccountEntity, PersistenceError>> GetByIdAsync(AccountId id, CancellationToken cancellationToken = default);
+    Task<Option<AccountEntity>> GetByIdAsync(AccountId id, CancellationToken cancellationToken = default);
 
     /// <summary>Retrieves all accounts.</summary>
     /// <param name="ct">Cancellation token.</param>

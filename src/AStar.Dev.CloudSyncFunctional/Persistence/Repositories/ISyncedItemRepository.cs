@@ -12,7 +12,7 @@ public interface ISyncedItemRepository
     /// <param name="id">The synced item identifier.</param>
     /// <param name="ct">Cancellation token.</param>
     /// <returns>The item if found, otherwise None.</returns>
-    Task<Option<SyncedItemEntity, PersistenceError>> GetByIdAsync(SyncedItemId id, CancellationToken cancellationToken = default);
+    Task<Option<SyncedItemEntity>> GetByIdAsync(SyncedItemId id, CancellationToken cancellationToken = default);
 
     /// <summary>Retrieves all synced items for a given account.</summary>
     /// <param name="accountId">The account identifier.</param>

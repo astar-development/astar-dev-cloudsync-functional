@@ -194,7 +194,7 @@ public async Task<Result<Unit, PersistenceError>> UpsertAsync(AccountEntity enti
 {
     try
     {
-        var existing = await context.Accounts.FindAsync([entity.Id], ct);
+        var existing = await context.Accounts.FindAsync([entity.Id], cancellationToken);
         if (existing is null)
             context.Accounts.Add(entity);
         else

@@ -9,8 +9,7 @@ namespace AStar.Dev.CloudSyncFunctional.Controls;
 public partial class TriStateCheckbox : UserControl
 {
     /// <summary>Identifies the <see cref="State"/> styled property.</summary>
-    public static readonly StyledProperty<CheckState> StateProperty =
-        AvaloniaProperty.Register<TriStateCheckbox, CheckState>(nameof(State), CheckState.Off);
+    public static readonly StyledProperty<CheckState> StateProperty = AvaloniaProperty.Register<TriStateCheckbox, CheckState>(nameof(State), CheckState.Off);
 
     /// <summary>Gets or sets the current check state.</summary>
     public CheckState State

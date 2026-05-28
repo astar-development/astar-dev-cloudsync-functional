@@ -1,3 +1,4 @@
+using AStar.Dev.FunctionalParadigm;
 using Microsoft.Graph;
 using Microsoft.Kiota.Abstractions.Authentication;
 
@@ -7,8 +8,14 @@ namespace AStar.Dev.CloudSyncFunctional.Graph;
 public sealed class GraphClientFactory : IGraphClientFactory
 {
     /// <inheritdoc />
-    public GraphServiceClient CreateClient(string accessToken) =>
-        new(new BaseBearerTokenAuthenticationProvider(new StaticAccessTokenProvider(accessToken)));
+    public Result<GraphServiceClient, GraphError> CreateClient(string accessToken)
+    {
+        if (string.IsNullOrWhiteSpace(accessToken))
+            return new Fail<GraphServiceClient, GraphError>(GraphErrorFactory.Unexpected("Access token must not be null or whitespace."));
+
+        return new Ok<GraphServiceClient, GraphError>(
+            new GraphServiceClient(new BaseBearerTokenAuthenticationProvider(new StaticAccessTokenProvider(accessToken))));
+    }
 
     private sealed class StaticAccessTokenProvider(string token) : IAccessTokenProvider
     {

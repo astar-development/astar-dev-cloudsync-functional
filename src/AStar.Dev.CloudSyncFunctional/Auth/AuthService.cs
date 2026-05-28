@@ -83,7 +83,7 @@ public sealed partial class AuthService(IPublicClientApplication app, ILogger<Au
     {
         var accounts = await app.GetAccountsAsync().ConfigureAwait(false);
 
-        return accounts.Select(a => a.HomeAccountId.Identifier).ToList();
+        return [.. accounts.Where(a => a.HomeAccountId is not null).Select(a => a.HomeAccountId!.Identifier)];
     }
 
     private static AuthResult BuildAuthResult(AuthenticationResult result)
@@ -96,7 +96,7 @@ public sealed partial class AuthService(IPublicClientApplication app, ILogger<Au
         return AuthResultFactory.Create(
             result.AccessToken,
             result.Account.HomeAccountId.Identifier,
-            new AccountProfile(displayName, email),
+            AccountProfileFactory.Create(displayName, email),
             result.ExpiresOn);
     }
 

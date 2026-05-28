@@ -6,19 +6,19 @@ namespace AStar.Dev.CloudSyncFunctional.Auth;
 public interface IAuthService
 {
     /// <summary>Opens an interactive browser sign-in and returns the authenticated result.</summary>
-    /// <param name="ct">Token to cancel the operation.</param>
+    /// <param name="cancellationToken">Token to cancel the operation.</param>
     /// <returns>An <see cref="AuthResult"/> on success, or an <see cref="AuthError"/> on failure.</returns>
     Task<Result<AuthResult, AuthError>> SignInInteractiveAsync(CancellationToken cancellationToken = default);
 
     /// <summary>Silently acquires a new access token for an existing cached account.</summary>
     /// <param name="accountId">The MSAL HomeAccountId identifier.</param>
-    /// <param name="ct">Token to cancel the operation.</param>
+    /// <param name="cancellationToken">Token to cancel the operation.</param>
     /// <returns>An <see cref="AuthResult"/> on success, or an <see cref="AuthError"/> on failure.</returns>
     Task<Result<AuthResult, AuthError>> AcquireTokenSilentAsync(string accountId, CancellationToken cancellationToken = default);
 
     /// <summary>Signs out and removes the account from the token cache.</summary>
     /// <param name="accountId">The MSAL HomeAccountId identifier.</param>
-    /// <param name="ct">Token to cancel the operation.</param>
+    /// <param name="cancellationToken">Token to cancel the operation.</param>
     /// <returns>A task that completes when sign-out is done.</returns>
     Task SignOutAsync(string accountId, CancellationToken cancellationToken = default);
 

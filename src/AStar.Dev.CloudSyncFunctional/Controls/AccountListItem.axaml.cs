@@ -9,36 +9,28 @@ namespace AStar.Dev.CloudSyncFunctional.Controls;
 public partial class AccountListItem : UserControl
 {
     /// <summary>Identifies the <see cref="AccountName"/> styled property.</summary>
-    public static readonly StyledProperty<string> AccountNameProperty =
-        AvaloniaProperty.Register<AccountListItem, string>(nameof(AccountName), string.Empty);
+    public static readonly StyledProperty<string> AccountNameProperty = AvaloniaProperty.Register<AccountListItem, string>(nameof(AccountName), string.Empty);
 
     /// <summary>Identifies the <see cref="Email"/> styled property.</summary>
-    public static readonly StyledProperty<string> EmailProperty =
-        AvaloniaProperty.Register<AccountListItem, string>(nameof(Email), string.Empty);
+    public static readonly StyledProperty<string> EmailProperty = AvaloniaProperty.Register<AccountListItem, string>(nameof(Email), string.Empty);
 
     /// <summary>Identifies the <see cref="Kind"/> styled property.</summary>
-    public static readonly StyledProperty<ProviderKind> KindProperty =
-        AvaloniaProperty.Register<AccountListItem, ProviderKind>(nameof(Kind));
+    public static readonly StyledProperty<ProviderKind> KindProperty = AvaloniaProperty.Register<AccountListItem, ProviderKind>(nameof(Kind));
 
     /// <summary>Identifies the <see cref="UsedBytes"/> styled property.</summary>
-    public static readonly StyledProperty<long> UsedBytesProperty =
-        AvaloniaProperty.Register<AccountListItem, long>(nameof(UsedBytes));
+    public static readonly StyledProperty<long> UsedBytesProperty = AvaloniaProperty.Register<AccountListItem, long>(nameof(UsedBytes));
 
     /// <summary>Identifies the <see cref="TotalBytes"/> styled property.</summary>
-    public static readonly StyledProperty<long> TotalBytesProperty =
-        AvaloniaProperty.Register<AccountListItem, long>(nameof(TotalBytes));
+    public static readonly StyledProperty<long> TotalBytesProperty = AvaloniaProperty.Register<AccountListItem, long>(nameof(TotalBytes));
 
     /// <summary>Identifies the <see cref="FolderCount"/> styled property.</summary>
-    public static readonly StyledProperty<int> FolderCountProperty =
-        AvaloniaProperty.Register<AccountListItem, int>(nameof(FolderCount));
+    public static readonly StyledProperty<int> FolderCountProperty = AvaloniaProperty.Register<AccountListItem, int>(nameof(FolderCount));
 
     /// <summary>Identifies the <see cref="Status"/> styled property.</summary>
-    public static readonly StyledProperty<SyncStatus> StatusProperty =
-        AvaloniaProperty.Register<AccountListItem, SyncStatus>(nameof(Status));
+    public static readonly StyledProperty<SyncStatus> StatusProperty = AvaloniaProperty.Register<AccountListItem, SyncStatus>(nameof(Status));
 
     /// <summary>Identifies the <see cref="IsSelected"/> styled property.</summary>
-    public static readonly StyledProperty<bool> IsSelectedProperty =
-        AvaloniaProperty.Register<AccountListItem, bool>(nameof(IsSelected));
+    public static readonly StyledProperty<bool> IsSelectedProperty = AvaloniaProperty.Register<AccountListItem, bool>(nameof(IsSelected));
 
     /// <summary>Gets or sets the display name of the account.</summary>
     public string AccountName

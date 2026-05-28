@@ -25,9 +25,9 @@
                            FontSize="12.5"/>
             </StackPanel>
             <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
-                <controls:AppButton x:Name="PauseButton" Kind="Ghost" ButtonSize="Sm" Label="Pause"/>
-                <controls:AppButton x:Name="SettingsButton" Kind="Ghost" ButtonSize="Sm" Label="Settings"/>
-                <controls:AppButton x:Name="MoreButton" Kind="Subtle" ButtonSize="Sm" Label="⋯"/>
+                <controls:AppButton x:Name="PauseButton" Kind="Ghost" ButtonSize="Small" Label="Pause"/>
+                <controls:AppButton x:Name="SettingsButton" Kind="Ghost" ButtonSize="Small" Label="Settings"/>
+                <controls:AppButton x:Name="MoreButton" Kind="Subtle" ButtonSize="Small" Label="⋯"/>
             </StackPanel>
         </Grid>
     </Border>

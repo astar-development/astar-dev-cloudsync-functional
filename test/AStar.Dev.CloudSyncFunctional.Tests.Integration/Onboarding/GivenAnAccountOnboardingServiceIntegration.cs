@@ -6,6 +6,9 @@ using AStar.Dev.CloudSyncFunctional.Persistence.ValueObjects;
 using AStar.Dev.CloudSyncFunctional.Tests.Integration.TestData;
 using AStar.Dev.FunctionalParadigm;
 using Microsoft.Extensions.Logging;
+using Testably.Abstractions;
+using Testably.Abstractions.Testing;
+using AccountId = AStar.Dev.CloudSyncFunctional.Persistence.ValueObjects.AccountId;
 
 namespace AStar.Dev.CloudSyncFunctional.Tests.Integration.Onboarding;
 
@@ -14,6 +17,7 @@ public class GivenAnAccountOnboardingServiceIntegration(DatabaseFixture db) : IC
     private AccountOnboardingService CreateSut() =>
         new(new AccountRepository(new TestDbContextFactory(db.Connection)),
             new SyncRuleRepository(new TestDbContextFactory(db.Connection)),
+            new RealFileSystem(),
             Substitute.For<ILogger<AccountOnboardingService>>());
 
     private SyncRuleRepository CreateSyncRuleRepo() =>
@@ -25,9 +29,9 @@ public class GivenAnAccountOnboardingServiceIntegration(DatabaseFixture db) : IC
     private static OneDriveAccount CreateAccount(params string[] folderNames) =>
         new()
         {
-            AccountId = Guid.NewGuid().ToString(),
+            AccountId = new Auth.AccountId(Guid.NewGuid().ToString()),
             Profile = new AccountProfile("Test User", "test@example.com"),
-            SelectedFolders = folderNames.Select((name, i) => new SelectedFolder($"graph-id-{i}", name)).ToList()
+            SelectedFolders = [.. folderNames.Select((name, i) => new SelectedFolder($"graph-id-{i}", name))]
         };
 
     [Fact]
@@ -48,9 +52,9 @@ public class GivenAnAccountOnboardingServiceIntegration(DatabaseFixture db) : IC
         var sut = CreateSut();
 
         await sut.CompleteOnboardingAsync(account, CancellationToken.None);
-        var stored = await CreateAccountRepo().GetByIdAsync(new AccountId(account.AccountId), CancellationToken.None);
+        var stored = await CreateAccountRepo().GetByIdAsync(new AccountId(account.AccountId.Value), CancellationToken.None);
 
-        stored.ShouldBeOfType<Some<Persistence.Entities.AccountEntity, PersistenceError>>();
+        stored.ShouldBeOfType<Some<Persistence.Entities.AccountEntity>>();
     }
 
     [Fact]
@@ -60,7 +64,7 @@ public class GivenAnAccountOnboardingServiceIntegration(DatabaseFixture db) : IC
         var sut = CreateSut();
 
         await sut.CompleteOnboardingAsync(account, CancellationToken.None);
-        var rules = await CreateSyncRuleRepo().GetByAccountAsync(new AccountId(account.AccountId), CancellationToken.None);
+        var rules = await CreateSyncRuleRepo().GetByAccountAsync(new AccountId(account.AccountId.Value), CancellationToken.None);
 
         rules.Count.ShouldBe(2);
     }
@@ -72,7 +76,7 @@ public class GivenAnAccountOnboardingServiceIntegration(DatabaseFixture db) : IC
         var sut = CreateSut();
 
         await sut.CompleteOnboardingAsync(account, CancellationToken.None);
-        var rules = await CreateSyncRuleRepo().GetByAccountAsync(new AccountId(account.AccountId), CancellationToken.None);
+        var rules = await CreateSyncRuleRepo().GetByAccountAsync(new AccountId(account.AccountId.Value), CancellationToken.None);
 
         rules.ShouldBeEmpty();
     }
@@ -82,14 +86,14 @@ public class GivenAnAccountOnboardingServiceIntegration(DatabaseFixture db) : IC
     {
         var account = new OneDriveAccount
         {
-            AccountId = Guid.NewGuid().ToString(),
+            AccountId = new Auth.AccountId(Guid.NewGuid().ToString()),
             Profile = new AccountProfile("Test User", "test@example.com"),
             SelectedFolders = [new SelectedFolder("graph-item-id-abc123", "Documents")]
         };
         var sut = CreateSut();
 
         await sut.CompleteOnboardingAsync(account, CancellationToken.None);
-        var rules = await CreateSyncRuleRepo().GetByAccountAsync(new AccountId(account.AccountId), CancellationToken.None);
+        var rules = await CreateSyncRuleRepo().GetByAccountAsync(new AccountId(account.AccountId.Value), CancellationToken.None);
 
         rules[0].RemotePath.ShouldBe("/Documents");
     }
@@ -99,14 +103,14 @@ public class GivenAnAccountOnboardingServiceIntegration(DatabaseFixture db) : IC
     {
         var account = new OneDriveAccount
         {
-            AccountId = Guid.NewGuid().ToString(),
+            AccountId = new Auth.AccountId(Guid.NewGuid().ToString()),
             Profile = new AccountProfile("Test User", "test@example.com"),
             SelectedFolders = [new SelectedFolder("graph-item-id-abc123", "Pictures")]
         };
         var sut = CreateSut();
 
         await sut.CompleteOnboardingAsync(account, CancellationToken.None);
-        var rules = await CreateSyncRuleRepo().GetByAccountAsync(new AccountId(account.AccountId), CancellationToken.None);
+        var rules = await CreateSyncRuleRepo().GetByAccountAsync(new AccountId(account.AccountId.Value), CancellationToken.None);
 
         rules[0].RemotePath.ShouldNotContain("graph-item-id-abc123");
     }

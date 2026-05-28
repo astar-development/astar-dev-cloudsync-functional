@@ -9,24 +9,19 @@ namespace AStar.Dev.CloudSyncFunctional.Controls;
 public partial class FolderToolbar : UserControl
 {
     /// <summary>Identifies the <see cref="BreadcrumbPath"/> styled property.</summary>
-    public static readonly StyledProperty<string> BreadcrumbPathProperty =
-        AvaloniaProperty.Register<FolderToolbar, string>(nameof(BreadcrumbPath), "~/AStar /");
+    public static readonly StyledProperty<string> BreadcrumbPathProperty = AvaloniaProperty.Register<FolderToolbar, string>(nameof(BreadcrumbPath), "~/AStar /");
 
     /// <summary>Identifies the <see cref="SelectionSummary"/> styled property.</summary>
-    public static readonly StyledProperty<string> SelectionSummaryProperty =
-        AvaloniaProperty.Register<FolderToolbar, string>(nameof(SelectionSummary), string.Empty);
+    public static readonly StyledProperty<string> SelectionSummaryProperty = AvaloniaProperty.Register<FolderToolbar, string>(nameof(SelectionSummary), string.Empty);
 
     /// <summary>Identifies the <see cref="CanApplyChanges"/> styled property.</summary>
-    public static readonly StyledProperty<bool> CanApplyChangesProperty =
-        AvaloniaProperty.Register<FolderToolbar, bool>(nameof(CanApplyChanges), false);
+    public static readonly StyledProperty<bool> CanApplyChangesProperty = AvaloniaProperty.Register<FolderToolbar, bool>(nameof(CanApplyChanges), false);
 
     /// <summary>Identifies the <see cref="FilterCommand"/> styled property.</summary>
-    public static readonly StyledProperty<ICommand?> FilterCommandProperty =
-        AvaloniaProperty.Register<FolderToolbar, ICommand?>(nameof(FilterCommand));
+    public static readonly StyledProperty<ICommand?> FilterCommandProperty = AvaloniaProperty.Register<FolderToolbar, ICommand?>(nameof(FilterCommand));
 
     /// <summary>Identifies the <see cref="ApplyChangesCommand"/> styled property.</summary>
-    public static readonly StyledProperty<ICommand?> ApplyChangesCommandProperty =
-        AvaloniaProperty.Register<FolderToolbar, ICommand?>(nameof(ApplyChangesCommand));
+    public static readonly StyledProperty<ICommand?> ApplyChangesCommandProperty = AvaloniaProperty.Register<FolderToolbar, ICommand?>(nameof(ApplyChangesCommand));
 
     /// <summary>Gets or sets the breadcrumb path text displayed on the left.</summary>
     public string BreadcrumbPath
@@ -70,24 +65,24 @@ public partial class FolderToolbar : UserControl
     protected override void OnInitialized()
     {
         base.OnInitialized();
-        updateBorder();
-        updateBreadcrumb();
-        updateSelectionPill();
-        updateApplyButton();
-        updateCommands();
+        UpdateBorder();
+        UpdateBreadcrumb();
+        UpdateSelectionPill();
+        UpdateApplyButton();
+        UpdateCommands();
     }
 
     /// <inheritdoc/>
     protected override void OnPropertyChanged(AvaloniaPropertyChangedEventArgs change)
     {
         base.OnPropertyChanged(change);
-        if (change.Property == BreadcrumbPathProperty) updateBreadcrumb();
-        if (change.Property == SelectionSummaryProperty) updateSelectionPill();
-        if (change.Property == CanApplyChangesProperty) updateApplyButton();
-        if (change.Property == FilterCommandProperty || change.Property == ApplyChangesCommandProperty) updateCommands();
+        if (change.Property == BreadcrumbPathProperty) UpdateBreadcrumb();
+        if (change.Property == SelectionSummaryProperty) UpdateSelectionPill();
+        if (change.Property == CanApplyChangesProperty) UpdateApplyButton();
+        if (change.Property == FilterCommandProperty || change.Property == ApplyChangesCommandProperty) UpdateCommands();
     }
 
-    private void updateBorder()
+    private void UpdateBorder()
     {
         if (ContainerBorder is null) return;
 
@@ -95,7 +90,7 @@ public partial class FolderToolbar : UserControl
             ContainerBorder.BorderBrush = borderBrush;
     }
 
-    private void updateBreadcrumb()
+    private void UpdateBreadcrumb()
     {
         if (BreadcrumbText is null) return;
 
@@ -105,7 +100,7 @@ public partial class FolderToolbar : UserControl
             BreadcrumbText.Foreground = brush;
     }
 
-    private void updateSelectionPill()
+    private void UpdateSelectionPill()
     {
         if (SelectionPill is null) return;
 
@@ -113,14 +108,14 @@ public partial class FolderToolbar : UserControl
         SelectionPill.IsVisible = !string.IsNullOrEmpty(SelectionSummary);
     }
 
-    private void updateApplyButton()
+    private void UpdateApplyButton()
     {
         if (ApplyButton is null) return;
 
         ApplyButton.IsEnabled = CanApplyChanges;
     }
 
-    private void updateCommands()
+    private void UpdateCommands()
     {
         if (FilterButton is null || ApplyButton is null) return;
 

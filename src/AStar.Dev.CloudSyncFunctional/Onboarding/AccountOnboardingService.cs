@@ -4,11 +4,12 @@ using AStar.Dev.CloudSyncFunctional.Persistence.Repositories;
 using AStar.Dev.CloudSyncFunctional.Persistence.ValueObjects;
 using AStar.Dev.FunctionalParadigm;
 using Microsoft.Extensions.Logging;
+using System.IO.Abstractions;
 
 namespace AStar.Dev.CloudSyncFunctional.Onboarding;
 
 /// <inheritdoc />
-public sealed partial class AccountOnboardingService(IAccountRepository accountRepository, ISyncRuleRepository syncRuleRepository, ILogger<AccountOnboardingService> logger) : IAccountOnboardingService
+public sealed partial class AccountOnboardingService(IAccountRepository accountRepository, ISyncRuleRepository syncRuleRepository, IFileSystem fileSystem, ILogger<AccountOnboardingService> logger) : IAccountOnboardingService
 {
     private static readonly char[] InvalidPathChars = ['\\', '/', ':', '*', '?', '"', '<', '>', '|',
         ..Enumerable.Range(0, 32).Select(i => (char)i)];
@@ -24,45 +25,34 @@ public sealed partial class AccountOnboardingService(IAccountRepository accountR
             .MatchAsync<Unit, PersistenceError, Result<OneDriveAccount, PersistenceError>>(
                 _ =>
                 {
-                    LogOnboardingComplete(logger, account.AccountId);
+                    LogOnboardingComplete(logger, account.AccountId.Value);
                     return new Ok<OneDriveAccount, PersistenceError>(account);
                 },
                 error =>
                 {
-                    LogOnboardingFailed(logger, account.AccountId, error.Message);
+                    LogOnboardingFailed(logger, account.AccountId.Value, error.Message);
                     return new Fail<OneDriveAccount, PersistenceError>(error);
                 });
     }
 
-    private async Task<Result<Unit, PersistenceError>> UpsertSyncRulesAsync(OneDriveAccount account, CancellationToken cancellationToken)
-    {
-        foreach (var folder in account.SelectedFolders)
-        {
-            var rule = new SyncRuleEntity
-            {
-                Id = new SyncRuleId(Guid.NewGuid().ToString()),
-                AccountId = new AccountId(account.AccountId),
-                RemotePath = $"/{folder.Name}",
-                RuleType = RuleType.Include
-            };
+    private Task<Result<Unit, PersistenceError>> UpsertSyncRulesAsync(OneDriveAccount account, CancellationToken cancellationToken) =>
+        account.SelectedFolders.Aggregate(
+            Task.FromResult<Result<Unit, PersistenceError>>(new Ok<Unit, PersistenceError>(Unit.Default)),
+            (current, folder) => current.BindAsync(_ => syncRuleRepository.UpsertAsync(CreateSyncRule(account, folder), cancellationToken)));
 
-            var stopResult = await syncRuleRepository.UpsertAsync(rule, cancellationToken)
-                .MatchAsync<Unit, PersistenceError, Result<Unit, PersistenceError>?>(
-                    _ => null,
-                    error => new Fail<Unit, PersistenceError>(error))
-                .ConfigureAwait(false);
-
-            if (stopResult is not null)
-                return stopResult;
-        }
-
-        return new Ok<Unit, PersistenceError>(Unit.Default);
-    }
-
-    private static AccountEntity MapToEntity(OneDriveAccount account) =>
+    private static SyncRuleEntity CreateSyncRule(OneDriveAccount account, SelectedFolder folder) =>
         new()
         {
-            Id = new AccountId(account.AccountId),
+            Id = new SyncRuleId(Guid.NewGuid().ToString()),
+            AccountId = new AccountId(account.AccountId.Value),
+            RemotePath = $"/{folder.Name}",
+            RuleType = RuleType.Include
+        };
+
+    private AccountEntity MapToEntity(OneDriveAccount account) =>
+        new()
+        {
+            Id = new AccountId(account.AccountId.Value),
             Profile = new AccountProfileEntity
             {
                 DisplayName = new DisplayName(account.Profile.DisplayName),
@@ -77,12 +67,12 @@ public sealed partial class AccountOnboardingService(IAccountRepository accountR
             }
         };
 
-    private static string ComputeDefaultSyncPath(string email)
+    private string ComputeDefaultSyncPath(string email)
     {
         var home = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
         var sanitised = SanitiseEmail(email);
 
-        return Path.Combine(home, "OneDrive", sanitised);
+        return fileSystem.Path.Combine(home, "OneDrive", sanitised);
     }
 
     private static string SanitiseEmail(string email) =>

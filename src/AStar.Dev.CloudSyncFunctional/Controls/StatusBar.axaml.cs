@@ -8,28 +8,22 @@ namespace AStar.Dev.CloudSyncFunctional.Controls;
 public partial class StatusBar : UserControl
 {
     /// <summary>Identifies the <see cref="HealthText"/> styled property.</summary>
-    public static readonly StyledProperty<string> HealthTextProperty =
-        AvaloniaProperty.Register<StatusBar, string>(nameof(HealthText), "All accounts healthy");
+    public static readonly StyledProperty<string> HealthTextProperty = AvaloniaProperty.Register<StatusBar, string>(nameof(HealthText), "All accounts healthy");
 
     /// <summary>Identifies the <see cref="UploadRate"/> styled property.</summary>
-    public static readonly StyledProperty<string> UploadRateProperty =
-        AvaloniaProperty.Register<StatusBar, string>(nameof(UploadRate), "↑ 0 B/s");
+    public static readonly StyledProperty<string> UploadRateProperty = AvaloniaProperty.Register<StatusBar, string>(nameof(UploadRate), "↑ 0 B/s");
 
     /// <summary>Identifies the <see cref="DownloadRate"/> styled property.</summary>
-    public static readonly StyledProperty<string> DownloadRateProperty =
-        AvaloniaProperty.Register<StatusBar, string>(nameof(DownloadRate), "↓ 0 B/s");
+    public static readonly StyledProperty<string> DownloadRateProperty = AvaloniaProperty.Register<StatusBar, string>(nameof(DownloadRate), "↓ 0 B/s");
 
     /// <summary>Identifies the <see cref="QueueSummary"/> styled property.</summary>
-    public static readonly StyledProperty<string> QueueSummaryProperty =
-        AvaloniaProperty.Register<StatusBar, string>(nameof(QueueSummary), string.Empty);
+    public static readonly StyledProperty<string> QueueSummaryProperty = AvaloniaProperty.Register<StatusBar, string>(nameof(QueueSummary), string.Empty);
 
     /// <summary>Identifies the <see cref="Version"/> styled property.</summary>
-    public static readonly StyledProperty<string> VersionProperty =
-        AvaloniaProperty.Register<StatusBar, string>(nameof(Version), string.Empty);
+    public static readonly StyledProperty<string> VersionProperty = AvaloniaProperty.Register<StatusBar, string>(nameof(Version), string.Empty);
 
     /// <summary>Identifies the <see cref="IsHealthy"/> styled property.</summary>
-    public static readonly StyledProperty<bool> IsHealthyProperty =
-        AvaloniaProperty.Register<StatusBar, bool>(nameof(IsHealthy), true);
+    public static readonly StyledProperty<bool> IsHealthyProperty = AvaloniaProperty.Register<StatusBar, bool>(nameof(IsHealthy), true);
 
     /// <summary>Gets or sets the health status text.</summary>
     public string HealthText
@@ -80,29 +74,29 @@ public partial class StatusBar : UserControl
     protected override void OnInitialized()
     {
         base.OnInitialized();
-        updateBackground();
-        updateBorder();
-        updateHealthDot();
-        updateHealthText();
-        updateUploadText();
-        updateDownloadText();
-        updateQueueText();
-        updateVersionText();
+        UpdateBackground();
+        UpdateBorder();
+        UpdateHealthDot();
+        UpdateHealthText();
+        UpdateUploadText();
+        UpdateDownloadText();
+        UpdateQueueText();
+        UpdateVersionText();
     }
 
     /// <inheritdoc/>
     protected override void OnPropertyChanged(AvaloniaPropertyChangedEventArgs change)
     {
         base.OnPropertyChanged(change);
-        if (change.Property == IsHealthyProperty) updateHealthDot();
-        if (change.Property == HealthTextProperty) updateHealthText();
-        if (change.Property == UploadRateProperty) updateUploadText();
-        if (change.Property == DownloadRateProperty) updateDownloadText();
-        if (change.Property == QueueSummaryProperty) updateQueueText();
-        if (change.Property == VersionProperty) updateVersionText();
+        if (change.Property == IsHealthyProperty) UpdateHealthDot();
+        if (change.Property == HealthTextProperty) UpdateHealthText();
+        if (change.Property == UploadRateProperty) UpdateUploadText();
+        if (change.Property == DownloadRateProperty) UpdateDownloadText();
+        if (change.Property == QueueSummaryProperty) UpdateQueueText();
+        if (change.Property == VersionProperty) UpdateVersionText();
     }
 
-    private void updateBackground()
+    private void UpdateBackground()
     {
         if (ContainerBorder is null) return;
 
@@ -110,7 +104,7 @@ public partial class StatusBar : UserControl
             ContainerBorder.Background = brush;
     }
 
-    private void updateBorder()
+    private void UpdateBorder()
     {
         if (ContainerBorder is null) return;
 
@@ -118,7 +112,7 @@ public partial class StatusBar : UserControl
             ContainerBorder.BorderBrush = borderBrush;
     }
 
-    private void updateHealthDot()
+    private void UpdateHealthDot()
     {
         if (HealthDot is null) return;
 
@@ -129,7 +123,7 @@ public partial class StatusBar : UserControl
             : null;
     }
 
-    private void updateHealthText()
+    private void UpdateHealthText()
     {
         if (HealthTextBlock is null) return;
 
@@ -139,7 +133,7 @@ public partial class StatusBar : UserControl
             HealthTextBlock.Foreground = brush;
     }
 
-    private void updateUploadText()
+    private void UpdateUploadText()
     {
         if (UploadText is null) return;
 
@@ -149,7 +143,7 @@ public partial class StatusBar : UserControl
             UploadText.Foreground = brush;
     }
 
-    private void updateDownloadText()
+    private void UpdateDownloadText()
     {
         if (DownloadText is null) return;
 
@@ -159,7 +153,7 @@ public partial class StatusBar : UserControl
             DownloadText.Foreground = brush;
     }
 
-    private void updateQueueText()
+    private void UpdateQueueText()
     {
         if (QueueText is null) return;
 
@@ -169,7 +163,7 @@ public partial class StatusBar : UserControl
             QueueText.Foreground = brush;
     }
 
-    private void updateVersionText()
+    private void UpdateVersionText()
     {
         if (VersionText is null) return;
 

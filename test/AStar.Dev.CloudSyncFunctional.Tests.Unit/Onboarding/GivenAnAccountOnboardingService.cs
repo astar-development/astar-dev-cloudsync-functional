@@ -5,6 +5,9 @@ using AStar.Dev.CloudSyncFunctional.Persistence.Entities;
 using AStar.Dev.CloudSyncFunctional.Persistence.Repositories;
 using AStar.Dev.FunctionalParadigm;
 using Microsoft.Extensions.Logging;
+using Testably.Abstractions;
+using System.IO.Abstractions;
+using Testably.Abstractions.Testing;
 using FpUnit = AStar.Dev.FunctionalParadigm.Unit;
 
 namespace AStar.Dev.CloudSyncFunctional.Tests.Unit.Onboarding;
@@ -21,13 +24,13 @@ public class GivenAnAccountOnboardingService
         syncRuleRepo.UpsertAsync(Arg.Any<SyncRuleEntity>(), Arg.Any<CancellationToken>())
             .Returns(Task.FromResult<Result<FpUnit, PersistenceError>>(new Ok<FpUnit, PersistenceError>(FpUnit.Default)));
 
-        return new AccountOnboardingService(accountRepo, syncRuleRepo, Substitute.For<ILogger<AccountOnboardingService>>());
+        return new AccountOnboardingService(accountRepo, syncRuleRepo, new MockFileSystem(), Substitute.For<ILogger<AccountOnboardingService>>());
     }
 
     private static OneDriveAccount CreateAccount() =>
         new()
         {
-            AccountId = "test-account-id",
+            AccountId = CloudSyncFunctional.Auth.AccountId.Create("test-account-id"),
             Profile = new AccountProfile("Test User", "test@example.com"),
             SelectedFolders = [new SelectedFolder("folder-1-id", "folder-1"), new SelectedFolder("folder-2-id", "folder-2")]
         };
@@ -52,7 +55,7 @@ public class GivenAnAccountOnboardingService
         var result = await sut.CompleteOnboardingAsync(account, CancellationToken.None);
 
         var ok = (Ok<OneDriveAccount, PersistenceError>)result;
-        ok.Value.AccountId.ShouldBe("test-account-id");
+        ok.Value.AccountId.Value.ShouldBe("test-account-id");
     }
 
     [Fact]

@@ -273,9 +273,9 @@ public sealed class AddAccountWizardViewModel : ReactiveObject, IDisposable
 
         var account = new OneDriveAccount
         {
-            AccountId = _authResult.AccountId,
+            AccountId = AccountId.Create(_authResult.AccountId),
             Profile = _authResult.Profile,
-            SelectedFolders = Folders.Where(f => f.IsSelected).Select(f => new SelectedFolder(f.FolderId, f.Name)).ToList()
+            SelectedFolders = [.. Folders.Where(f => f.IsSelected).Select(f => new SelectedFolder(f.FolderId, f.Name))]
         };
 
         await _onboardingService.CompleteOnboardingAsync(account, cancellationToken)

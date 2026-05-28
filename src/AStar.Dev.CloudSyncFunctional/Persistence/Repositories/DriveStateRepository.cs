@@ -10,14 +10,14 @@ namespace AStar.Dev.CloudSyncFunctional.Persistence.Repositories;
 public sealed class DriveStateRepository(IDbContextFactory<AppDbContext> dbFactory) : IDriveStateRepository
 {
     /// <inheritdoc/>
-    public async Task<Option<DriveStateEntity, PersistenceError>> GetByAccountAsync(AccountId accountId, CancellationToken cancellationToken = default)
+    public async Task<Option<DriveStateEntity>> GetByAccountAsync(AccountId accountId, CancellationToken cancellationToken = default)
     {
         await using var context = await dbFactory.CreateDbContextAsync(cancellationToken).ConfigureAwait(false);
         var entity = await context.DriveStates.FindAsync([accountId], cancellationToken).ConfigureAwait(false);
 
         return entity is null
-            ? new None<DriveStateEntity, PersistenceError>(PersistenceErrorFactory.Unexpected("Drive state not found."))
-            : new Some<DriveStateEntity, PersistenceError>(entity);
+            ? new None<DriveStateEntity>()
+            : new Some<DriveStateEntity>(entity);
     }
 
     /// <inheritdoc/>

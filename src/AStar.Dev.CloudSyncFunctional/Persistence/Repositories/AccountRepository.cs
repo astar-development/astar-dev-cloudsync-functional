@@ -10,14 +10,14 @@ namespace AStar.Dev.CloudSyncFunctional.Persistence.Repositories;
 public sealed class AccountRepository(IDbContextFactory<AppDbContext> dbFactory) : IAccountRepository
 {
     /// <inheritdoc/>
-    public async Task<Option<AccountEntity, PersistenceError>> GetByIdAsync(AccountId id, CancellationToken cancellationToken = default)
+    public async Task<Option<AccountEntity>> GetByIdAsync(AccountId id, CancellationToken cancellationToken = default)
     {
         await using var context = await dbFactory.CreateDbContextAsync(cancellationToken).ConfigureAwait(false);
         var entity = await context.Accounts.FindAsync([id], cancellationToken).ConfigureAwait(false);
 
         return entity is null
-            ? new None<AccountEntity, PersistenceError>(PersistenceErrorFactory.Unexpected("Account not found."))
-            : new Some<AccountEntity, PersistenceError>(entity);
+            ? new None<AccountEntity>()
+            : new Some<AccountEntity>(entity);
     }
 
     /// <inheritdoc/>

@@ -13,7 +13,7 @@ scheduler.StopSync();                     // pause without disposing
 scheduler.SetInterval(newInterval);       // change interval mid-run
 
 await scheduler.TriggerNowAsync(ct);     // immediate one-shot sync (all accounts)
-await scheduler.TriggerAccountAsync(accountId, ct);  // sync a single account
+await scheduler.TriggerAccountAsync(accountId, cancellationToken);  // sync a single account
 await scheduler.CancelAccountSyncAsync(accountId);   // cancel in-flight sync for account
 ```
 

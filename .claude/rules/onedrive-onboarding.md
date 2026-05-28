@@ -56,7 +56,7 @@ The wizard ViewModel raises `Completed` with the draft `OneDriveAccount`. The ho
 ```csharp
 wizard.Completed += async (_, account) =>
 {
-    await _onboardingService.CompleteOnboardingAsync(account, ct)
+    await _onboardingService.CompleteOnboardingAsync(account, cancellationToken)
         .MatchAsync(
             finalAccount => { /* add to accounts list, navigate away */ },
             error        => { HasError = true; ErrorMessage = error.Message; });

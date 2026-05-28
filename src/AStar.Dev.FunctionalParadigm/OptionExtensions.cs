@@ -2,60 +2,52 @@ namespace AStar.Dev.FunctionalParadigm;
 
 public static class OptionExtensions
 {
-    public static Option<TResult, TError> Tap<TResult, TError>(
-        this Option<TResult, TError> option,
-        Action<TResult> onSome,
-        Action<TError>? onNone = null)
+    public static Option<TResult> Tap<TResult>(this Option<TResult> option, Action<TResult> onSome, Action<string>? onNone = null)
     {
-        switch (option)
+        if (option is Some<TResult> some)
         {
-            case Some<TResult, TError> some:
-                onSome(some.Value);
-                return some;
-
-            case None<TResult, TError> none:
-                onNone?.Invoke(none.Error);
-                return none;
-
-            default:
-                throw new InvalidOperationException("Unexpected option type.");
+            onSome(some.Value);
+            return some;
         }
+
+        if (option is None<TResult> none)
+        {
+            onNone?.Invoke(none);
+            return none;
+        }
+
+        throw new InvalidOperationException("Unexpected option type.");
     }
 
-    public static Option<TMapped, TError> Map<TResult, TMapped, TError>(
-        this Option<TResult, TError> option,
-        Func<TResult, TMapped> selector)
-    {
-        return option switch
-        {
-            Some<TResult, TError> some => new Some<TMapped, TError>(selector(some.Value)),
-            None<TResult, TError> none => new None<TMapped, TError>(none.Error),
-            _ => throw new InvalidOperationException("Unexpected option type.")
-        };
-    }
+    public static Option<TMapped> Map<TResult, TMapped>(this Option<TResult> option, Func<TResult, TMapped> selector)
+        => option switch
+            {
+                Some<TResult> some => new Some<TMapped>(selector(some.Value)),
+                None<TResult> => new None<TMapped>(),
+                _ => throw new InvalidOperationException("Unexpected option type.")
+            };
 
-    public static Option<TMapped, TError> Bind<TResult, TMapped, TError>(
-        this Option<TResult, TError> option,
-        Func<TResult, Option<TMapped, TError>> binder)
-    {
-        return option switch
-        {
-            Some<TResult, TError> some => binder(some.Value),
-            None<TResult, TError> none => new None<TMapped, TError>(none.Error),
-            _ => throw new InvalidOperationException("Unexpected option type.")
-        };
-    }
+    public static Option<TMapped> Bind<TResult, TMapped>(this Option<TResult> option, Func<TResult, Option<TMapped>> binder)
+        => option switch
+            {
+                Some<TResult> some => binder(some.Value),
+                None<TResult> => new None<TMapped>(),
+                _ => throw new InvalidOperationException("Unexpected option type.")
+            };
 
-    public static TOut Match<TResult, TError, TOut>(
-        this Option<TResult, TError> option,
-        Func<TResult, TOut> onSome,
-        Func<TError, TOut> onNone)
-    {
-        return option switch
-        {
-            Some<TResult, TError> some => onSome(some.Value),
-            None<TResult, TError> none => onNone(none.Error),
-            _ => throw new InvalidOperationException("Unexpected option type.")
-        };
-    }
+    public static TOut Match<TResult, TOut>(this Option<TResult> option, Func<TResult, TOut> onSome, Func<string, TOut> onNone)
+        => option switch
+            {
+                Some<TResult> some => onSome(some.Value),
+                None<TResult> none => onNone(none),
+                _ => throw new InvalidOperationException("Unexpected option type.")
+            };
+
+    public static TOut Match<TResult, TOut>(this Option<TResult> option, Func<TResult, TOut> onSome)
+        => option switch
+            {
+                Some<TResult> some => onSome(some.Value),
+                None<TResult> none => new None<TOut>(),
+                _ => throw new InvalidOperationException("Unexpected option type.")
+            };
 }

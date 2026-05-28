@@ -9,28 +9,22 @@ namespace AStar.Dev.CloudSyncFunctional.Controls;
 public partial class AppButton : UserControl
 {
     /// <summary>Identifies the <see cref="Kind"/> styled property.</summary>
-    public static readonly StyledProperty<AppButtonKind> KindProperty =
-        AvaloniaProperty.Register<AppButton, AppButtonKind>(nameof(Kind), AppButtonKind.Primary);
+    public static readonly StyledProperty<AppButtonKind> KindProperty = AvaloniaProperty.Register<AppButton, AppButtonKind>(nameof(Kind), AppButtonKind.Primary);
 
     /// <summary>Identifies the <see cref="ButtonSize"/> styled property.</summary>
-    public static readonly StyledProperty<AppButtonSize> ButtonSizeProperty =
-        AvaloniaProperty.Register<AppButton, AppButtonSize>(nameof(ButtonSize), AppButtonSize.Md);
+    public static readonly StyledProperty<AppButtonSize> ButtonSizeProperty = AvaloniaProperty.Register<AppButton, AppButtonSize>(nameof(ButtonSize), AppButtonSize.Medium);
 
     /// <summary>Identifies the <see cref="Label"/> styled property.</summary>
-    public static readonly StyledProperty<string> LabelProperty =
-        AvaloniaProperty.Register<AppButton, string>(nameof(Label), string.Empty);
+    public static readonly StyledProperty<string> LabelProperty = AvaloniaProperty.Register<AppButton, string>(nameof(Label), string.Empty);
 
     /// <summary>Identifies the <see cref="LeadingIcon"/> styled property.</summary>
-    public static readonly StyledProperty<Geometry?> LeadingIconProperty =
-        AvaloniaProperty.Register<AppButton, Geometry?>(nameof(LeadingIcon));
+    public static readonly StyledProperty<Geometry?> LeadingIconProperty = AvaloniaProperty.Register<AppButton, Geometry?>(nameof(LeadingIcon));
 
     /// <summary>Identifies the <see cref="TrailingIcon"/> styled property.</summary>
-    public static readonly StyledProperty<Geometry?> TrailingIconProperty =
-        AvaloniaProperty.Register<AppButton, Geometry?>(nameof(TrailingIcon));
+    public static readonly StyledProperty<Geometry?> TrailingIconProperty = AvaloniaProperty.Register<AppButton, Geometry?>(nameof(TrailingIcon));
 
     /// <summary>Identifies the <see cref="Command"/> styled property.</summary>
-    public static readonly StyledProperty<ICommand?> CommandProperty =
-        AvaloniaProperty.Register<AppButton, ICommand?>(nameof(Command));
+    public static readonly StyledProperty<ICommand?> CommandProperty = AvaloniaProperty.Register<AppButton, ICommand?>(nameof(Command));
 
     /// <summary>Gets or sets the visual style variant.</summary>
     public AppButtonKind Kind
@@ -132,15 +126,15 @@ public partial class AppButton : UserControl
         }
     }
 
-    private void SetButtonAppearance(string? bgKey, string? fgKey, string? borderKey, int borderThickness)
+    private void SetButtonAppearance(string? backgroundKey, string? foregroundKey, string? borderKey, int borderThickness)
     {
         if (InnerButton is null) return;
 
-        InnerButton.Background = bgKey is not null && this.TryFindResource(bgKey, out var bg) && bg is IBrush bgBrush
+        InnerButton.Background = backgroundKey is not null && this.TryFindResource(backgroundKey, out var bg) && bg is IBrush bgBrush
             ? bgBrush
             : Brushes.Transparent;
 
-        InnerButton.Foreground = fgKey is not null && this.TryFindResource(fgKey, out var fg) && fg is IBrush fgBrush
+        InnerButton.Foreground = foregroundKey is not null && this.TryFindResource(foregroundKey, out var fg) && fg is IBrush fgBrush
             ? fgBrush
             : Brushes.White;
 
@@ -156,8 +150,8 @@ public partial class AppButton : UserControl
 
         var (height, fontSize) = ButtonSize switch
         {
-            AppButtonSize.Sm => (26.0, 12.0),
-            AppButtonSize.Lg => (38.0, 13.0),
+            AppButtonSize.Small => (26.0, 12.0),
+            AppButtonSize.Large => (38.0, 13.0),
             _ => (32.0, 12.5)
         };
 

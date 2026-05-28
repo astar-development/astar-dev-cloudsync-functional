@@ -193,9 +193,9 @@ public sealed class AddAccountWizardViewModel : ReactiveObject, IDisposable
         var canGoNext = this.WhenAnyValue(x => x.IsSignedIn, x => x.CurrentStep,
             (signedIn, step) => step == WizardStep.SignIn ? signedIn : true);
 
-        OpenBrowser = ReactiveCommand.CreateFromTask(ct => OpenBrowserAsync(authService, ct));
+        OpenBrowser = ReactiveCommand.CreateFromTask(ct => OpenBrowserAsync(authService, cancellationToken));
         Back        = ReactiveCommand.Create(ExecuteBack);
-        Next        = ReactiveCommand.CreateFromTask(ct => ExecuteNextAsync(graphService, ct), canGoNext);
+        Next        = ReactiveCommand.CreateFromTask(ct => ExecuteNextAsync(graphService, cancellationToken), canGoNext);
         Cancel      = ReactiveCommand.CreateFromTask(ExecuteCancelAsync);
     }
 

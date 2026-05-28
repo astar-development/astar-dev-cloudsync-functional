@@ -36,7 +36,7 @@ collection.ShouldBeEmpty();
 
 ```csharp
 // ✅ test code — pattern matching is fine
-var result = await repository.GetByIdAsync(id, ct);
+var result = await repository.GetByIdAsync(id, cancellationToken);
 result.ShouldBeOfType<Option<AccountEntity>.Some>();
 var some = (Option<AccountEntity>.Some)result;
 some.Value.Profile.Email.ShouldBe("test@example.com");

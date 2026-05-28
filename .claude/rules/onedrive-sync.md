@@ -188,7 +188,7 @@ public enum ConflictPolicy
 ### Resolution flow
 
 1. `ConflictResolver.Resolve(policy, localModified, remoteModified)` returns `ConflictOutcome`.
-2. `ConflictApplier.ApplyAsync(conflict, outcome, accountId, accessToken, ct)` executes the chosen action via `IGraphService` or local file system.
+2. `ConflictApplier.ApplyAsync(conflict, outcome, accountId, accessToken, cancellationToken)` executes the chosen action via `IGraphService` or local file system.
 3. `syncRepository.ResolveConflictAsync(conflictId, policy)` marks the conflict resolved in the DB.
 4. Unresolved conflicts surface in the UI via `ISyncService.ConflictDetected` event.
 
