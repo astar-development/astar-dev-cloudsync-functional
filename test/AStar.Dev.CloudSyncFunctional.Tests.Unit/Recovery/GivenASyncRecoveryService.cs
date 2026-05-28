@@ -116,4 +116,98 @@ public class GivenASyncRecoveryService
 
         await syncRepo.Received(1).ResetInterruptedJobsAsync(accountId, Arg.Any<CancellationToken>());
     }
+
+    [Fact]
+    public async Task when_account_has_running_jobs_then_detect_returns_account_display_name_in_account_name()
+    {
+        var accountId = new AccountId("acc-5");
+        var accountEntity = CreateAccountEntity("acc-5", "Carol Smith", "carol@example.com");
+        var accountRepo = Substitute.For<IAccountRepository>();
+        accountRepo.GetAllAsync(Arg.Any<CancellationToken>())
+            .Returns(Task.FromResult<IReadOnlyList<AccountEntity>>([accountEntity]));
+        var syncRepo = Substitute.For<ISyncRepository>();
+        syncRepo.GetInterruptedJobsAsync(accountId, Arg.Any<CancellationToken>())
+            .Returns(Task.FromResult<IReadOnlyList<SyncJobEntity>>([CreateRunningJob(accountId)]));
+        var driveStateRepo = Substitute.For<IDriveStateRepository>();
+        driveStateRepo.GetByAccountAsync(accountId, Arg.Any<CancellationToken>())
+            .Returns(Task.FromResult<Option<DriveStateEntity>>(new None<DriveStateEntity>()));
+        var sut = new SyncRecoveryService(accountRepo, syncRepo, driveStateRepo);
+
+        var result = await sut.DetectAsync(CancellationToken.None);
+
+        result[0].AccountName.ShouldBe("Carol Smith");
+    }
+
+    [Fact]
+    public async Task when_drive_state_has_empty_delta_link_then_can_resume_is_false()
+    {
+        var accountId = new AccountId("acc-6");
+        var accountEntity = CreateAccountEntity("acc-6", "Dave", "dave@example.com");
+        var accountRepo = Substitute.For<IAccountRepository>();
+        accountRepo.GetAllAsync(Arg.Any<CancellationToken>())
+            .Returns(Task.FromResult<IReadOnlyList<AccountEntity>>([accountEntity]));
+        var syncRepo = Substitute.For<ISyncRepository>();
+        syncRepo.GetInterruptedJobsAsync(accountId, Arg.Any<CancellationToken>())
+            .Returns(Task.FromResult<IReadOnlyList<SyncJobEntity>>([CreateRunningJob(accountId)]));
+        var driveStateRepo = Substitute.For<IDriveStateRepository>();
+        driveStateRepo.GetByAccountAsync(accountId, Arg.Any<CancellationToken>())
+            .Returns(Task.FromResult<Option<DriveStateEntity>>(new Some<DriveStateEntity>(new DriveStateEntity
+            {
+                AccountId = accountId,
+                DeltaLink = string.Empty,
+                LastCheckedAt = DateTimeOffset.UtcNow.AddHours(-1)
+            })));
+        var sut = new SyncRecoveryService(accountRepo, syncRepo, driveStateRepo);
+
+        var result = await sut.DetectAsync(CancellationToken.None);
+
+        result[0].CanResume.ShouldBeFalse();
+    }
+
+    [Fact]
+    public async Task when_can_resume_is_true_then_message_is_resume_message()
+    {
+        var accountId = new AccountId("acc-7");
+        var accountEntity = CreateAccountEntity("acc-7", "Eve", "eve@example.com");
+        var accountRepo = Substitute.For<IAccountRepository>();
+        accountRepo.GetAllAsync(Arg.Any<CancellationToken>())
+            .Returns(Task.FromResult<IReadOnlyList<AccountEntity>>([accountEntity]));
+        var syncRepo = Substitute.For<ISyncRepository>();
+        syncRepo.GetInterruptedJobsAsync(accountId, Arg.Any<CancellationToken>())
+            .Returns(Task.FromResult<IReadOnlyList<SyncJobEntity>>([CreateRunningJob(accountId)]));
+        var driveStateRepo = Substitute.For<IDriveStateRepository>();
+        driveStateRepo.GetByAccountAsync(accountId, Arg.Any<CancellationToken>())
+            .Returns(Task.FromResult<Option<DriveStateEntity>>(new Some<DriveStateEntity>(new DriveStateEntity
+            {
+                AccountId = accountId,
+                DeltaLink = "https://graph.microsoft.com/v1.0/drives/yyy/root/delta?token=xyz",
+                LastCheckedAt = DateTimeOffset.UtcNow.AddHours(-2)
+            })));
+        var sut = new SyncRecoveryService(accountRepo, syncRepo, driveStateRepo);
+
+        var result = await sut.DetectAsync(CancellationToken.None);
+
+        result[0].Message.ShouldBe("Sync resumed from last checkpoint.");
+    }
+
+    [Fact]
+    public async Task when_can_resume_is_false_then_message_is_no_checkpoint_message()
+    {
+        var accountId = new AccountId("acc-8");
+        var accountEntity = CreateAccountEntity("acc-8", "Frank", "frank@example.com");
+        var accountRepo = Substitute.For<IAccountRepository>();
+        accountRepo.GetAllAsync(Arg.Any<CancellationToken>())
+            .Returns(Task.FromResult<IReadOnlyList<AccountEntity>>([accountEntity]));
+        var syncRepo = Substitute.For<ISyncRepository>();
+        syncRepo.GetInterruptedJobsAsync(accountId, Arg.Any<CancellationToken>())
+            .Returns(Task.FromResult<IReadOnlyList<SyncJobEntity>>([CreateRunningJob(accountId)]));
+        var driveStateRepo = Substitute.For<IDriveStateRepository>();
+        driveStateRepo.GetByAccountAsync(accountId, Arg.Any<CancellationToken>())
+            .Returns(Task.FromResult<Option<DriveStateEntity>>(new None<DriveStateEntity>()));
+        var sut = new SyncRecoveryService(accountRepo, syncRepo, driveStateRepo);
+
+        var result = await sut.DetectAsync(CancellationToken.None);
+
+        result[0].Message.ShouldBe("Sync interrupted. No checkpoint found — a full sync will run on next attempt.");
+    }
 }

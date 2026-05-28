@@ -28,7 +28,7 @@ public sealed partial class GraphService(IGraphClientFactory clientFactory, ILog
         {
             LogGraphFailed(logger, accountId, ex.Message);
 
-            return new Fail<T, GraphError>(GraphErrorFactory.Unexpected(ex.Message));
+            return GraphErrorFactory.Unexpected(ex.Message);
         }
     }
 
@@ -59,7 +59,7 @@ public sealed partial class GraphService(IGraphClientFactory clientFactory, ILog
         var folders = (foldersSoFar ?? []).Concat(GetFoldersFromPage(page)).ToList();
 
         return page.OdataNextLink is null
-            ? Task.FromResult<Result<List<DriveFolder>, GraphError>>(new Ok<List<DriveFolder>, GraphError>(folders))
+            ? Task.FromResult<Result<List<DriveFolder>, GraphError>>(folders)
             : GetFolderPageAsync(client, driveFound, rootFound, page.OdataNextLink, cancellationToken)
                 .BindAsync(nextPage => GetFoldersFromPagesAsync(client, driveFound, rootFound, nextPage, folders, cancellationToken));
     }

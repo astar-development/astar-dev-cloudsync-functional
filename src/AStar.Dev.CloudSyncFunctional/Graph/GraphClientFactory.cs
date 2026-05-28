@@ -11,10 +11,9 @@ public sealed class GraphClientFactory : IGraphClientFactory
     public Result<GraphServiceClient, GraphError> CreateClient(string accessToken)
     {
         if (string.IsNullOrWhiteSpace(accessToken))
-            return new Fail<GraphServiceClient, GraphError>(GraphErrorFactory.Unexpected("Access token must not be null or whitespace."));
+            return GraphErrorFactory.Unexpected("Access token must not be null or whitespace.");
 
-        return new Ok<GraphServiceClient, GraphError>(
-            new GraphServiceClient(new BaseBearerTokenAuthenticationProvider(new StaticAccessTokenProvider(accessToken))));
+        return new GraphServiceClient(new BaseBearerTokenAuthenticationProvider(new StaticAccessTokenProvider(accessToken)));
     }
 
     private sealed class StaticAccessTokenProvider(string token) : IAccessTokenProvider

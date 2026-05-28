@@ -3,6 +3,7 @@ using AStar.Dev.CloudSyncFunctional.Graph;
 using AStar.Dev.CloudSyncFunctional.Onboarding;
 using AStar.Dev.CloudSyncFunctional.Persistence;
 using AStar.Dev.CloudSyncFunctional.Persistence.Repositories;
+using AStar.Dev.CloudSyncFunctional.Recovery;
 using AStar.Dev.CloudSyncFunctional.Wizard;
 using AStar.Dev.CloudSyncFunctional.Workspace;
 using Avalonia;
@@ -83,6 +84,7 @@ public partial class App : Application
         services.AddTransient<IFileClassificationRuleRepository, FileClassificationRuleRepository>();
 
         services.AddTransient<IAccountOnboardingService, AccountOnboardingService>();
+        services.AddTransient<ISyncRecoveryService, SyncRecoveryService>();
         services.AddTransient<AddAccountWizardViewModel>();
         services.AddTransient<WorkspaceViewModel>();
     }

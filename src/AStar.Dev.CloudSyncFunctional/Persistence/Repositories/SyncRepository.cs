@@ -12,6 +12,8 @@ public sealed class SyncRepository(IDbContextFactory<AppDbContext> dbFactory) : 
     private const string PendingState = "Pending";
     private const string ResolvedState = "Resolved";
     private const string CompletedStatus = "Completed";
+    private const string RunningStatus = "Running";
+    private const string InterruptedStatus = "Interrupted";
 
     /// <inheritdoc/>
     public async Task<IReadOnlyList<SyncConflictEntity>> GetPendingConflictsAsync(AccountId accountId, CancellationToken cancellationToken = default)
@@ -38,15 +40,15 @@ public sealed class SyncRepository(IDbContextFactory<AppDbContext> dbFactory) : 
                 context.Entry(existing).CurrentValues.SetValues(entity);
             await context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
 
-            return new Ok<Unit, PersistenceError>(Unit.Default);
+            return Unit.Default;
         }
         catch (DbUpdateConcurrencyException)
         {
-            return new Fail<Unit, PersistenceError>(PersistenceErrorFactory.ConcurrencyConflict());
+            return PersistenceErrorFactory.ConcurrencyConflict();
         }
         catch (DbUpdateException ex)
         {
-            return new Fail<Unit, PersistenceError>(PersistenceErrorFactory.Unexpected(ex.Message));
+            return PersistenceErrorFactory.Unexpected(ex.Message);
         }
     }
 
@@ -57,21 +59,20 @@ public sealed class SyncRepository(IDbContextFactory<AppDbContext> dbFactory) : 
         {
             await using var context = await dbFactory.CreateDbContextAsync(cancellationToken).ConfigureAwait(false);
             var existing = await context.SyncConflicts.FindAsync([id], cancellationToken).ConfigureAwait(false);
-            if (existing is not null)
-            {
-                existing.State = ResolvedState;
-                await context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
-            }
+            if (existing is null) return Unit.Default;
+            
+            existing.State = ResolvedState;
+            await context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
 
-            return new Ok<Unit, PersistenceError>(Unit.Default);
+            return Unit.Default;
         }
         catch (DbUpdateConcurrencyException)
         {
-            return new Fail<Unit, PersistenceError>(PersistenceErrorFactory.ConcurrencyConflict());
+            return PersistenceErrorFactory.ConcurrencyConflict();
         }
         catch (DbUpdateException ex)
         {
-            return new Fail<Unit, PersistenceError>(PersistenceErrorFactory.Unexpected(ex.Message));
+            return PersistenceErrorFactory.Unexpected(ex.Message);
         }
     }
 
@@ -88,15 +89,15 @@ public sealed class SyncRepository(IDbContextFactory<AppDbContext> dbFactory) : 
                 context.Entry(existing).CurrentValues.SetValues(entity);
             await context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
 
-            return new Ok<Unit, PersistenceError>(Unit.Default);
+            return Unit.Default;
         }
         catch (DbUpdateConcurrencyException)
         {
-            return new Fail<Unit, PersistenceError>(PersistenceErrorFactory.ConcurrencyConflict());
+            return PersistenceErrorFactory.ConcurrencyConflict();
         }
         catch (DbUpdateException ex)
         {
-            return new Fail<Unit, PersistenceError>(PersistenceErrorFactory.Unexpected(ex.Message));
+            return PersistenceErrorFactory.Unexpected(ex.Message);
         }
     }
 
@@ -113,11 +114,48 @@ public sealed class SyncRepository(IDbContextFactory<AppDbContext> dbFactory) : 
             context.SyncJobs.RemoveRange(completed);
             await context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
 
-            return new Ok<Unit, PersistenceError>(Unit.Default);
+            return Unit.Default;
         }
         catch (DbUpdateException ex)
         {
-            return new Fail<Unit, PersistenceError>(PersistenceErrorFactory.Unexpected(ex.Message));
+            return PersistenceErrorFactory.Unexpected(ex.Message);
+        }
+    }
+
+    /// <inheritdoc/>
+    public async Task<IReadOnlyList<SyncJobEntity>> GetInterruptedJobsAsync(AccountId accountId, CancellationToken cancellationToken = default)
+    {
+        await using var context = await dbFactory.CreateDbContextAsync(cancellationToken).ConfigureAwait(false);
+
+        return await context.SyncJobs
+            .AsNoTracking()
+            .Where(j => j.AccountId == accountId && j.Status == RunningStatus)
+            .ToListAsync(cancellationToken)
+            .ConfigureAwait(false);
+    }
+
+    /// <inheritdoc/>
+    public async Task<Result<Unit, PersistenceError>> ResetInterruptedJobsAsync(AccountId accountId, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            await using var context = await dbFactory.CreateDbContextAsync(cancellationToken).ConfigureAwait(false);
+            var running = await context.SyncJobs
+                .Where(j => j.AccountId == accountId && j.Status == RunningStatus)
+                .ToListAsync(cancellationToken)
+                .ConfigureAwait(false);
+            running.ForEach(job => job.Status = InterruptedStatus);
+            await context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+
+            return Unit.Default;
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            return PersistenceErrorFactory.ConcurrencyConflict();
+        }
+        catch (DbUpdateException ex)
+        {
+            return PersistenceErrorFactory.Unexpected(ex.Message);
         }
     }
 }
