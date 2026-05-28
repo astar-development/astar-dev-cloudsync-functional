@@ -6,15 +6,18 @@ using MELogLevel = Microsoft.Extensions.Logging.LogLevel;
 namespace AStar.Dev.CloudSyncFunctional.Auth;
 
 /// <inheritdoc />
-public sealed partial class AuthService(IPublicClientApplication app, ILogger<AuthService> logger) : IAuthService
+public sealed partial class AuthService(IPublicClientApplication app, ILogger<AuthService> logger, ITokenCacheService tokenCacheService) : IAuthService
 {
     private static readonly string[] Scopes = ["Files.ReadWrite", "offline_access", "User.Read"];
+    private bool _cacheRegistered;
 
     /// <inheritdoc />
     public async Task<Result<AuthResult, AuthError>> SignInInteractiveAsync(CancellationToken cancellationToken = default)
     {
         try
         {
+            await EnsureCacheRegisteredAsync(cancellationToken).ConfigureAwait(false);
+
             var msalResult = await app
                 .AcquireTokenInteractive(Scopes)
                 .WithPrompt(Prompt.SelectAccount)
@@ -35,11 +38,13 @@ public sealed partial class AuthService(IPublicClientApplication app, ILogger<Au
         catch (MsalException ex)
         {
             LogAuthFailed(logger, ex.Message);
+
             return AuthErrorFactory.Failed(ex.Message);
         }
         catch (Exception ex)
         {
             LogAuthFailed(logger, ex.Message);
+
             return AuthErrorFactory.Failed(ex.Message);
         }
     }
@@ -49,6 +54,8 @@ public sealed partial class AuthService(IPublicClientApplication app, ILogger<Au
     {
         try
         {
+            await EnsureCacheRegisteredAsync(cancellationToken).ConfigureAwait(false);
+
             var accounts = await app.GetAccountsAsync().ConfigureAwait(false);
             var account = accounts.FirstOrDefault(a => a.HomeAccountId?.Identifier == accountId);
             if (account is null)
@@ -60,11 +67,14 @@ public sealed partial class AuthService(IPublicClientApplication app, ILogger<Au
         }
         catch (MsalUiRequiredException)
         {
+            LogAuthFailed(logger, "Re-authentication required.");
+
             return AuthErrorFactory.Failed("Re-authentication required.");
         }
         catch (Exception ex)
         {
             LogAuthFailed(logger, ex.Message);
+
             return AuthErrorFactory.Failed(ex.Message);
         }
     }
@@ -84,6 +94,13 @@ public sealed partial class AuthService(IPublicClientApplication app, ILogger<Au
         var accounts = await app.GetAccountsAsync().ConfigureAwait(false);
 
         return [.. accounts.Where(a => a.HomeAccountId is not null).Select(a => a.HomeAccountId!.Identifier)];
+    }
+
+    private async Task EnsureCacheRegisteredAsync(CancellationToken cancellationToken)
+    {
+        if (_cacheRegistered) return;
+        await tokenCacheService.RegisterAsync(app, cancellationToken).ConfigureAwait(false);
+        _cacheRegistered = true;
     }
 
     private static AuthResult BuildAuthResult(AuthenticationResult result)

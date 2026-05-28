@@ -71,6 +71,7 @@ public sealed class GivenAnAuthService
         app.When(a => a.AcquireTokenSilent(Arg.Any<IEnumerable<string>>(), Arg.Any<IAccount>()))
            .Do(_ => throw new MsalUiRequiredException("code", "message"));
         var logger = Substitute.For<ILogger<AuthService>>();
+        logger.IsEnabled(MELogLevel.Error).Returns(true);
         var sut = new AuthService(app, logger, Substitute.For<ITokenCacheService>());
 
         _ = await sut.AcquireTokenSilentAsync("target-id", TestContext.Current.CancellationToken);
@@ -81,6 +82,73 @@ public sealed class GivenAnAuthService
             Arg.Any<object>(),
             Arg.Any<Exception?>(),
             Arg.Any<Func<object, Exception?, string>>());
+    }
+
+    [Fact]
+    public async Task when_sign_in_registers_cache_then_silent_acquire_skips_registration()
+    {
+        var app = Substitute.For<IPublicClientApplication>();
+        app.When(a => a.AcquireTokenInteractive(Arg.Any<IEnumerable<string>>()))
+           .Do(_ => throw new MsalClientException("authentication_canceled", "Cancelled"));
+        app.GetAccountsAsync().Returns(Task.FromResult<IEnumerable<IAccount>>([]));
+        var tokenCacheService = Substitute.For<ITokenCacheService>();
+        var sut = CreateSut(app, tokenCacheService);
+
+        _ = await sut.SignInInteractiveAsync(TestContext.Current.CancellationToken);
+        _ = await sut.AcquireTokenSilentAsync("any-id", TestContext.Current.CancellationToken);
+
+        await tokenCacheService.Received(1).RegisterAsync(app, Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task when_silent_acquire_registers_cache_then_sign_in_skips_registration()
+    {
+        var app = Substitute.For<IPublicClientApplication>();
+        app.GetAccountsAsync().Returns(Task.FromResult<IEnumerable<IAccount>>([]));
+        app.When(a => a.AcquireTokenInteractive(Arg.Any<IEnumerable<string>>()))
+           .Do(_ => throw new MsalClientException("authentication_canceled", "Cancelled"));
+        var tokenCacheService = Substitute.For<ITokenCacheService>();
+        var sut = CreateSut(app, tokenCacheService);
+
+        _ = await sut.AcquireTokenSilentAsync("any-id", TestContext.Current.CancellationToken);
+        _ = await sut.SignInInteractiveAsync(TestContext.Current.CancellationToken);
+
+        await tokenCacheService.Received(1).RegisterAsync(app, Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task when_register_async_throws_during_sign_in_then_returns_failed_error()
+    {
+        var app = Substitute.For<IPublicClientApplication>();
+        var tokenCacheService = Substitute.For<ITokenCacheService>();
+        tokenCacheService.RegisterAsync(Arg.Any<IPublicClientApplication>(), Arg.Any<CancellationToken>())
+            .Returns(Task.FromException(new InvalidOperationException("cache unavailable")));
+        var sut = CreateSut(app, tokenCacheService);
+
+        var result = await sut.SignInInteractiveAsync(TestContext.Current.CancellationToken);
+
+        var fail = result.ShouldBeOfType<Fail<AuthResult, AuthError>>();
+        fail.Error.ShouldBeOfType<AuthFailedError>();
+        fail.Error.Message.ShouldContain("cache unavailable");
+    }
+
+    [Fact]
+    public async Task when_register_async_throws_then_next_sign_in_call_retries_registration()
+    {
+        var app = Substitute.For<IPublicClientApplication>();
+        app.When(a => a.AcquireTokenInteractive(Arg.Any<IEnumerable<string>>()))
+           .Do(_ => throw new MsalClientException("authentication_canceled", "Cancelled"));
+        var tokenCacheService = Substitute.For<ITokenCacheService>();
+        tokenCacheService.RegisterAsync(Arg.Any<IPublicClientApplication>(), Arg.Any<CancellationToken>())
+            .Returns(
+                Task.FromException(new InvalidOperationException("cache unavailable")),
+                Task.CompletedTask);
+        var sut = CreateSut(app, tokenCacheService);
+
+        _ = await sut.SignInInteractiveAsync(TestContext.Current.CancellationToken);
+        _ = await sut.SignInInteractiveAsync(TestContext.Current.CancellationToken);
+
+        await tokenCacheService.Received(2).RegisterAsync(app, Arg.Any<CancellationToken>());
     }
 
     [Fact]
