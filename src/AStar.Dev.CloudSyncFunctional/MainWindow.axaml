@@ -252,7 +252,8 @@
                                         AccountName="{Binding SelectedAccount.Name}"
                                         Email="{Binding SelectedAccount.Email}"
                                         Kind="{Binding SelectedAccount.Kind}"
-                                        Status="{Binding SelectedAccount.Status}"/>
+                                        Status="{Binding SelectedAccount.Status}"
+                                        SyncCommand="{Binding TriggerSync}"/>
 
                 <!-- Sub-tabs -->
                 <controls:SubTabBar x:Name="SubTabBarControl" Grid.Row="1"/>

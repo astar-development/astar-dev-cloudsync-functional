@@ -424,17 +424,12 @@ public class GivenAWorkspaceViewModel : IClassFixture<ReactiveUiFixture>
                 }
             ]));
         var syncRuleRepo = Substitute.For<ISyncRuleRepository>();
-        syncRuleRepo.GetByAccountAsync(new Persistence.ValueObjects.AccountId("acc-1"), Arg.Any<CancellationToken>())
-            .Returns(Task.FromResult<IReadOnlyList<SyncRuleEntity>>(
-            [
-                new SyncRuleEntity
+        syncRuleRepo.GetAllByAccountIdsAsync(Arg.Any<IEnumerable<Persistence.ValueObjects.AccountId>>(), Arg.Any<CancellationToken>())
+            .Returns(Task.FromResult<IReadOnlyDictionary<Persistence.ValueObjects.AccountId, IReadOnlyList<SyncRule>>>(
+                new Dictionary<Persistence.ValueObjects.AccountId, IReadOnlyList<SyncRule>>
                 {
-                    Id = new SyncRuleId("rule-1"),
-                    AccountId = new Persistence.ValueObjects.AccountId("acc-1"),
-                    RemotePath = "/Desktop",
-                    RuleType = RuleType.Include
-                }
-            ]));
+                    [new Persistence.ValueObjects.AccountId("acc-1")] = [new SyncRule("/Desktop", RuleType.Include)]
+                }));
         var sut = new WorkspaceViewModel(new ServiceCollection().BuildServiceProvider(), accountRepo, null, syncRuleRepo);
 
         await sut.LoadPersistedAccountsAsync(CancellationToken.None);
@@ -460,8 +455,9 @@ public class GivenAWorkspaceViewModel : IClassFixture<ReactiveUiFixture>
                 }
             ]));
         var syncRuleRepo = Substitute.For<ISyncRuleRepository>();
-        syncRuleRepo.GetByAccountAsync(Arg.Any<Persistence.ValueObjects.AccountId>(), Arg.Any<CancellationToken>())
-            .Returns(Task.FromResult<IReadOnlyList<SyncRuleEntity>>([]));
+        syncRuleRepo.GetAllByAccountIdsAsync(Arg.Any<IEnumerable<Persistence.ValueObjects.AccountId>>(), Arg.Any<CancellationToken>())
+            .Returns(Task.FromResult<IReadOnlyDictionary<Persistence.ValueObjects.AccountId, IReadOnlyList<SyncRule>>>(
+                new Dictionary<Persistence.ValueObjects.AccountId, IReadOnlyList<SyncRule>>()));
         var scheduler = Substitute.For<ISyncScheduler>();
         scheduler.TriggerAccountAsync(Arg.Any<string>(), Arg.Any<CancellationToken>())
             .Returns(Task.CompletedTask);

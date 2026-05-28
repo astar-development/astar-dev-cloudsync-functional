@@ -9,7 +9,7 @@ namespace AStar.Dev.CloudSyncFunctional.Controls;
 public partial class FolderToolbar : UserControl
 {
     /// <summary>Identifies the <see cref="BreadcrumbPath"/> styled property.</summary>
-    public static readonly StyledProperty<string> BreadcrumbPathProperty = AvaloniaProperty.Register<FolderToolbar, string>(nameof(BreadcrumbPath), "~/AStar /");
+    public static readonly StyledProperty<string> BreadcrumbPathProperty = AvaloniaProperty.Register<FolderToolbar, string>(nameof(BreadcrumbPath), string.Empty);
 
     /// <summary>Identifies the <see cref="SelectionSummary"/> styled property.</summary>
     public static readonly StyledProperty<string> SelectionSummaryProperty = AvaloniaProperty.Register<FolderToolbar, string>(nameof(SelectionSummary), string.Empty);

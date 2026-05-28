@@ -1,6 +1,5 @@
 using AStar.Dev.CloudSyncFunctional.Auth;
 using AStar.Dev.CloudSyncFunctional.Domain;
-using AStar.Dev.CloudSyncFunctional.Persistence.Entities;
 using AStar.Dev.CloudSyncFunctional.Persistence.Repositories;
 using AStar.Dev.CloudSyncFunctional.Sync.Pipeline;
 using AStar.Dev.FunctionalParadigm;
@@ -41,10 +40,7 @@ public sealed partial class SyncService(IAuthService authService, ISyncRuleRepos
             return new Fail<Unit, SyncError>(tokenError);
 
         var accountId = new PersistenceAccountId(account.AccountId.Value);
-        var entityRules = await syncRuleRepository.GetByAccountAsync(accountId, cancellationToken).ConfigureAwait(false);
-        var syncRules = entityRules.Select(r => r.RuleType == RuleType.Include
-            ? SyncRuleFactory.CreateInclude(r.RemotePath)
-            : SyncRuleFactory.CreateExclude(r.RemotePath)).ToList();
+        var syncRules = await syncRuleRepository.GetByAccountAsync(accountId, cancellationToken).ConfigureAwait(false);
         var allSyncedItems = await syncedItemRepository.GetByAccountAsync(accountId, cancellationToken).ConfigureAwait(false);
         var syncedItemsMap = allSyncedItems.ToDictionary(item => item.RemotePath, StringComparer.OrdinalIgnoreCase);
 

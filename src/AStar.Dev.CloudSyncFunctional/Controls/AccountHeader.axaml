@@ -25,6 +25,7 @@
                            FontSize="12.5"/>
             </StackPanel>
             <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+                <controls:AppButton x:Name="SyncButton" Kind="Primary" ButtonSize="Small" Label="Sync now"/>
                 <controls:AppButton x:Name="PauseButton" Kind="Ghost" ButtonSize="Small" Label="Pause"/>
                 <controls:AppButton x:Name="SettingsButton" Kind="Ghost" ButtonSize="Small" Label="Settings"/>
                 <controls:AppButton x:Name="MoreButton" Kind="Subtle" ButtonSize="Small" Label="⋯"/>
