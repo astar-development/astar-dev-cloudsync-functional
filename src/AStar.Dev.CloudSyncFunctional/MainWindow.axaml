@@ -7,6 +7,7 @@
         xmlns:accounts="clr-namespace:AStar.Dev.CloudSyncFunctional.Accounts"
         xmlns:folderTree="clr-namespace:AStar.Dev.CloudSyncFunctional.FolderTree"
         xmlns:wizard="clr-namespace:AStar.Dev.CloudSyncFunctional.Wizard"
+        xmlns:settings="clr-namespace:AStar.Dev.CloudSyncFunctional.Settings"
         xmlns:lucide="clr-namespace:Lucide.Avalonia;assembly=Lucide.Avalonia"
         mc:Ignorable="d" d:DesignWidth="1280" d:DesignHeight="820"
         x:Class="AStar.Dev.CloudSyncFunctional.MainWindow"
@@ -231,6 +232,7 @@
                                                    Foreground="{DynamicResource Ink3}"/>
                             </Button>
                             <Button x:Name="FooterSettingsButton"
+                                    Command="{Binding OpenSettings}"
                                     Width="26" Height="26"
                                     Background="Transparent"
                                     BorderThickness="0" Padding="0">
@@ -293,7 +295,7 @@
                                     Version="{Binding Version}"/>
             </Grid>
 
-            <!-- Wizard overlay (spans both columns) -->
+            <!-- Overlay (spans both columns) -->
             <ContentControl Grid.Column="0" Grid.ColumnSpan="2"
                             Content="{Binding CurrentOverlay}"
                             HorizontalContentAlignment="Stretch"
@@ -302,6 +304,9 @@
                 <ContentControl.DataTemplates>
                     <DataTemplate DataType="wizard:AddAccountWizardViewModel">
                         <wizard:AddAccountWizardView />
+                    </DataTemplate>
+                    <DataTemplate DataType="settings:SettingsViewModel">
+                        <settings:SettingsView />
                     </DataTemplate>
                 </ContentControl.DataTemplates>
             </ContentControl>

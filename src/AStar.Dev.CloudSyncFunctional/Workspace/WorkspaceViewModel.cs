@@ -6,6 +6,7 @@ using AStar.Dev.CloudSyncFunctional.FolderTree;
 using AStar.Dev.CloudSyncFunctional.Persistence.Entities;
 using AStar.Dev.CloudSyncFunctional.Persistence.Repositories;
 using AStar.Dev.CloudSyncFunctional.Recovery;
+using AStar.Dev.CloudSyncFunctional.Settings;
 using AStar.Dev.CloudSyncFunctional.Sync;
 using AStar.Dev.CloudSyncFunctional.Wizard;
 using Microsoft.Extensions.DependencyInjection;
@@ -73,6 +74,9 @@ public class WorkspaceViewModel : ReactiveObject, IDisposable
     /// <summary>Gets the command that opens the add-account wizard overlay.</summary>
     public ReactiveCommand<RxUnit, RxUnit> OpenAddAccountWizard { get; }
 
+    /// <summary>Gets the command that opens the settings overlay.</summary>
+    public ReactiveCommand<RxUnit, RxUnit> OpenSettings { get; }
+
     /// <summary>Gets the command that triggers an immediate sync for the currently selected account.</summary>
     public ReactiveCommand<RxUnit, RxUnit> TriggerSync { get; private set; } = null!;
 
@@ -125,6 +129,7 @@ public class WorkspaceViewModel : ReactiveObject, IDisposable
         _logger = logger;
         Accounts = [];
         OpenAddAccountWizard = ReactiveCommand.Create(ExecuteOpenAddAccountWizard);
+        OpenSettings = ReactiveCommand.Create(ExecuteOpenSettings);
         InitializeCommands();
     }
 
@@ -136,6 +141,7 @@ public class WorkspaceViewModel : ReactiveObject, IDisposable
         Accounts = BuildAccounts();
         SelectedAccount = Accounts[0];
         OpenAddAccountWizard = ReactiveCommand.Create(ExecuteOpenAddAccountWizard);
+        OpenSettings = ReactiveCommand.Create(ExecuteOpenSettings);
         InitializeCommands();
     }
 
@@ -200,6 +206,20 @@ public class WorkspaceViewModel : ReactiveObject, IDisposable
         wizard.Completed += OnWizardCompleted;
         wizard.Cancelled += OnWizardCancelled;
         CurrentOverlay = wizard;
+    }
+
+    private void ExecuteOpenSettings()
+    {
+        var settings = _serviceProvider.GetRequiredService<SettingsViewModel>();
+        settings.Closed += OnSettingsClosed;
+        CurrentOverlay = settings;
+    }
+
+    private void OnSettingsClosed(object? sender, EventArgs e)
+    {
+        if (sender is SettingsViewModel settings)
+            settings.Closed -= OnSettingsClosed;
+        CurrentOverlay = null;
     }
 
     private void OnWizardCompleted(object? sender, OneDriveAccount account)

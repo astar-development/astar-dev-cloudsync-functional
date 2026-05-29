@@ -1,6 +1,8 @@
+using AStar.Dev.CloudSyncFunctional.Settings;
 using AStar.Dev.CloudSyncFunctional.Workspace;
 using Avalonia.Controls;
 using Avalonia.Input;
+using RxUnit = System.Reactive.Unit;
 
 namespace AStar.Dev.CloudSyncFunctional;
 
@@ -33,5 +35,17 @@ public partial class MainWindow : Window
     {
         if (e.GetCurrentPoint(null).Properties.IsLeftButtonPressed && !e.Handled)
             BeginMoveDrag(e);
+    }
+
+    /// <inheritdoc/>
+    protected override void OnKeyDown(KeyEventArgs e)
+    {
+        base.OnKeyDown(e);
+        if (e.Key != Key.Escape) return;
+        if (DataContext is not WorkspaceViewModel vm) return;
+        if (vm.CurrentOverlay is not SettingsViewModel settings) return;
+
+        settings.Close.Execute(RxUnit.Default).Subscribe();
+        e.Handled = true;
     }
 }

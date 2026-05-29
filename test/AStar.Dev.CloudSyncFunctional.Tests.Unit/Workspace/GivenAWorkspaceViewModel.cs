@@ -7,6 +7,7 @@ using AStar.Dev.CloudSyncFunctional.Persistence.Entities;
 using AStar.Dev.CloudSyncFunctional.Persistence.Repositories;
 using AStar.Dev.CloudSyncFunctional.Persistence.ValueObjects;
 using AStar.Dev.CloudSyncFunctional.Recovery;
+using AStar.Dev.CloudSyncFunctional.Settings;
 using AStar.Dev.CloudSyncFunctional.Sync;
 using AStar.Dev.CloudSyncFunctional.Tests.Unit.Infrastructure;
 using AStar.Dev.CloudSyncFunctional.Wizard;
@@ -468,4 +469,134 @@ public class GivenAWorkspaceViewModel : IClassFixture<ReactiveUiFixture>
 
         await scheduler.Received(1).TriggerAccountAsync("acc-1", Arg.Any<CancellationToken>());
     }
+
+    [Fact]
+    public void when_open_settings_is_executed_then_current_overlay_is_settings_view_model()
+    {
+        var services = new ServiceCollection();
+        services.AddTransient<SettingsViewModel>();
+        var provider = services.BuildServiceProvider();
+        var sut = new WorkspaceViewModel(provider);
+
+        sut.OpenSettings.Execute().Subscribe();
+
+        sut.CurrentOverlay.ShouldNotBeNull();
+        sut.CurrentOverlay.ShouldBeOfType<SettingsViewModel>();
+    }
+
+    [Fact]
+    public void when_settings_closed_event_fires_then_current_overlay_is_null()
+    {
+        var services = new ServiceCollection();
+        services.AddTransient<SettingsViewModel>();
+        var provider = services.BuildServiceProvider();
+        var sut = new WorkspaceViewModel(provider);
+        sut.OpenSettings.Execute().Subscribe();
+
+        var settings = (SettingsViewModel)sut.CurrentOverlay!;
+        settings.Close.Execute().Subscribe();
+
+        sut.CurrentOverlay.ShouldBeNull();
+    }
+
+    [Fact]
+    public void when_open_settings_is_executed_then_previous_overlay_is_replaced()
+    {
+        var auth = Substitute.For<IAuthService>();
+        var graph = Substitute.For<IGraphService>();
+        var onboarding = Substitute.For<IAccountOnboardingService>();
+        var services = new ServiceCollection();
+        services.AddTransient(_ => new AddAccountWizardViewModel(auth, graph, onboarding));
+        services.AddTransient<SettingsViewModel>();
+        var provider = services.BuildServiceProvider();
+        var sut = new WorkspaceViewModel(provider);
+        sut.OpenAddAccountWizard.Execute().Subscribe();
+
+        sut.OpenSettings.Execute().Subscribe();
+
+        sut.CurrentOverlay.ShouldNotBeNull();
+        sut.CurrentOverlay.ShouldBeOfType<SettingsViewModel>();
+    }
+
+    [Fact]
+    public void when_open_settings_executed_twice_then_second_settings_vm_is_the_overlay()
+    {
+        var services = new ServiceCollection();
+        services.AddTransient<SettingsViewModel>();
+        var provider = services.BuildServiceProvider();
+        var sut = new WorkspaceViewModel(provider);
+        sut.OpenSettings.Execute().Subscribe();
+
+        sut.OpenSettings.Execute().Subscribe();
+
+        sut.CurrentOverlay.ShouldNotBeNull();
+        sut.CurrentOverlay.ShouldBeOfType<SettingsViewModel>();
+    }
+
+    [Fact]
+    public void when_settings_closed_then_overlay_property_changed_fires()
+    {
+        var services = new ServiceCollection();
+        services.AddTransient<SettingsViewModel>();
+        var provider = services.BuildServiceProvider();
+        var sut = new WorkspaceViewModel(provider);
+        sut.OpenSettings.Execute().Subscribe();
+        var raisedProperties = new List<string?>();
+        sut.PropertyChanged += (_, e) => raisedProperties.Add(e.PropertyName);
+
+        var settings = (SettingsViewModel)sut.CurrentOverlay!;
+        settings.Close.Execute().Subscribe();
+
+        raisedProperties.ShouldContain(nameof(WorkspaceViewModel.CurrentOverlay));
+    }
+
+    [Fact]
+    public void when_settings_is_closed_then_current_overlay_property_changed_fires_exactly_once()
+    {
+        var services = new ServiceCollection();
+        services.AddTransient<SettingsViewModel>();
+        var provider = services.BuildServiceProvider();
+        var sut = new WorkspaceViewModel(provider);
+        sut.OpenSettings.Execute().Subscribe();
+        var settings = (SettingsViewModel)sut.CurrentOverlay!;
+        var changeCount = 0;
+        sut.PropertyChanged += (_, e) => { if (e.PropertyName == nameof(WorkspaceViewModel.CurrentOverlay)) changeCount++; };
+
+        settings.Close.Execute().Subscribe();
+
+        changeCount.ShouldBe(1);
+    }
+
+    [Fact]
+    public void when_settings_close_is_called_again_after_overlay_is_already_null_then_overlay_stays_null()
+    {
+        var services = new ServiceCollection();
+        services.AddTransient<SettingsViewModel>();
+        var provider = services.BuildServiceProvider();
+        var sut = new WorkspaceViewModel(provider);
+        sut.OpenSettings.Execute().Subscribe();
+        var settings = (SettingsViewModel)sut.CurrentOverlay!;
+        settings.Close.Execute().Subscribe();
+
+        settings.Close.Execute().Subscribe();
+
+        sut.CurrentOverlay.ShouldBeNull();
+    }
+
+    [Fact]
+    public void when_settings_is_reopened_after_close_and_then_closed_again_then_overlay_is_null()
+    {
+        var services = new ServiceCollection();
+        services.AddTransient<SettingsViewModel>();
+        var provider = services.BuildServiceProvider();
+        var sut = new WorkspaceViewModel(provider);
+        sut.OpenSettings.Execute().Subscribe();
+        ((SettingsViewModel)sut.CurrentOverlay!).Close.Execute().Subscribe();
+
+        sut.OpenSettings.Execute().Subscribe();
+        ((SettingsViewModel)sut.CurrentOverlay!).Close.Execute().Subscribe();
+
+        sut.CurrentOverlay.ShouldBeNull();
+    }
+
 }

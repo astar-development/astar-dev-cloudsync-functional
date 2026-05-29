@@ -1,11 +1,10 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
+    <OutputType>Exe</OutputType>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <OutputType>Exe</OutputType>
     <RootNamespace>AStar.Dev.CloudSyncFunctional.Tests.Integration</RootNamespace>
     <TargetFramework>net10.0</TargetFramework>
-    <TestingPlatformDotnetTestSupport>true</TestingPlatformDotnetTestSupport>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <NoWarn>NU1902;NU1903;CA1859</NoWarn>
     <IsPackable>false</IsPackable>
@@ -20,7 +19,11 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="xunit.v3.mtp-v2" Version="3.2.2" />
+    <PackageReference Include="xunit.v3" Version="3.2.2" />
+    <PackageReference Include="xunit.runner.visualstudio" version="3.1.5">
+        <PrivateAssets>all</PrivateAssets>
+        <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
     <PackageReference Include="Shouldly" Version="4.3.0" />
     <PackageReference Include="NSubstitute" Version="5.3.0" />
     <PackageReference Include="Microsoft.Data.Sqlite" Version="10.0.8" />

@@ -6,6 +6,7 @@ using AStar.Dev.CloudSyncFunctional.Persistence.Repositories;
 using AStar.Dev.CloudSyncFunctional.Recovery;
 using AStar.Dev.CloudSyncFunctional.Sync;
 using AStar.Dev.CloudSyncFunctional.Sync.Pipeline;
+using AStar.Dev.CloudSyncFunctional.Settings;
 using AStar.Dev.CloudSyncFunctional.Wizard;
 using AStar.Dev.CloudSyncFunctional.Workspace;
 using Avalonia;
@@ -103,6 +104,7 @@ public partial class App : Application
         services.AddSingleton<ISyncScheduler, SyncScheduler>();
 
         services.AddTransient<AddAccountWizardViewModel>();
+        services.AddTransient<SettingsViewModel>();
         services.AddTransient<WorkspaceViewModel>();
     }
 

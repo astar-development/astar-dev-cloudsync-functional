@@ -1,52 +1,43 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+This file is for Claude Code.
 
 ## Commands
 
 ```bash
 # Build
 dotnet build
-
-# Run all tests
-dotnet test
-
-# Run tests for a specific project (uses Microsoft.Testing.Platform — OutputType=Exe)
-dotnet run --project test/AStar.Dev.FunctionsParadigm.Tests.Unit
-
 # Run app
 dotnet run --project src/AStar.Dev.OneDriveFunctional
-
+# Run all tests
+dotnet test
+# Run tests for a specific project
+dotnet run --project test/AStar.Dev.FunctionsParadigm.Tests.Unit
 # Run single test by name filter
 dotnet run --project test/AStar.Dev.FunctionsParadigm.Tests.Unit -- --filter "when_an_ok_result"
 ```
 
-## Architecture
-
-Three projects in `AStar.Dev.OneDrive.Functional.slnx`, targeting **net10.0**:
-
 ### `src/AStar.Dev.FunctionalParadigm`
+
 Core library. Two discriminated unions:
 
-**`Result<TResult, TError>`** — abstract record with `Ok` and `Fail` subtypes plus extension methods:
+**`Result<TResult, TError>`** — abstract record with `Ok` and `Fail`
+
+Implicit conversions exist from `Result<TResult,TError>` to `TResult` and `TError`.
+
+**`Option<TResult>`** — abstract record with `Some<TResult>` and `None<TResult>` subtypes. Same four extension methods (`Map`, `Bind`, `Tap`, `Match`) via `OptionExtensions`. Implicit conversions exist
+
+**Result/Option** extension methods:
 - `Map` — transform success value, propagate failure
 - `Bind` — chain operations that return `Result`
 - `Tap` — side-effect on success/failure, return result unchanged
 - `Match` — fold both cases to a single output type
 
-Implicit conversions exist from `Result<TResult,TError>` to `TResult` and `TError` (returns `default!` for the wrong case).
-
-**`Option<TResult, TError>`** — extends `Result<TResult, TError>`. Abstract record with `Some<TResult, TError>` and `None<TResult, TError>` subtypes. Same four extension methods (`Map`, `Bind`, `Tap`, `Match`) via `OptionExtensions`. Implicit conversions to `TResult` (from `Some`) and `TError` (from `None`). Semantically: presence (`Some`) vs absence (`None`) rather than success/failure.
-
 ### `src/AStar.Dev.OneDriveFunctional`
-Avalonia 12 desktop app (WinExe). Uses ReactiveUI with compiled bindings. Entry point is `Program.cs`; MVVM wired via `MainWindowViewModel : ReactiveObject`. `AvaloniaUI.DiagnosticsSupport` is Debug-only.
 
-## Testing
+Avalonia 12 desktop app (WinExe). Uses ReactiveUI with compiled bindings. 
 
-### `test/AStar.Dev.FunctionsParadigm.Tests.Unit`
-xUnit v3 tests against the FunctionalParadigm library. `TreatWarningsAsErrors` is on. Test classes are named `GivenA<Type>` with methods named `when_<condition>_then_<expectation>`.
-
-### C#/.NET Conventions
+### C#/.NET Convention
 
 - Eliminate "what" comments by extracting well-named methods — NOT by moving them into XML docs.
 - Blank line before every `return` (except `return` directly after `if`/`else`).
@@ -57,25 +48,17 @@ xUnit v3 tests against the FunctionalParadigm library. `TreatWarningsAsErrors` i
 - Test naming: `GivenA<Subject>` class, `when_..._then_...` method names (snake_case).
 - **Mocking**: Prefer real instances. Use NSubstitute only when a real dependency requires significant setup that obscures the test (e.g. `IAuthService`, `IGraphService`, `ILogger<T>`). Add the package only when needed. See `@.claude/rules/c-sharp-testing.md`.
 - **Integration tests**: Require a real SQLite `:memory:` database. Never use EF Core in-memory provider. `AppDbContext` constructed directly via `DbContextOptionsBuilder`, never mocked. `MigrateAsync` in fixture setup. Per-class lifecycle via `IClassFixture<DatabaseFixture>`. See `@.claude/rules/c-sharp-testing.md`.
-- **Commit messages**: Conventional Commits — `feat(packages/core): ...`, `fix(apps/web/Portal.Blazor): ...`
-- **Branch names**: `feature/...`, `bug/...`, `doc/...`; `main` ALWAYS deployable
-- **Test projects**: Named `*.Tests.Unit` or `*.Tests.Integration` — auto-set `IsPackable=false`
 - **Method signatures**: Always single-line regardless of param count — `public void Foo(string a, int b, CancellationToken cancellationToken = default)`. Never split params across lines. Every file type.
-- **Comments**: Never restate what code says — any file type (`.cs`, `.csproj`, `.axaml`, config, etc.). Refactor to extract when needed. Only comment when _reason_ behind decision isn't derivable from code.
+- **Comments**: NEVER
 - **XML Comments**: all public methods/properties — see full spec in `.claude/rules/c-sharp-code-style.md` § XML Documentation.
     - Every `<param>`, `<returns>`, and `<exception>` must be documented where applicable.
     - Classes implementing interface: use `<inheritdoc />`, not class-level docs.
-
 
 ## Before Starting ANY Task
 
 Three steps **MANDATORY** before single line of code. No exceptions, including spikes.
 
-1. **Branch first** — run `git branch`, confirm not on `main`. If on main, create branch:
-
-    ```bash
-    git checkout -b feature/short-description<-issue-number>
-    ```
+1. **Branch first** — run `git branch`, confirm not on `main`. If on main, create branch: `git checkout -b feature/short-description<-issue-number>`
 
     Naming: `feature/...`, `bug/...`, `doc/...`. NEVER commit to `main`. See @docs/git-instructions.md.
 
@@ -125,15 +108,11 @@ Before any coding task complete — commits and PRs included:
 
 ## Verification Before Declaring Done
 
-NEVER say "fixed", "done", or "complete" without explicit evidence:
-
 - Run `dotnet build` — zero errors required. Paste exact output.
 - Run `dotnet test` — paste the EXACT pass/fail count from raw terminal output. Do NOT summarise or self-report. New failures must be zero; pre-existing failures must be identified.
 - Confirm ALL call sites and test files were found and updated before reporting completion.
 - Trace the original bug/requirement through the code path and state in plain text WHY the change addresses it at the root cause.
 - For sync/download bugs specifically: confirm the full flow (Graph API → persistence → sync logic) before touching any code. Write a failing reproducing test first; declare done only when it turns green.
-
-Say "I believe this is fixed because…" — never just "fixed".
 
 ## Subagent Usage
 
@@ -144,20 +123,13 @@ Say "I believe this is fixed because…" — never just "fixed".
 
 ### Verifying Subagent Output
 
-After ANY subagent completes, verify before trusting its report:
-
-1. **Files**: `Read` every file the subagent claims to have written or modified — do NOT assume it succeeded.
-2. **Tests**: Re-run `dotnet test` yourself and paste actual output. Never accept a subagent's "all tests pass" summary as truth.
-3. **Diff**: Confirm the actual changes match what was requested.
-
-If verification fails, take over directly — do not re-prompt the same subagent.
+After ANY subagent completes, verify before trusting its report: confirm changed files achieve the requirement(s), all meaningful tests have been written.
+If verification fails, take over — do not re-prompt the same subagent.
 
 ## graphify
 
-This project has a graphify knowledge graph at graphify-out/.
+The graphify knowledge graph is graphify-out/.
 
 Rules:
 - Before answering architecture or codebase questions, read graphify-out/GRAPH_REPORT.md for god nodes and community structure
-- If graphify-out/wiki/index.md exists, navigate it instead of reading raw files
-- For cross-module "how does X relate to Y" questions, prefer `graphify query "<question>"`, `graphify path "<A>" "<B>"`, or `graphify explain "<concept>"` over grep — these traverse the graph's EXTRACTED + INFERRED edges instead of scanning files
-- After modifying code files in this session, run `graphify update .` to keep the graph current (AST-only, no API cost)
+- For "how does X relate to Y" questions, use `graphify query "<question>"`, `graphify path "<A>" "<B>"`, or `graphify explain "<concept>"` not grep — these traverse the graph's EXTRACTED + INFERRED edges instead of scanning files
