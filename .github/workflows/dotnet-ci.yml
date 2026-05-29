@@ -94,4 +94,6 @@ jobs:
             -p:TreatWarningsAsErrors=true
 
       - name: Test
-        run: dotnet test --no-build --verbosity normal
+        run: |
+          pwd
+          dotnet test --no-build --verbosity normal
