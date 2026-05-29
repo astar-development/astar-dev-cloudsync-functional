@@ -25,12 +25,8 @@ on:
       - main
       - 'release/**'
     paths:
-      - 'src/**/*.cs'
-      - 'src/**/*.csproj'
-      - 'src/**/*.axaml'
-      - 'src/**/*.razor'
-      - 'test/**/*.cs'
-      - 'test/**/*.csproj'
+      - 'src/**/*''
+      - 'test/**/*'
       - 'Directory.Build.props'
       - 'Directory.Build.targets'
       - 'Directory.Packages.props'
@@ -92,42 +88,5 @@ jobs:
             --configuration Release \
             -p:TreatWarningsAsErrors=true
 
-      - name: Test (per project)
-        run: |
-          mkdir -p TestResults
-
-          mapfile -t projects < <(find . -name '*.Tests*.csproj')
-
-          for proj in "${projects[@]}"; do
-            echo "Running tests for $proj"
-
-            proj_dir=$(dirname "$proj")
-            proj_name=$(basename "$proj" .csproj)
-
-            cd "$proj_dir"
-
-            dotnet test \
-              --no-build \
-              --configuration Release \
-              --logger "trx;LogFileName=$proj_name.trx" \
-              --results-directory "$GITHUB_WORKSPACE/TestResults" \
-              --collect:"XPlat Code Coverage" \
-              -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=cobertura
-
-            cd "$GITHUB_WORKSPACE"
-          done
-
-      - name: Publish test results
-        uses: EnricoMi/publish-unit-test-result-action@v2.23.0
-        if: always()
-        with:
-          files: TestResults/**/*.trx
-          check_name: Test results
-          fail_on: test failures
-
-      - name: Upload coverage
-        uses: codecov/codecov-action@v5.4.3
-        if: always()
-        with:
-          files: TestResults/**/coverage.cobertura.xml
-          fail_ci_if_error: false
+      - name: Test
+        run: dotnet test --no-build --verbosity normal
