@@ -117,7 +117,7 @@ TaskScheduler.UnobservedTaskException += (_, args) =>
 {
     LogUnhandledException(_logger, args.Exception);
     args.SetObserved();
-    RxApp.MainThreadScheduler.Schedule(() =>
+    RxSchedulers.MainThreadScheduler.Schedule(() =>
     {
         _mainWindowViewModel.HasError = true;
         _mainWindowViewModel.ErrorMessage = "An unexpected error occurred. Please restart the application.";

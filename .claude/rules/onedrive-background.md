@@ -113,7 +113,7 @@ ViewModels subscribe to these events and update observable properties. They neve
 
 ```csharp
 // ReactiveUI — post to UI thread
-RxApp.MainThreadScheduler.Schedule(() => UpdateFromProgress(args));
+RxSchedulers.MainThreadScheduler.Schedule(() => UpdateFromProgress(args));
 ```
 
 - `SyncScheduler._activeSyncs` is a `ConcurrentDictionary` — safe to read/write from multiple threads.

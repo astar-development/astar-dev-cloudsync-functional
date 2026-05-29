@@ -117,7 +117,7 @@ services.AddSingleton<ILogEntryProvider>(sp => sp.GetRequiredService<InMemoryLog
 
 ## LogViewerViewModel
 
-Subscribes to `ILogEntryProvider.EntryAdded` and loads `GetSnapshot()` on construction. Marshals updates to the UI thread via `RxApp.MainThreadScheduler`. Exposes an `ObservableCollection<LogEntry>` bound to the view.
+Subscribes to `ILogEntryProvider.EntryAdded` and loads `GetSnapshot()` on construction. Marshals updates to the UI thread via `RxSchedulers.MainThreadScheduler`. Exposes an `ObservableCollection<LogEntry>` bound to the view.
 
 ```csharp
 public sealed class LogViewerViewModel : ReactiveObject, IDisposable
@@ -132,7 +132,7 @@ public sealed class LogViewerViewModel : ReactiveObject, IDisposable
             Entries.Add(entry);
 
         provider.EntryAdded
-            .ObserveOn(RxApp.MainThreadScheduler)
+            .ObserveOn(RxSchedulers.MainThreadScheduler)
             .Subscribe(entry => Entries.Add(entry))
             .DisposeWith(_disposables);
     }

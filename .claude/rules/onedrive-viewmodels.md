@@ -229,7 +229,7 @@ var folders = await graphService.GetRootFoldersAsync(...);
 await folders.MatchAsync<List<DriveFolder>, GraphError, Unit>(
     f =>
     {
-        RxApp.MainThreadScheduler.Schedule(() =>
+        RxSchedulers.MainThreadScheduler.Schedule(() =>
         {
             foreach (var folder in f)
                 Folders.Add(new WizardFolderItem(folder.Id, folder.Name));
@@ -238,7 +238,7 @@ await folders.MatchAsync<List<DriveFolder>, GraphError, Unit>(
     },
     error =>
     {
-        RxApp.MainThreadScheduler.Schedule(() =>
+        RxSchedulers.MainThreadScheduler.Schedule(() =>
         {
             HasError = true;
             ErrorMessage = error.Message;
