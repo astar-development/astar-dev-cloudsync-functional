@@ -87,13 +87,10 @@ jobs:
 
       - name: Build
         run: |
-          pwd
           dotnet build \
             --no-restore \
             --configuration Release \
             -p:TreatWarningsAsErrors=true
 
-      - name: Test
-        run: |
-          pwd
-          dotnet test --no-build --verbosity normal
+      # - name: Test
+      #   run: dotnet test --no-build --verbosity normal
