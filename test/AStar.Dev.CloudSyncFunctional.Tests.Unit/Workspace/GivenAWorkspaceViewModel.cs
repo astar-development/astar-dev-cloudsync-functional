@@ -7,6 +7,7 @@ using AStar.Dev.CloudSyncFunctional.Persistence.Entities;
 using AStar.Dev.CloudSyncFunctional.Persistence.Repositories;
 using AStar.Dev.CloudSyncFunctional.Persistence.ValueObjects;
 using AStar.Dev.CloudSyncFunctional.Recovery;
+using AStar.Dev.CloudSyncFunctional.Settings;
 using AStar.Dev.CloudSyncFunctional.Sync;
 using AStar.Dev.CloudSyncFunctional.Tests.Unit.Infrastructure;
 using AStar.Dev.CloudSyncFunctional.Wizard;
@@ -467,5 +468,34 @@ public class GivenAWorkspaceViewModel : IClassFixture<ReactiveUiFixture>
         await sut.TriggerSync.Execute().FirstAsync();
 
         await scheduler.Received(1).TriggerAccountAsync("acc-1", Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public void when_open_settings_is_executed_then_current_overlay_is_settings_view_model()
+    {
+        var services = new ServiceCollection();
+        services.AddTransient<SettingsViewModel>();
+        var provider = services.BuildServiceProvider();
+        var sut = new WorkspaceViewModel(provider);
+
+        sut.OpenSettings.Execute().Subscribe();
+
+        sut.CurrentOverlay.ShouldNotBeNull();
+        sut.CurrentOverlay.ShouldBeOfType<SettingsViewModel>();
+    }
+
+    [Fact]
+    public void when_settings_closed_event_fires_then_current_overlay_is_null()
+    {
+        var services = new ServiceCollection();
+        services.AddTransient<SettingsViewModel>();
+        var provider = services.BuildServiceProvider();
+        var sut = new WorkspaceViewModel(provider);
+        sut.OpenSettings.Execute().Subscribe();
+
+        var settings = (SettingsViewModel)sut.CurrentOverlay!;
+        settings.Close.Execute().Subscribe();
+
+        sut.CurrentOverlay.ShouldBeNull();
     }
 }
