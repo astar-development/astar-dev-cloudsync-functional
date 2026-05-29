@@ -1,0 +1,55 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:settings="clr-namespace:AStar.Dev.CloudSyncFunctional.Settings"
+             xmlns:lucide="clr-namespace:Lucide.Avalonia;assembly=Lucide.Avalonia"
+             x:Class="AStar.Dev.CloudSyncFunctional.Settings.SettingsView"
+             x:DataType="settings:SettingsViewModel">
+    <Grid>
+        <!-- Semi-transparent backdrop — click outside the card to dismiss -->
+        <Button Command="{Binding Close}"
+                Background="#60000000"
+                BorderThickness="0"
+                HorizontalAlignment="Stretch"
+                VerticalAlignment="Stretch"
+                Padding="0"
+                CornerRadius="0"/>
+
+        <!-- Settings card — solid background intercepts pointer events, preventing them from reaching the backdrop -->
+        <Border Width="560" MaxHeight="640"
+                Background="{DynamicResource Surface}"
+                BorderBrush="{DynamicResource Border}"
+                BorderThickness="1"
+                CornerRadius="12"
+                BoxShadow="0 8 32 0 #40000000"
+                HorizontalAlignment="Center"
+                VerticalAlignment="Center">
+            <Grid RowDefinitions="Auto,*">
+                <Grid Grid.Row="0" ColumnDefinitions="*,Auto" Margin="20,16,16,16">
+                    <TextBlock Grid.Column="0"
+                               Text="Settings"
+                               FontFamily="{StaticResource PlusJakartaSans}"
+                               FontSize="16" FontWeight="SemiBold"
+                               Foreground="{DynamicResource Ink}"
+                               VerticalAlignment="Center"/>
+                    <Button Grid.Column="1"
+                            Command="{Binding Close}"
+                            Width="26" Height="26"
+                            Background="Transparent"
+                            BorderThickness="0" Padding="0">
+                        <lucide:LucideIcon Kind="X" Width="14" Height="14"
+                                           Foreground="{DynamicResource Ink3}"/>
+                    </Button>
+                </Grid>
+
+                <TextBlock Grid.Row="1"
+                           Text="Settings content coming soon."
+                           FontFamily="{StaticResource PlusJakartaSans}"
+                           FontSize="13"
+                           Foreground="{DynamicResource Ink3}"
+                           HorizontalAlignment="Center"
+                           VerticalAlignment="Center"
+                           Margin="20,0,20,24"/>
+            </Grid>
+        </Border>
+    </Grid>
+</UserControl>
