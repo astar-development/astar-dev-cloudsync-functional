@@ -1,23 +1,31 @@
 using System.Collections.ObjectModel;
+using System.Reactive.Disposables;
 using AStar.Dev.CloudSyncFunctional.Accounts;
 using AStar.Dev.CloudSyncFunctional.Domain;
 using AStar.Dev.CloudSyncFunctional.FolderTree;
 using AStar.Dev.CloudSyncFunctional.Persistence.Entities;
 using AStar.Dev.CloudSyncFunctional.Persistence.Repositories;
 using AStar.Dev.CloudSyncFunctional.Recovery;
+using AStar.Dev.CloudSyncFunctional.Sync;
 using AStar.Dev.CloudSyncFunctional.Wizard;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using ReactiveUI;
 using RxUnit = System.Reactive.Unit;
+using PersistenceAccountId = AStar.Dev.CloudSyncFunctional.Persistence.ValueObjects.AccountId;
 
 namespace AStar.Dev.CloudSyncFunctional.Workspace;
 
 /// <summary>Root view-model for the application workspace. Holds all accounts and summary statistics.</summary>
-public class WorkspaceViewModel : ReactiveObject
+public class WorkspaceViewModel : ReactiveObject, IDisposable
 {
     private readonly IServiceProvider _serviceProvider;
     private readonly IAccountRepository? _accountRepository;
     private readonly ISyncRecoveryService? _recoveryService;
+    private readonly ISyncRuleRepository? _syncRuleRepository;
+    private readonly ISyncScheduler? _syncScheduler;
+    private readonly ILogger<WorkspaceViewModel>? _logger;
+    private readonly CompositeDisposable _disposables = new();
 
     /// <summary>Gets all cloud storage accounts registered in the workspace.</summary>
     public ObservableCollection<AccountViewModel> Accounts { get; }
@@ -41,15 +49,32 @@ public class WorkspaceViewModel : ReactiveObject
         set => this.RaiseAndSetIfChanged(ref field, value);
     }
 
-    /// <summary>Gets or sets a value indicating whether any syncs were interrupted (e.g. due to a crash) and need recovery.</summary>
+    /// <summary>Gets or sets a value indicating whether any syncs were interrupted and need recovery.</summary>
     public bool HasInterruptedSyncs
     {
         get;
         set => this.RaiseAndSetIfChanged(ref field, value);
     }
 
+    /// <summary>Gets or sets a value indicating whether the last sync command produced an error.</summary>
+    public bool HasError
+    {
+        get;
+        set => this.RaiseAndSetIfChanged(ref field, value);
+    }
+
+    /// <summary>Gets or sets the error message from the last failed sync command.</summary>
+    public string ErrorMessage
+    {
+        get;
+        set => this.RaiseAndSetIfChanged(ref field, value);
+    } = string.Empty;
+
     /// <summary>Gets the command that opens the add-account wizard overlay.</summary>
     public ReactiveCommand<RxUnit, RxUnit> OpenAddAccountWizard { get; }
+
+    /// <summary>Gets the command that triggers an immediate sync for the currently selected account.</summary>
+    public ReactiveCommand<RxUnit, RxUnit> TriggerSync { get; private set; } = null!;
 
     /// <summary>Gets hourly transfer buckets for today (24 values, index = hour).</summary>
     public int[] TodayBuckets { get; } =
@@ -87,13 +112,36 @@ public class WorkspaceViewModel : ReactiveObject
     /// <param name="serviceProvider">The DI container used to resolve the wizard ViewModel on demand.</param>
     /// <param name="accountRepository">Repository used to load persisted accounts on startup.</param>
     /// <param name="recoveryService">Optional recovery service used to detect interrupted syncs on startup.</param>
-    public WorkspaceViewModel(IServiceProvider serviceProvider, IAccountRepository accountRepository, ISyncRecoveryService? recoveryService = null)
+    /// <param name="syncRuleRepository">Optional repository used to load sync rules (folders) per account.</param>
+    /// <param name="syncScheduler">Optional scheduler used to trigger on-demand sync.</param>
+    /// <param name="logger">Optional logger for error reporting.</param>
+    public WorkspaceViewModel(IServiceProvider serviceProvider, IAccountRepository accountRepository, ISyncRecoveryService? recoveryService = null, ISyncRuleRepository? syncRuleRepository = null, ISyncScheduler? syncScheduler = null, ILogger<WorkspaceViewModel>? logger = null)
     {
         _serviceProvider = serviceProvider;
         _accountRepository = accountRepository;
         _recoveryService = recoveryService;
+        _syncRuleRepository = syncRuleRepository;
+        _syncScheduler = syncScheduler;
+        _logger = logger;
         Accounts = [];
         OpenAddAccountWizard = ReactiveCommand.Create(ExecuteOpenAddAccountWizard);
+        InitializeCommands();
+    }
+
+    /// <summary>Initialises a new <see cref="WorkspaceViewModel"/> with design-time data.</summary>
+    /// <param name="serviceProvider">The DI container used to resolve the wizard ViewModel on demand.</param>
+    public WorkspaceViewModel(IServiceProvider serviceProvider)
+    {
+        _serviceProvider = serviceProvider;
+        Accounts = BuildAccounts();
+        SelectedAccount = Accounts[0];
+        OpenAddAccountWizard = ReactiveCommand.Create(ExecuteOpenAddAccountWizard);
+        InitializeCommands();
+    }
+
+    /// <summary>Initialises a new <see cref="WorkspaceViewModel"/> with no DI services (design-time use).</summary>
+    public WorkspaceViewModel() : this(EmptyServiceProvider.Instance)
+    {
     }
 
     /// <summary>Loads persisted accounts from the database and populates <see cref="Accounts"/>.</summary>
@@ -105,8 +153,17 @@ public class WorkspaceViewModel : ReactiveObject
             return;
 
         var entities = await _accountRepository.GetAllAsync(cancellationToken);
-        foreach (var vm in entities.Select(MapToViewModel))
-            Accounts.Add(vm);
+        var accountIds = entities.Select(e => e.Id);
+        IReadOnlyDictionary<PersistenceAccountId, IReadOnlyList<SyncRule>> rulesByAccount = _syncRuleRepository is not null
+            ? await _syncRuleRepository.GetAllByAccountIdsAsync(accountIds, cancellationToken)
+            : new Dictionary<PersistenceAccountId, IReadOnlyList<SyncRule>>();
+
+        foreach (var entity in entities)
+        {
+            var syncRules = rulesByAccount.TryGetValue(entity.Id, out var rules) ? rules : [];
+            Accounts.Add(MapToViewModel(entity, syncRules));
+        }
+
         if (Accounts.Count > 0 && SelectedAccount is null)
             SelectedAccount = Accounts[0];
 
@@ -117,19 +174,24 @@ public class WorkspaceViewModel : ReactiveObject
         }
     }
 
-    /// <summary>Initialises a new <see cref="WorkspaceViewModel"/> using the provided service provider (design-time and test use).</summary>
-    /// <param name="serviceProvider">The DI container used to resolve the wizard ViewModel on demand.</param>
-    public WorkspaceViewModel(IServiceProvider serviceProvider)
-    {
-        _serviceProvider = serviceProvider;
-        Accounts = BuildAccounts();
-        SelectedAccount = Accounts[0];
-        OpenAddAccountWizard = ReactiveCommand.Create(ExecuteOpenAddAccountWizard);
-    }
+    /// <inheritdoc/>
+    public void Dispose() => _disposables.Dispose();
 
-    /// <summary>Initialises a new <see cref="WorkspaceViewModel"/> with no DI services (design-time use).</summary>
-    public WorkspaceViewModel() : this(EmptyServiceProvider.Instance)
+    private void InitializeCommands()
     {
+        var canSync = this.WhenAnyValue(
+            x => x.SelectedAccount,
+            a => a is not null && !string.IsNullOrEmpty(a.AccountId) && _syncScheduler is not null);
+
+        TriggerSync = ReactiveCommand.CreateFromTask(ExecuteTriggerSyncAsync, canSync);
+
+        _disposables.Add(TriggerSync.ThrownExceptions
+            .Subscribe(ex =>
+            {
+                HasError = true;
+                ErrorMessage = ex.Message;
+                _logger?.LogError(ex, "TriggerSync failed for account {AccountId}", SelectedAccount?.AccountId);
+            }));
     }
 
     private void ExecuteOpenAddAccountWizard()
@@ -147,23 +209,52 @@ public class WorkspaceViewModel : ReactiveObject
         Accounts.Add(new AccountViewModel
         {
             Kind = ProviderKind.OneDrive,
+            AccountId = account.AccountId.Value,
             Name = account.Profile.DisplayName,
             Email = account.Profile.Email,
             Status = SyncStatus.Ok,
-            FolderCount = account.SelectedFolders.Count
+            FolderCount = account.SelectedFolders.Count,
+            Folders = [.. account.SelectedFolders.Select(f => new FolderNode
+            {
+                Path = $"/{f.Name}",
+                Name = f.Name,
+                Depth = 0,
+                SelectionState = CheckState.On,
+                LastSync = DateTimeOffset.MinValue
+            })]
         });
         SelectedAccount = Accounts[^1];
         this.RaisePropertyChanged(nameof(WorkspaceSubtitle));
     }
 
-    private static AccountViewModel MapToViewModel(AccountEntity entity) =>
-        new()
+    private static AccountViewModel MapToViewModel(AccountEntity entity, IReadOnlyList<SyncRule> syncRules)
+    {
+        var includedFolders = syncRules
+            .Where(r => r.RuleType == RuleType.Include)
+            .Select(r => new FolderNode
+            {
+                Path = r.RemotePath,
+                Name = r.RemotePath.TrimStart('/'),
+                Depth = 0,
+                SelectionState = CheckState.On,
+                LastSync = DateTimeOffset.MinValue
+            })
+            .ToList();
+
+        return new AccountViewModel
         {
             Kind = ProviderKind.OneDrive,
+            AccountId = entity.Id.Value,
             Name = entity.Profile.DisplayName.Value,
             Email = entity.Profile.Email.Value,
-            Status = SyncStatus.Ok
+            Status = SyncStatus.Ok,
+            FolderCount = includedFolders.Count,
+            Folders = [.. includedFolders]
         };
+    }
+
+    private Task ExecuteTriggerSyncAsync(CancellationToken cancellationToken)
+        => _syncScheduler!.TriggerAccountAsync(SelectedAccount!.AccountId, cancellationToken);
 
     private void OnWizardCancelled(object? sender, EventArgs e)
     {

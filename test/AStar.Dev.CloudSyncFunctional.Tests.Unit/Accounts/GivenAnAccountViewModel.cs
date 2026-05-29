@@ -52,4 +52,12 @@ public class GivenAnAccountViewModel
 
         raisedProperties.ShouldBeEmpty();
     }
+
+    [Fact]
+    public void when_account_id_is_set_then_it_can_be_retrieved()
+    {
+        var sut = new AccountViewModel { Kind = ProviderKind.OneDrive, Name = "Test", Email = "t@t.com", AccountId = "acc-abc" };
+
+        sut.AccountId.ShouldBe("acc-abc");
+    }
 }

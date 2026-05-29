@@ -1,3 +1,4 @@
+using System.IO.Abstractions;
 using System.Net;
 using AStar.Dev.CloudSyncFunctional.Graph;
 using AStar.Dev.FunctionalParadigm;
@@ -10,7 +11,7 @@ namespace AStar.Dev.CloudSyncFunctional.Tests.Unit.Graph;
 public sealed class GivenAGraphService
 {
     private static GraphService CreateSut(IGraphClientFactory? factory = null) =>
-        new(factory ?? Substitute.For<IGraphClientFactory>(), Substitute.For<ILogger<GraphService>>());
+        new(factory ?? Substitute.For<IGraphClientFactory>(), Substitute.For<IHttpClientFactory>(), Substitute.For<IFileSystem>(), Substitute.For<ILogger<GraphService>>());
 
     [Fact]
     public async Task when_client_factory_throws_then_get_root_folders_returns_unexpected_graph_error()

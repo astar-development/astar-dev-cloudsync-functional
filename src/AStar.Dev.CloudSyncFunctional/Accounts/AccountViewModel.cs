@@ -10,6 +10,9 @@ public class AccountViewModel : ReactiveObject
     /// <summary>Gets the provider type for this account.</summary>
     public ProviderKind Kind { get; init; }
 
+    /// <summary>Gets the MSAL HomeAccountId identifier for this account.</summary>
+    public string AccountId { get; init; } = string.Empty;
+
     /// <summary>Gets the display name for this account.</summary>
     public string Name { get; init; } = string.Empty;
 

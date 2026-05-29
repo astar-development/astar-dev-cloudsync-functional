@@ -21,6 +21,9 @@ public partial class AccountHeader : UserControl
     /// <summary>Identifies the <see cref="Status"/> styled property.</summary>
     public static readonly StyledProperty<SyncStatus> StatusProperty = AvaloniaProperty.Register<AccountHeader, SyncStatus>(nameof(Status));
 
+    /// <summary>Identifies the <see cref="SyncCommand"/> styled property.</summary>
+    public static readonly StyledProperty<ICommand?> SyncCommandProperty = AvaloniaProperty.Register<AccountHeader, ICommand?>(nameof(SyncCommand));
+
     /// <summary>Identifies the <see cref="PauseCommand"/> styled property.</summary>
     public static readonly StyledProperty<ICommand?> PauseCommandProperty = AvaloniaProperty.Register<AccountHeader, ICommand?>(nameof(PauseCommand));
 
@@ -56,6 +59,13 @@ public partial class AccountHeader : UserControl
     {
         get => GetValue(StatusProperty);
         set => SetValue(StatusProperty, value);
+    }
+
+    /// <summary>Gets or sets the command that triggers an immediate sync for this account.</summary>
+    public ICommand? SyncCommand
+    {
+        get => GetValue(SyncCommandProperty);
+        set => SetValue(SyncCommandProperty, value);
     }
 
     /// <summary>Gets or sets the command invoked when the Pause button is clicked.</summary>
@@ -112,23 +122,23 @@ public partial class AccountHeader : UserControl
     {
         base.OnInitialized();
         UpdateBorder();
-        updateProviderMark();
-        updateNameText();
-        updateProviderNameText();
-        updateStatusPill();
-        updateEmailText();
-        updateButtons();
+        UpdateProviderMark();
+        UpdateNameText();
+        UpdateProviderNameText();
+        UpdateStatusPill();
+        UpdateEmailText();
+        UpdateButtons();
     }
 
     /// <inheritdoc/>
     protected override void OnPropertyChanged(AvaloniaPropertyChangedEventArgs change)
     {
         base.OnPropertyChanged(change);
-        if (change.Property == AccountNameProperty) updateNameText();
-        if (change.Property == EmailProperty) updateEmailText();
-        if (change.Property == KindProperty) { updateProviderMark(); updateProviderNameText(); }
-        if (change.Property == StatusProperty) updateStatusPill();
-        if (change.Property == PauseCommandProperty || change.Property == SettingsCommandProperty || change.Property == MoreCommandProperty) updateButtons();
+        if (change.Property == AccountNameProperty) UpdateNameText();
+        if (change.Property == EmailProperty) UpdateEmailText();
+        if (change.Property == KindProperty) { UpdateProviderMark(); UpdateProviderNameText(); }
+        if (change.Property == StatusProperty) UpdateStatusPill();
+        if (change.Property == SyncCommandProperty || change.Property == PauseCommandProperty || change.Property == SettingsCommandProperty || change.Property == MoreCommandProperty) UpdateButtons();
     }
 
     private void UpdateBorder()
@@ -139,7 +149,7 @@ public partial class AccountHeader : UserControl
             ContainerBorder.BorderBrush = borderBrush;
     }
 
-    private void updateProviderMark()
+    private void UpdateProviderMark()
     {
         if (ProviderMarkControl is null) return;
 
@@ -147,7 +157,7 @@ public partial class AccountHeader : UserControl
         ProviderMarkControl.Size = 42;
     }
 
-    private void updateNameText()
+    private void UpdateNameText()
     {
         if (NameText is null) return;
 
@@ -157,7 +167,7 @@ public partial class AccountHeader : UserControl
             NameText.Foreground = brush;
     }
 
-    private void updateProviderNameText()
+    private void UpdateProviderNameText()
     {
         if (ProviderNameText is null) return;
 
@@ -167,7 +177,7 @@ public partial class AccountHeader : UserControl
             ProviderNameText.Foreground = brush;
     }
 
-    private void updateStatusPill()
+    private void UpdateStatusPill()
     {
         if (StatusPillControl is null) return;
 
@@ -176,7 +186,7 @@ public partial class AccountHeader : UserControl
         StatusPillControl.Tone = tone;
     }
 
-    private void updateEmailText()
+    private void UpdateEmailText()
     {
         if (EmailText is null) return;
 
@@ -186,10 +196,11 @@ public partial class AccountHeader : UserControl
             EmailText.Foreground = brush;
     }
 
-    private void updateButtons()
+    private void UpdateButtons()
     {
-        if (PauseButton is null || SettingsButton is null || MoreButton is null) return;
+        if (SyncButton is null || PauseButton is null || SettingsButton is null || MoreButton is null) return;
 
+        SyncButton.Command = SyncCommand;
         PauseButton.Command = PauseCommand;
         SettingsButton.Command = SettingsCommand;
         MoreButton.Command = MoreCommand;

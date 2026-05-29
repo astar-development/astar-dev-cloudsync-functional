@@ -1,13 +1,15 @@
 using System.Collections.ObjectModel;
+using System.Reactive.Concurrency;
 using System.Reactive.Disposables;
+using System.Reactive.Linq;
 using AStar.Dev.CloudSyncFunctional.Accounts;
 using AStar.Dev.CloudSyncFunctional.Auth;
 using AStar.Dev.CloudSyncFunctional.Domain;
 using AStar.Dev.CloudSyncFunctional.Graph;
 using AStar.Dev.CloudSyncFunctional.Onboarding;
 using AStar.Dev.FunctionalParadigm;
-using Avalonia.Threading;
 using ReactiveUI;
+using ReactiveUI.Avalonia;
 using RxUnit = System.Reactive.Unit;
 
 namespace AStar.Dev.CloudSyncFunctional.Wizard;
@@ -145,13 +147,14 @@ public sealed class AddAccountWizardViewModel : ReactiveObject, IDisposable
         _graphService = graphService;
         _onboardingService = onboardingService;
 
-        var canSignIn = this.WhenAnyValue(x => x.IsWaitingForAuth, waiting => !waiting);
+        var canSignIn = this.WhenAnyValue(x => x.IsWaitingForAuth, waiting => !waiting)
+            .ObserveOn(AvaloniaScheduler.Instance);
 
-        SelectProvider = ReactiveCommand.CreateFromTask<ProviderKind, RxUnit>(ExecuteSelectProviderAsync);
-        SignIn = ReactiveCommand.CreateFromTask(ExecuteSignInAsync, canSignIn);
-        Back = ReactiveCommand.Create(ExecuteBack);
-        AddAccount = ReactiveCommand.CreateFromTask(ExecuteAddAccountAsync);
-        Cancel = ReactiveCommand.CreateFromTask(ExecuteCancelAsync);
+        SelectProvider = ReactiveCommand.CreateFromTask<ProviderKind, RxUnit>(ExecuteSelectProviderAsync, outputScheduler: AvaloniaScheduler.Instance);
+        SignIn = ReactiveCommand.CreateFromTask(ExecuteSignInAsync, canSignIn, outputScheduler: AvaloniaScheduler.Instance);
+        Back = ReactiveCommand.Create(ExecuteBack, outputScheduler: AvaloniaScheduler.Instance);
+        AddAccount = ReactiveCommand.CreateFromTask(ExecuteAddAccountAsync, outputScheduler: AvaloniaScheduler.Instance);
+        Cancel = ReactiveCommand.CreateFromTask(ExecuteCancelAsync, outputScheduler: AvaloniaScheduler.Instance);
     }
 
     /// <inheritdoc/>
@@ -200,30 +203,36 @@ public sealed class AddAccountWizardViewModel : ReactiveObject, IDisposable
                 ok =>
                 {
                     _authResult = ok;
-                    IsSignedIn = true;
-                    IsWaitingForAuth = false;
-                    SignInStatusText = $"Signed in as {ok.Profile.Email}";
-                    CurrentStep = WizardStep.SelectFolders;
-                    _ = LoadFoldersAsync(ok, CancellationToken.None);
+                    _ = RxSchedulers.MainThreadScheduler.Schedule(() =>
+                    {
+                        IsSignedIn = true;
+                        IsWaitingForAuth = false;
+                        SignInStatusText = $"Signed in as {ok.Profile.Email}";
+                        CurrentStep = WizardStep.SelectFolders;
+                        _ = LoadFoldersAsync(ok, CancellationToken.None);
+                    });
                 },
                 error =>
                 {
-                    IsWaitingForAuth = false;
-                    if (error is AuthCancelledError && timeoutCts.IsCancellationRequested)
+                    _ = RxSchedulers.MainThreadScheduler.Schedule(() =>
                     {
-                        SignInHasError = true;
-                        SignInStatusText = "Sign-in timed out. Please try again.";
-                    }
-                    else if (error is AuthCancelledError)
-                    {
-                        CurrentStep = WizardStep.ProviderSelection;
-                        SignInStatusText = string.Empty;
-                    }
-                    else
-                    {
-                        SignInHasError = true;
-                        SignInStatusText = error.Message;
-                    }
+                        IsWaitingForAuth = false;
+                        if (error is AuthCancelledError && timeoutCts.IsCancellationRequested)
+                        {
+                            SignInHasError = true;
+                            SignInStatusText = "Sign-in timed out. Please try again.";
+                        }
+                        else if (error is AuthCancelledError)
+                        {
+                            CurrentStep = WizardStep.ProviderSelection;
+                            SignInStatusText = string.Empty;
+                        }
+                        else
+                        {
+                            SignInHasError = true;
+                            SignInStatusText = error.Message;
+                        }
+                    });
                 });
     }
 
@@ -234,7 +243,7 @@ public sealed class AddAccountWizardViewModel : ReactiveObject, IDisposable
             .MatchAsync(
                 folders =>
                 {
-                    Dispatcher.UIThread.Post(() =>
+                    _ = RxSchedulers.MainThreadScheduler.Schedule(() =>
                     {
                         Folders.Clear();
                         foreach (var folder in folders)
@@ -244,7 +253,7 @@ public sealed class AddAccountWizardViewModel : ReactiveObject, IDisposable
                 },
                 error =>
                 {
-                    Dispatcher.UIThread.Post(() =>
+                    _ = RxSchedulers.MainThreadScheduler.Schedule(() =>
                     {
                         HasError = true;
                         ErrorMessage = error.Message;
@@ -271,21 +280,24 @@ public sealed class AddAccountWizardViewModel : ReactiveObject, IDisposable
         if (_authResult is null)
             return;
 
-        var account = new OneDriveAccount
-        {
-            AccountId = AccountId.Create(_authResult.AccountId),
-            Profile = _authResult.Profile,
-            SelectedFolders = [.. Folders.Where(f => f.IsSelected).Select(f => new SelectedFolder(f.FolderId, f.Name))]
-        };
-
-        await _onboardingService.CompleteOnboardingAsync(account, cancellationToken)
+        await _graphService.GetDriveIdAsync(_authResult.AccountId, _authResult.AccessToken, cancellationToken)
             .MatchAsync(
-                finalAccount => Completed?.Invoke(this, finalAccount),
-                error =>
+                async driveId =>
                 {
-                    HasError = true;
-                    ErrorMessage = error.Message;
-                });
+                    var account = new OneDriveAccount
+                    {
+                        AccountId = AccountId.Create(_authResult.AccountId),
+                        Profile = _authResult.Profile,
+                        DriveIdValue = driveId,
+                        SelectedFolders = [.. Folders.Where(f => f.IsSelected).Select(f => new SelectedFolder(f.FolderId, f.Name))]
+                    };
+
+                    await _onboardingService.CompleteOnboardingAsync(account, cancellationToken)
+                        .MatchAsync(
+                            finalAccount => { _ = RxSchedulers.MainThreadScheduler.Schedule(() => Completed?.Invoke(this, finalAccount)); },
+                            error => { _ = RxSchedulers.MainThreadScheduler.Schedule(() => { HasError = true; ErrorMessage = error.Message; }); });
+                },
+                error => { _ = RxSchedulers.MainThreadScheduler.Schedule(() => { HasError = true; ErrorMessage = error.Message; }); });
     }
 
     private Task ExecuteCancelAsync(CancellationToken cancellationToken = default)

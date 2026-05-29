@@ -75,7 +75,7 @@ public class GivenASyncRuleRepository(DatabaseFixture db) : IClassFixture<Databa
         await sut.UpsertAsync(CreateEntity(accountIdB), CancellationToken.None);
         var rulesForA = await sut.GetByAccountAsync(accountIdA, CancellationToken.None);
 
-        rulesForA.ShouldAllBe(r => r.AccountId == accountIdA);
+        rulesForA.ShouldHaveSingleItem();
     }
 
     [Fact]
