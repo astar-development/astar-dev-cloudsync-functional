@@ -25,8 +25,12 @@ on:
       - main
       - 'release/**'
     paths:
-      - 'src/**/*''
-      - 'test/**/*'
+      - 'src/**/*.cs'
+      - 'src/**/*.csproj'
+      - 'src/**/*.axaml'
+      - 'src/**/*.razor'
+      - 'test/**/*.cs'
+      - 'test/**/*.csproj'
       - 'Directory.Build.props'
       - 'Directory.Build.targets'
       - 'Directory.Packages.props'
