@@ -21,7 +21,7 @@ public sealed class SyncRuleRepository(IDbContextFactory<AppDbContext> dbFactory
             .ToListAsync(cancellationToken)
             .ConfigureAwait(false);
 
-        return entities.Select(ToSyncRule).ToList();
+        return [.. entities.Select(ToSyncRule)];
     }
 
     /// <inheritdoc/>
@@ -43,7 +43,7 @@ public sealed class SyncRuleRepository(IDbContextFactory<AppDbContext> dbFactory
             .GroupBy(r => r.AccountId)
             .ToDictionary(
                 g => g.Key,
-                g => (IReadOnlyList<SyncRule>)g.Select(ToSyncRule).ToList());
+                g => (IReadOnlyList<SyncRule>)[.. g.Select(ToSyncRule)]);
     }
 
     /// <inheritdoc/>

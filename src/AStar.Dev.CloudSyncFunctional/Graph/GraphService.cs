@@ -21,6 +21,20 @@ public sealed partial class GraphService(IGraphClientFactory clientFactory, IHtt
     private readonly ConcurrentDictionary<string, string> _driveIdCache = new();
 
     /// <inheritdoc />
+    public Task<Result<PersistenceDriveId, GraphError>> GetDriveIdAsync(string accountId, string accessToken, CancellationToken cancellationToken = default)
+        => ExecuteGraphOperationAsync(
+            accountId,
+            () => TryGetClientForToken(clientFactory, accessToken)
+                .BindAsync(async client =>
+                {
+                    var driveId = await GetOrResolveDriveIdAsync(accountId, client, cancellationToken).ConfigureAwait(false);
+
+                    return driveId is null
+                        ? new Fail<PersistenceDriveId, GraphError>(GraphErrorFactory.Unexpected("Could not resolve drive ID."))
+                        : (Result<PersistenceDriveId, GraphError>)new Ok<PersistenceDriveId, GraphError>(new PersistenceDriveId(driveId));
+                }));
+
+    /// <inheritdoc />
     public Task<Result<List<DriveFolder>, GraphError>> GetRootFoldersAsync(string accountId, string accessToken, CancellationToken cancellationToken = default)
         => ExecuteGraphOperationAsync(
             accountId,
@@ -57,10 +71,12 @@ public sealed partial class GraphService(IGraphClientFactory clientFactory, IHtt
                         ? (Result<Option<string>, GraphError>)new Ok<Option<string>, GraphError>(new Some<string>(id))
                         : new Ok<Option<string>, GraphError>(new None<string>());
                 })
-                .MatchAsync<Option<string>, GraphError, Option<string>>(opt => opt, _ => new None<string>());
+                .MatchAsync(opt => opt, _ => new None<string>());
         }
-        catch (ODataError)
+        catch (ODataError ex)
         {
+            LogGraphFailed(logger, remotePath, $"{ex.Error?.Code}: {ex.Error?.Message ?? ex.Message}");
+
             return new None<string>();
         }
         catch (Exception ex)
@@ -76,20 +92,20 @@ public sealed partial class GraphService(IGraphClientFactory clientFactory, IHtt
         => ExecuteGraphOperationAsync(
             accountId,
             () => TryGetClientForToken(clientFactory, accessToken)
-                .BindAsync(async client =>
+                .BindAsync(async Task<Result<string, GraphError>> (client) =>
                 {
                     var driveId = await GetOrResolveDriveIdAsync(accountId, client, cancellationToken).ConfigureAwait(false);
                     if (driveId is null)
-                        return (Result<string, GraphError>)new Fail<string, GraphError>(GraphErrorFactory.Unexpected("Could not resolve drive ID."));
+                        return new Fail<string, GraphError>(GraphErrorFactory.Unexpected("Could not resolve drive ID."));
 
                     var item = await client.Drives[driveId].Items[itemId]
                         .GetAsync(req => req.QueryParameters.Select = ["@microsoft.graph.downloadUrl"], cancellationToken: cancellationToken)
                         .ConfigureAwait(false);
 
                     if (item?.AdditionalData is null || !item.AdditionalData.TryGetValue("@microsoft.graph.downloadUrl", out var url) || url is null)
-                        return (Result<string, GraphError>)new Fail<string, GraphError>(GraphErrorFactory.NotFound(itemId));
+                        return new Fail<string, GraphError>(GraphErrorFactory.NotFound(itemId));
 
-                    return (Result<string, GraphError>)new Ok<string, GraphError>(url.ToString()!);
+                    return new Ok<string, GraphError>(url.ToString()!);
                 }));
 
     /// <inheritdoc />
@@ -101,7 +117,7 @@ public sealed partial class GraphService(IGraphClientFactory clientFactory, IHtt
                 {
                     var driveId = await GetOrResolveDriveIdAsync(accountId, client, cancellationToken).ConfigureAwait(false);
                     if (driveId is null)
-                        return (Result<string, GraphError>)new Fail<string, GraphError>(GraphErrorFactory.Unexpected("Could not resolve drive ID for upload."));
+                        return new Fail<string, GraphError>(GraphErrorFactory.Unexpected("Could not resolve drive ID for upload."));
 
                     var fileName = fileSystem.Path.GetFileName(localPath);
                     var lastModified = fileSystem.File.GetLastWriteTimeUtc(localPath)
@@ -127,7 +143,7 @@ public sealed partial class GraphService(IGraphClientFactory clientFactory, IHtt
                         .ConfigureAwait(false);
 
                     if (session?.UploadUrl is null)
-                        return (Result<string, GraphError>)new Fail<string, GraphError>(GraphErrorFactory.Unexpected("Upload session URL was null."));
+                        return new Fail<string, GraphError>(GraphErrorFactory.Unexpected("Upload session URL was null."));
 
                     await using var fileStream = fileSystem.File.OpenRead(localPath);
 
@@ -139,15 +155,15 @@ public sealed partial class GraphService(IGraphClientFactory clientFactory, IHtt
         => ExecuteGraphOperationAsync(
             accountId,
             () => TryGetClientForToken(clientFactory, accessToken)
-                .BindAsync(async client =>
+                .BindAsync(async Task<Result<Unit, GraphError>> (client) =>
                 {
                     var driveId = await GetOrResolveDriveIdAsync(accountId, client, cancellationToken).ConfigureAwait(false);
                     if (driveId is null)
-                        return (Result<Unit, GraphError>)new Fail<Unit, GraphError>(GraphErrorFactory.Unexpected("Could not resolve drive ID for delete."));
+                        return new Fail<Unit, GraphError>(GraphErrorFactory.Unexpected("Could not resolve drive ID for delete."));
 
                     await client.Drives[driveId].Items[itemId].DeleteAsync(cancellationToken: cancellationToken).ConfigureAwait(false);
 
-                    return (Result<Unit, GraphError>)new Ok<Unit, GraphError>(Unit.Default);
+                    return new Ok<Unit, GraphError>(Unit.Default);
                 }));
 
     /// <inheritdoc />
@@ -172,6 +188,13 @@ public sealed partial class GraphService(IGraphClientFactory clientFactory, IHtt
         try
         {
             return await operation().ConfigureAwait(false);
+        }
+        catch (ODataError ex)
+        {
+            var detail = $"{ex.Error?.Code}: {ex.Error?.Message ?? ex.Message}";
+            LogGraphFailed(logger, accountId, detail);
+
+            return GraphErrorFactory.Unexpected(detail);
         }
         catch (Exception ex)
         {
@@ -292,7 +315,7 @@ public sealed partial class GraphService(IGraphClientFactory clientFactory, IHtt
 
             for (var attempt = 1; attempt <= maxRetries; attempt++)
             {
-                using var content = new System.Net.Http.ByteArrayContent(buffer, 0, bytesRead);
+                using var content = new ByteArrayContent(buffer, 0, bytesRead);
                 content.Headers.TryAddWithoutValidation("Content-Range", $"bytes {offset}-{end}/{totalSize}");
                 content.Headers.ContentLength = bytesRead;
 
@@ -304,7 +327,7 @@ public sealed partial class GraphService(IGraphClientFactory clientFactory, IHtt
                     var doc = System.Text.Json.JsonDocument.Parse(json);
                     var itemId = doc.RootElement.TryGetProperty("id", out var idProp) ? idProp.GetString() : null;
                     chunkCompleted = itemId is not null
-                        ? (Result<string, GraphError>)new Ok<string, GraphError>(itemId)
+                        ? new Ok<string, GraphError>(itemId)
                         : new Fail<string, GraphError>(GraphErrorFactory.Unexpected("Upload completed but item ID was missing."));
                     break;
                 }
@@ -339,7 +362,7 @@ public sealed partial class GraphService(IGraphClientFactory clientFactory, IHtt
         return new Fail<string, GraphError>(GraphErrorFactory.Unexpected("Upload completed without receiving item ID."));
     }
 
-    private static TimeSpan ParseChunkRetryAfter(System.Net.Http.HttpResponseMessage response)
+    private static TimeSpan ParseChunkRetryAfter(HttpResponseMessage response)
     {
         if (response.Headers.RetryAfter?.Delta is TimeSpan delta)
             return delta;

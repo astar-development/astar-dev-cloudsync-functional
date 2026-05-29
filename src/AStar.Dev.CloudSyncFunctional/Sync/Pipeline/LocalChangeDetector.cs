@@ -76,7 +76,7 @@ public sealed class LocalChangeDetector(IFileSystem fileSystem) : ILocalChangeDe
     private string GetRelativePath(string basePath, string fullPath)
     {
         var normalised = fullPath.StartsWith(basePath, StringComparison.OrdinalIgnoreCase)
-            ? fullPath.Substring(basePath.Length).TrimStart(fileSystem.Path.DirectorySeparatorChar)
+            ? fullPath[basePath.Length..].TrimStart(fileSystem.Path.DirectorySeparatorChar)
             : fullPath;
 
         return normalised;

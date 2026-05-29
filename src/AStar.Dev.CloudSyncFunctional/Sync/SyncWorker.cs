@@ -19,7 +19,7 @@ public sealed partial class SyncWorker(IGraphService graphService, IHttpDownload
 
     private Task<Result<Unit, SyncError>> ExecuteDownloadAsync(DownloadJob job, string accountId, string accessToken, CancellationToken cancellationToken) =>
         graphService.GetDownloadUrlAsync(accountId, accessToken, job.ItemId, cancellationToken)
-            .MatchAsync<string, GraphError, Result<Unit, SyncError>>(
+            .MatchAsync(
                 url => downloader.DownloadAsync(url, job.LocalPath, job.RemoteModified ?? DateTimeOffset.UtcNow, null, cancellationToken),
                 error =>
                 {
@@ -30,9 +30,9 @@ public sealed partial class SyncWorker(IGraphService graphService, IHttpDownload
 
     private Task<Result<Unit, SyncError>> ExecuteUploadAsync(UploadJob job, string accountId, string accessToken, PersistenceDriveId driveId, CancellationToken cancellationToken) =>
         graphService.GetFolderIdByPathAsync(accessToken, driveId, job.ParentFolderPath.TrimStart('/'), cancellationToken)
-            .MatchAsync<string, Result<Unit, SyncError>>(
+            .MatchAsync(
                 folderId => uploadService.UploadAsync(accountId, accessToken, job.LocalPath, job.RemotePath, folderId, cancellationToken)
-                    .MatchAsync<string, SyncError, Result<Unit, SyncError>>(
+                    .MatchAsync(
                         _ => Task.FromResult<Result<Unit, SyncError>>(new Ok<Unit, SyncError>(Unit.Default)),
                         error =>
                         {

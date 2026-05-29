@@ -3,7 +3,7 @@ namespace AStar.Dev.CloudSyncFunctional.Sync;
 /// <summary>Classifies remote paths against a set of <see cref="FileClassificationRule"/> instances.</summary>
 public static class FileClassifier
 {
-    private static readonly char[] PathSeparators = ['/', '-', '_', '.', ' '];
+    private static readonly char[] PathSeparators = [Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar, '-', '_', '.', ' '];
 
     /// <summary>Classifies the given remote path against the provided rules.</summary>
     /// <remarks>

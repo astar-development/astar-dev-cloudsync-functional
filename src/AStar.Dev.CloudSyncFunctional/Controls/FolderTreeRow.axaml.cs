@@ -202,8 +202,8 @@ public partial class FolderTreeRow : UserControl
 
         var isPath = NodeName.EndsWith('/');
         NameText.FontFamily = isPath
-            ? (FontFamily)(this.TryFindResource("JetBrainsMono", out var mono) && mono is FontFamily monoFamily ? monoFamily : FontFamily.Default)
-            : (FontFamily)(this.TryFindResource("PlusJakartaSans", out var sans) && sans is FontFamily sansFamily ? sansFamily : FontFamily.Default);
+            ? this.TryFindResource("JetBrainsMono", out var mono) && mono is FontFamily monoFamily ? monoFamily : FontFamily.Default
+            : this.TryFindResource("PlusJakartaSans", out var sans) && sans is FontFamily sansFamily ? sansFamily : FontFamily.Default;
 
         if (this.TryFindResource("Ink", out var inkRes) && inkRes is IBrush inkBrush)
             NameText.Foreground = inkBrush;

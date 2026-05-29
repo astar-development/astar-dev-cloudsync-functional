@@ -6,6 +6,7 @@ using AStar.Dev.CloudSyncFunctional.Onboarding;
 using AStar.Dev.CloudSyncFunctional.Tests.Unit.Infrastructure;
 using AStar.Dev.CloudSyncFunctional.Wizard;
 using AStar.Dev.FunctionalParadigm;
+using PersistenceDriveId = AStar.Dev.CloudSyncFunctional.Persistence.ValueObjects.DriveId;
 
 namespace AStar.Dev.CloudSyncFunctional.Tests.Unit.Wizard;
 
@@ -392,6 +393,8 @@ public class GivenAnAddAccountWizardViewModel : IClassFixture<ReactiveUiFixture>
         var graph = Substitute.For<IGraphService>();
         graph.GetRootFoldersAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<CancellationToken>())
             .Returns(Task.FromResult<Result<List<DriveFolder>, GraphError>>(new Ok<List<DriveFolder>, GraphError>([])));
+        graph.GetDriveIdAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<CancellationToken>())
+            .Returns(Task.FromResult<Result<PersistenceDriveId, GraphError>>(new Ok<PersistenceDriveId, GraphError>(new PersistenceDriveId("drive-id-1"))));
 
         var onboarding = Substitute.For<IAccountOnboardingService>();
         onboarding.CompleteOnboardingAsync(Arg.Any<OneDriveAccount>(), Arg.Any<CancellationToken>())
@@ -422,6 +425,8 @@ public class GivenAnAddAccountWizardViewModel : IClassFixture<ReactiveUiFixture>
         var graph = Substitute.For<IGraphService>();
         graph.GetRootFoldersAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<CancellationToken>())
             .Returns(Task.FromResult<Result<List<DriveFolder>, GraphError>>(new Ok<List<DriveFolder>, GraphError>([])));
+        graph.GetDriveIdAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<CancellationToken>())
+            .Returns(Task.FromResult<Result<PersistenceDriveId, GraphError>>(new Ok<PersistenceDriveId, GraphError>(new PersistenceDriveId("drive-id-1"))));
 
         var onboarding = Substitute.For<IAccountOnboardingService>();
         onboarding.CompleteOnboardingAsync(Arg.Any<OneDriveAccount>(), Arg.Any<CancellationToken>())
@@ -436,5 +441,30 @@ public class GivenAnAddAccountWizardViewModel : IClassFixture<ReactiveUiFixture>
 
         sut.HasError.ShouldBeTrue();
         sut.ErrorMessage.ShouldContain("DB failure");
+    }
+
+    [Fact]
+    public async Task when_get_drive_id_fails_then_error_is_surfaced()
+    {
+        var auth = Substitute.For<IAuthService>();
+        var profile = new AccountProfile("Test User", "test@example.com");
+        var authResult = AuthResultFactory.Create("token", "test-account-id", profile, DateTimeOffset.UtcNow.AddHours(1));
+        auth.SignInInteractiveAsync(Arg.Any<CancellationToken>())
+            .Returns(Task.FromResult<Result<AuthResult, AuthError>>(new Ok<AuthResult, AuthError>(authResult)));
+
+        var graph = Substitute.For<IGraphService>();
+        graph.GetRootFoldersAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<CancellationToken>())
+            .Returns(Task.FromResult<Result<List<DriveFolder>, GraphError>>(new Ok<List<DriveFolder>, GraphError>([])));
+        graph.GetDriveIdAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<CancellationToken>())
+            .Returns(Task.FromResult<Result<PersistenceDriveId, GraphError>>(new Fail<PersistenceDriveId, GraphError>(GraphErrorFactory.Unexpected("drive lookup failed"))));
+
+        var sut = CreateSut(auth: auth, graph: graph);
+
+        await sut.SelectProvider.Execute(ProviderKind.OneDrive);
+        await sut.SignIn.Execute();
+        await sut.AddAccount.Execute();
+
+        sut.HasError.ShouldBeTrue();
+        sut.ErrorMessage.ShouldContain("drive lookup failed");
     }
 }

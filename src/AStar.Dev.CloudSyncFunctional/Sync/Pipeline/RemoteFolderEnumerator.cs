@@ -42,8 +42,8 @@ public sealed partial class RemoteFolderEnumerator(IGraphService graphService, I
         => graphService.GetFolderIdByPathAsync(accessToken, account.DriveIdValue, rule.RemotePath.TrimStart('/'), cancellationToken)
             .MatchAsync(
                 async folderId => await graphService.EnumerateFolderAsync(accessToken, account.DriveIdValue, folderId, rule.RemotePath, cancellationToken)
-                    .MatchAsync<List<DeltaItem>, GraphError, SyncError?>(
-                        items => { allItems.AddRange(items); return (SyncError?)null; },
+                    .MatchAsync(
+                        items => { allItems.AddRange(items); return null; },
                         error =>
                         {
                             LogEnumerationFailed(logger, rule.RemotePath, error.Message);
@@ -59,10 +59,7 @@ public sealed partial class RemoteFolderEnumerator(IGraphService graphService, I
 
     private static bool IsAncestor(string potentialAncestor, string path)
     {
-        if (!path.StartsWith(potentialAncestor, StringComparison.OrdinalIgnoreCase))
-            return false;
-
-        if (path.Length == potentialAncestor.Length)
+        if (!path.StartsWith(potentialAncestor, StringComparison.OrdinalIgnoreCase) || path.Length == potentialAncestor.Length)
             return false;
 
         return path[potentialAncestor.Length] == '/';

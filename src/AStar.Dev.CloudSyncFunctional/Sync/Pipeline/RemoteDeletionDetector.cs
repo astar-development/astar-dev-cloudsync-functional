@@ -27,8 +27,8 @@ public sealed partial class RemoteDeletionDetector(ISyncedItemRepository syncedI
             }
 
             var deleteError = await syncedItemRepository.DeleteAsync(tracked.Id, cancellationToken)
-                .MatchAsync<Unit, Onboarding.PersistenceError, Onboarding.PersistenceError?>(
-                    _ => (Onboarding.PersistenceError?)null,
+                .MatchAsync(
+                    _ => null,
                     error =>
                     {
                         LogTrackingDeleteFailed(logger, remotePath, error.Message);

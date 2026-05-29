@@ -12,7 +12,7 @@ public sealed partial class SyncScheduler(ISyncService syncService, IAccountRepo
     private static readonly TimeSpan DefaultInterval = TimeSpan.FromMinutes(60);
 
     private readonly ConcurrentDictionary<string, CancellationTokenSource> _activeSyncs = new();
-    private System.Threading.Timer? _timer;
+    private Timer? _timer;
     private TimeSpan _interval = DefaultInterval;
     private long _runningFlag;
 
@@ -27,7 +27,7 @@ public sealed partial class SyncScheduler(ISyncService syncService, IAccountRepo
     {
         _interval = interval ?? DefaultInterval;
         _timer?.Dispose();
-        _timer = new System.Threading.Timer(OnTimerTickAsync, null, _interval, _interval);
+        _timer = new Timer(OnTimerTickAsync, null, _interval, _interval);
         LogSchedulerStarted(logger, (long)_interval.TotalMinutes);
     }
 

@@ -64,6 +64,6 @@ public static class SqliteTypeConverters
 
     /// <summary>Converts a nullable <see cref="DateTimeOffset"/> to and from a nullable UTC ticks <see langword="long"/>.</summary>
     public static ValueConverter<DateTimeOffset?, long?> NullableDateTimeOffsetToTicks { get; } =
-        new(dt => dt.HasValue ? dt.Value.UtcTicks : (long?)null,
-            ticks => ticks.HasValue ? new DateTimeOffset(ticks.Value, TimeSpan.Zero) : (DateTimeOffset?)null);
+        new(dt => dt.HasValue ? dt.Value.UtcTicks : null,
+            ticks => ticks.HasValue ? new DateTimeOffset(ticks.Value, TimeSpan.Zero) : null);
 }

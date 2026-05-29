@@ -30,8 +30,8 @@ public sealed partial class LocalDeletionDetector(IGraphService graphService, IS
                 return new Fail<Unit, SyncError>(SyncErrorFactory.GraphFailed(remoteDeleteError));
 
             var trackingError = await syncedItemRepository.DeleteAsync(item.Id, cancellationToken)
-                .MatchAsync<Unit, Onboarding.PersistenceError, Onboarding.PersistenceError?>(
-                    _ => (Onboarding.PersistenceError?)null,
+                .MatchAsync(
+                    _ => null,
                     error =>
                     {
                         LogTrackingDeleteFailed(logger, item.RemotePath, error.Message);
